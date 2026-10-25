@@ -1,0 +1,8 @@
+[project]
+name = "mdwnfr"
+version = "0.2.0"
+description = "Python-first Late Egyptian PWA editor"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+[tool.setuptools.packages.find]
+where = ["core"]

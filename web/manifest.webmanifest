@@ -1,0 +1,24 @@
+{
+  "name": "MdwNfr — Egyptian Editor",
+  "short_name": "MdwNfr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#eaf0f5",
+  "theme_color": "#102d51",
+  "description": "Offline-first native hieroglyphic document editor — predictive writing foundation.",
+  "icons": [
+    {
+      "src": "/icons/app-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/app-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
