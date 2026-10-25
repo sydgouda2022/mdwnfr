@@ -83,7 +83,7 @@ print('Offline publication:', 'COMPLETE' if publication['complete'] else 'SHELL 
 
 # Content-addressed service-worker cache for repeatable IDE rebuilds.
 import re
-cache_fingerprint=hashlib.sha256((DEST/'offline-assets.json').read_bytes()).hexdigest()[:16]
+cache_fingerprint=hashlib.sha256((DEST/'offline-assets.json').read_bytes()+(DEST/'sw.js').read_bytes()).hexdigest()[:16]
 sw=DEST/'sw.js'
 sw_source=sw.read_text(encoding='utf-8')
 sw_source=re.sub(r"const CACHE = 'mdwnfr-offline-[^']+';",

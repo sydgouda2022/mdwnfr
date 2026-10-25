@@ -94,7 +94,10 @@ async function mutateDocument(id,doc){
     const ready=()=>{
      if(++loaded!==2)return;
      const now=Date.now();
-     const due=!oldIndex?.last_snapshot_at || now-oldIndex.last_snapshot_at>=SNAPSHOT_INTERVAL_MS;
+     if(previous&&(previous.revision>doc.revision||(previous.revision===doc.revision&&JSON.stringify(previous)!==JSON.stringify(doc)))){
+       fail(new Error('Another tab modified this document. Reopen it before saving.'));return;
+      }
+      const due=!oldIndex?.last_snapshot_at || now-oldIndex.last_snapshot_at>=SNAPSHOT_INTERVAL_MS;
      const previousDocument=previous||doc;
      // Only snapshot a real prior revision, or the original new document.
      const canCapture=due&&previousDocument&&

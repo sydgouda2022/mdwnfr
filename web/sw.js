@@ -22,7 +22,7 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
   const response=await fetch(MANIFEST,{cache:'no-store'});
   if(!response.ok)throw Error('Offline manifest is not available');
   const publication=await response.json();
-  if(publication.format!=='mdwnfr-offline-publication-v1'||!Array.isArray(publication.assets))
+  if(publication.format!=='mdwnfr-offline-publication-v1'||publication.complete!==true||!Array.isArray(publication.assets))
     throw Error('Unsupported offline publication');
   const cache=await caches.open(CACHE);
   try {

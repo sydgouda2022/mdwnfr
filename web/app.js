@@ -1,5 +1,5 @@
 import {save,load,list,remove,loadProfile,saveProfile,listSnapshots,restoreSnapshot} from './storage.js';
-import {SIGN_CATALOG} from './keyboard_catalog.js';
+import {createKeyboardFromData} from './vendor/hieroglyphic/keyboard_api.mjs';
 import {NO_MIRROR_HIEROGLYPHS,mirrorSign,reverseVisualQuadrat} from './hieroglyph_facing.mjs';
 import {fitQuadrat} from './quadrat_preview.mjs';
 import {buildEgyptianPalette,normalizeColour} from './editor_controls.mjs';
@@ -8,7 +8,8 @@ import {buildEgyptianPalette,normalizeColour} from './editor_controls.mjs';
    JavaScript owns only interaction state, local persistence, and DOM drawing. */
 const $=id=>document.getElementById(id);
 const pxmm=96/25.4;
-const glyphGroups={unilaterals:SIGN_CATALOG.single,bilaterals:SIGN_CATALOG.dual,trilaterals:SIGN_CATALOG.triple};
+const signKeyboard=createKeyboardFromData();
+const glyphGroups={unilaterals:signKeyboard.getSigns('uni'),bilaterals:signKeyboard.getSigns('bi'),trilaterals:signKeyboard.getSigns('tri')};
 const numerals=[...('𓏺𓏻𓏼𓏽𓏾𓏿𓐀𓐁𓐂')].map((sign,i)=>({sign,value:String(i+1)})).concat([
  {sign:'𓎆',value:'10'},{sign:'𓍢',value:'100'},{sign:'𓆼',value:'1,000'},
  {sign:'𓂭',value:'10,000'},{sign:'𓆐',value:'100,000'},{sign:'𓁨',value:'1,000,000'}]);
@@ -165,7 +166,8 @@ async function renderPapyrusWindow(){
  const box=slot.shell.getBoundingClientRect();
  const viewport=$('canvas-area').getBoundingClientRect();
  const unit=zoom*pxmm;
- const left=Math.max(0,(viewport.left-box.left)/unit);
+ const margin=doc.margins_mm?.left??18;
+  const left=Math.max(0,(viewport.left-box.left)/unit);
  const right=Math.max(left,(viewport.right-box.left)/unit);
  const w=layoutCache.column_width_mm;
  if(!(w>0))return;
@@ -173,11 +175,11 @@ async function renderPapyrusWindow(){
  // same query handles RTL and LTR; coordinates themselves come from Python.
  let lo,hi;
  if(doc.direction==='rtl'){
-  lo=(summary.width-18-right)/w;
-  hi=(summary.width-18-left)/w;
+  lo=(summary.width-margin-right)/w;
+  hi=(summary.width-margin-left)/w;
  }else{
-  lo=(left-18)/w;
-  hi=(right-18)/w;
+  lo=(left-margin)/w;
+  hi=(right-margin)/w;
  }
  // A single image may occupy multiple physical column-width slots.
  // Page summaries carry spans only when necessary, so viewport indexing remains
@@ -1387,7 +1389,7 @@ async function pumpLayoutQueue(){
        snapshot.revision!==doc.revision||editorScreen.hidden)continue;
     layoutCache=outcome.layout;paint(outcome.layout);
     status(outcome.layout.warnings.length?'Layout warning: '+outcome.layout.warnings[0]:
-           'Revision '+doc.revision+' · Local autosave',outcome.layout.warnings.length>0);
+           'Revision '+doc.revision+' · Saving locally…',outcome.layout.warnings.length>0);
    }catch(e){
     if(version===layoutVersion)status('Layout: '+e.message,true);
    }
@@ -1866,6 +1868,7 @@ function suggestionButton(candidate){
  const button=document.createElement('button');button.append(facingSequenceNode(candidate.signs));
  if(candidate.source==='user')button.classList.add('user-choice');
  if(candidate.source==='personal')button.classList.add('personal-choice');
+  if(candidate.source_tier==='ramses_corpus')button.classList.add('ramses-choice');
  const rtc=candidate.source_tier==='ramses_corpus';
  
  button.setAttribute('aria-label',(candidate.source==='user'?'Use own spelling ':candidate.source==='personal'?'Use personal spelling ':rtc?'Use Ramses corpus spelling ':'Choose lemma-linked spelling ')+candidate.signs.join(''));

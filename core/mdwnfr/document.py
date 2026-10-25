@@ -175,7 +175,7 @@ def validate_signs(signs: Any) -> list[str]:
         if not isinstance(sign, str) or len(sign) != 1:
             raise DocumentError("Every sign must be exactly one Unicode codepoint")
         cp = ord(sign)
-        if not (0x13000 <= cp <= 0x1342F or 0x13460 <= cp <= 0x143FF):
+        if not (0x13000 <= cp <= 0x1342F):
             raise DocumentError("Use Egyptian hieroglyph Unicode signs, not transliteration")
     return signs.copy()
 

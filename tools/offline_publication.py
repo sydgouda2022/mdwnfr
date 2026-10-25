@@ -22,6 +22,8 @@ SHELL = (
     'core/mdwnfr/data/lexicon.json',
     'core/mdwnfr/data/glyph_geometry.json',
     'lexicon-install.mjs', 'lexicon/lexicon.json', 'lexicon/manifest.json',
+    'vendor/hieroglyphic/keyboard_api.mjs','vendor/hieroglyphic/keyboard_search.mjs',
+    'vendor/hieroglyphic/keyboard_catalog.js','vendor/hieroglyphic/lexicon_install.mjs',
     'core/mdwnfr/data/catalog_integrity.json',
     'core/mdwnfr/data/artwork_catalog.json',
     'core/mdwnfr/data/artwork_silhouettes.json','artwork/catalog.json',
