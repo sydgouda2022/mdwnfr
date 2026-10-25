@@ -121,7 +121,7 @@ class ObjectSequenceLayout(unittest.TestCase):
         frame=table(rows=24,columns=1)
         for row in frame['rows']:
             row[0]['items']=[word(['𓅓']) for _ in range(3)]
-        doc['items']=[frame,word(['𓈖']) for _ in range(24)]
+        doc['items']=[frame]+[word(['𓈖']) for _ in range(24)]
         result=layout_document(doc)
         fragments=[(page['index'],pl['id']) for page in result['pages']
             for col in page['columns'] if col['kind']=='table'
