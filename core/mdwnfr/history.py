@@ -2,7 +2,7 @@
 
 History entries contain only the affected object's data (or changed document
 properties); there are no full-document snapshots for ordinary edits. The
-browser keeps session stacks, while Python alone validates and applies edits.
+Python session owns both undo/redo stacks and authoritative edit validation.
 """
 from __future__ import annotations
 from copy import deepcopy

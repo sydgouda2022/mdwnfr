@@ -1,4 +1,4 @@
-name: MdwNfr CI and automatic Hieroglyphic Keyboard updates
+name: MdwNfr CI and pinned Hieroglyphic Keyboard verification
 on:
   push:
     branches: [main]
@@ -29,16 +29,12 @@ jobs:
         with: {python-version: '3.12'}
       - uses: actions/setup-node@v5
         with: {node-version: '24'}
-      - name: Check pinned Hieroglyphic release or stage new verified release
+      - name: Verify pinned Hieroglyphic Keyboard dependency
         env:
           EVENT: ${{ github.event_name }}
         run: |
           set -euo pipefail
-          if [ "$EVENT" = pull_request ]; then
-            python tools/sync_keyboards.py --verify
-          else
-            python tools/sync_keyboards.py --verify
-          fi
+          python tools/sync_keyboards.py --verify
       - name: Install matching licensed Egyptian glyph font
         run: |
           set -euo pipefail
@@ -61,6 +57,8 @@ jobs:
           node --check web/app.js
           node --check web/worker.js
           node --check web/lexicon-install.mjs
+          node --check web/keyboard-prediction-worker.mjs
+          node --check web/vendor/hieroglyphic/keyboard_api.mjs
           python -m compileall -q core/mdwnfr
           node qa/test_quadrat_preview.mjs
       - name: Verify reproducible offline browser assets

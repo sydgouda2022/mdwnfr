@@ -187,7 +187,7 @@ async function renderPapyrusWindow(){
  const box=slot.shell.getBoundingClientRect();
  const viewport=$('canvas-area').getBoundingClientRect();
  const unit=zoom*pxmm;
- const margin=doc.margins_mm?.left??18;
+ const margin=doc.direction==='rtl'?(doc.margins_mm?.right??18):(doc.margins_mm?.left??18);
   const left=Math.max(0,(viewport.left-box.left)/unit);
  const right=Math.max(left,(viewport.right-box.left)/unit);
  const w=layoutCache.column_width_mm;
@@ -704,7 +704,7 @@ $('cartouche-orientation').onchange=e=>{const item=selectedCartoucheObject();
 $('cartouche-save').onclick=()=>{const item=selectedCartoucheObject();if(!item)return;
  const value=$('cartouche-words').value.trim();
  const parts=value?value.split(/\s+/u):[];
- const allowed=/^[\u{13000}-\u{1342F}\u{13460}-\u{143FF}]+$/u;
+ const allowed=/^[\u{13000}-\u{1342F}]+$/u;
  if(parts.length>48||parts.some(s=>!allowed.test(s))){status('Cartouche accepts up to 48 hieroglyphic words',true);return;}
  apply({op:'set_cartouche_words',id:item.id,words:parts.map(s=>Array.from(s))});
 };
@@ -770,7 +770,7 @@ $('table-cell-save').onclick=async()=>{
  if(raw.startsWith('=')){action.mode='formula';action.formula=raw;}
  else{
   action.mode='text';action.words=raw?raw.split(/\s+/u).map(s=>Array.from(s)):[];
-  if(action.words.some(word=>word.some(c=>!(c.codePointAt(0)>=0x13000&&c.codePointAt(0)<=0x143ff)))){
+  if(action.words.some(word=>word.some(c=>!(c.codePointAt(0)>=0x13000&&c.codePointAt(0)<=0x1342f)))){
    status('Only hieroglyphic Unicode words are supported in table cells',true);return;
   }
  }
@@ -965,13 +965,14 @@ function beginClipartDrag(e,placement,column,page,node){
   const dx=(lastX-startX)/unit,dy=(lastY-startY)/unit;
   const target=clipartDropIndex(page,lastX,lastY,placement.id);
   const newPage=target?.page??page;
-  const yRoom=Math.max(0,newPage.height-36-placement.height);
+  const margins=doc.margins_mm||{top:18,bottom:18};
+   const yRoom=Math.max(0,newPage.height-margins.top-margins.bottom-placement.height);
   const initialTop=node.getBoundingClientRect().top;
   // Node preview has been cleared; preserve the original pointer grab offset.
   const grabY=(startY-initialTop)/(unit);
   const destinationRect=target?.paper.getBoundingClientRect();
   const proposedTop=destinationRect?(lastY-destinationRect.top)/unit-grabY:placement.y+dy;
-  const yAlign=yRoom?Math.max(0,Math.min(1,(proposedTop-18)/yRoom)):0.5;
+  const yAlign=yRoom?Math.max(0,Math.min(1,(proposedTop-margins.top)/yRoom)):0.5;
   // A float's horizontal position is a millimetre offset *forward in
   // reading order* from its document anchor, not an absolute page pixel.
   // Python reserves the crossed slots, then flows words through every safe
@@ -981,7 +982,7 @@ function beginClipartDrag(e,placement,column,page,node){
     ?column.x+column.width-desiredX-placement.width_mm
     :desiredX-column.x;
   const maximalOffset=newPage===page
-    ?(doc.surface==='papyrus'?2000:Math.max(0,page.width-36-placement.width_mm))
+    ?(doc.surface==='papyrus'?2000:Math.max(0,page.width-(doc.margins_mm?.left??18)-(doc.margins_mm?.right??18)-placement.width_mm))
     :0;
   // Negative values move the art back over preceding text columns; Python
   // alone reflows those columns, preserving logical object order.
@@ -1324,7 +1325,10 @@ async function flushAutosave(){
   const job=autosaveQueue.catch(()=>{}).then(()=>save(snapshot));
   autosaveQueue=job;
  }
- try{await autosaveQueue;}catch(error){
+ try{await autosaveQueue;
+  if(snapshot&&doc&&doc.id===snapshot.id&&doc.revision===snapshot.revision)
+   status('Revision '+snapshot.revision+' · Saved locally');
+ }catch(error){
   if(snapshot && (!autosaveWanted||autosaveWanted.revision<snapshot.revision))autosaveWanted=snapshot;
   throw error;
  }
@@ -1705,7 +1709,7 @@ async function pasteSelection(event=null){
   if(tokens.length>MAX_ATOMIC_OBJECTS){status('Paste exceeds 150,000-word limit',true);return;}
   objects=tokens.map(token=>({type:'word',signs:[...token],color:'#192433',bold:false,lexicon_ref:null}));
   if(objects.some(item=>item.signs.some(sign=>{
-   const cp=sign.codePointAt(0);return !(cp>=0x13000&&cp<=0x1342f||cp>=0x13460&&cp<=0x143ff);
+   const cp=sign.codePointAt(0);return !(cp>=0x13000&&cp<=0x1342f);
   }))){status('Paste only accepts hieroglyphic Unicode words',true);return;}
  }
  if(!objects.length)return;
@@ -2014,6 +2018,7 @@ $('import-file').addEventListener('change',async event=>{
  finally{setLibraryBusy(false);}
 });
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&doc)flushAutosave().catch(()=>{});});
+window.addEventListener('pagehide',()=>{if(doc)flushAutosave().catch(()=>{});});
 
 // All modal completion paths settle the promise; cancel/outside/Escape never mutate the DB.
 function modal({title,description='',action='Continue',initialValue=null,destructive=false}){

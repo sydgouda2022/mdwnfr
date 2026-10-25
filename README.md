@@ -22,3 +22,5 @@ The browser predictor now runs in `web/keyboard-prediction-worker.mjs`, using th
 The library supports per-document `.mdwnfr.json` Export and Import. Imported documents pass Python validation, and duplicate document IDs are rejected without overwriting content. Keep exports outside the browser to survive data clearing or device loss.
 
 Keyboard dependency upgrades require a reviewed change; CI verifies the pinned release without pushing automatically to main.
+
+The iPhone/iPad drawing surface uses 44 CSS-pixel resize handles; document margins now govern papyrus viewport lookup and image drag geometry. All imported/pasted document glyphs must be supported by the bundled rendering font.
