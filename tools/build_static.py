@@ -77,6 +77,10 @@ if not isinstance(keyboard_sha,str) or len(keyboard_sha)!=64 or any(c not in '01
 if keyboard_sha != hashlib.sha256((DEST/'lexicon/lexicon.json').read_bytes()).hexdigest():
     raise ValueError('Keyboard lock does not match published browser dictionary')
 (DEST/'keyboard-release-pin.json').write_text(json.dumps({'sha256':keyboard_sha},sort_keys=True)+'\n',encoding='utf-8')
+# The browser's headless keyboard API owns prediction; the Python corpus
+# remains in the source checkout for native tests, not the published PWA.
+for redundant in ('core/mdwnfr/data/lexicon.json','keyboard_catalog.js','lexicon-install.mjs'):
+    (DEST/redundant).unlink(missing_ok=True)
 print('Built:',DEST)
 runtime=inspect()
 (DEST/'runtime-status.json').write_text(json.dumps(runtime,sort_keys=True,separators=(',',':')),encoding='utf-8')

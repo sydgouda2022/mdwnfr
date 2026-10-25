@@ -32,3 +32,7 @@ Deleting a document also removes its per-document prediction preferences. CI run
 The headless API v2 caps one prediction result window at 80 entries. The editor labels expanded results accordingly; it does not claim that 80 predictions exhaust the 41,330-record corpus.
 
 Document library order reflects successful IndexedDB save times. Keyboard Enter/Space works on cartouches and table cells, and the layout worker can be restarted after fatal initialization errors without a permanently pending layout request.
+
+## Packaged browser assets
+
+The PWA ships just the verified headless keyboard API and its browser dictionary. Legacy Python dictionary JSON, old browser lexicon installer, and the duplicate sign catalog remain available in source for native regression/compatibility checks, but are omitted from the published bundle.

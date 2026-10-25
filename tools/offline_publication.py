@@ -10,7 +10,7 @@ from pathlib import Path
 
 # Always-cached shell includes every Python module imported by the browser RPC core.
 SHELL = (
-    'index.html', 'style.css', 'boot.mjs', 'app.js', 'editor_controls.mjs', 'hieroglyph_facing.mjs', 'quadrat_preview.mjs', 'keyboard_catalog.js', 'worker.js', 'storage.js',
+    'index.html', 'style.css', 'boot.mjs', 'app.js', 'editor_controls.mjs', 'hieroglyph_facing.mjs', 'quadrat_preview.mjs', 'worker.js', 'storage.js',
     'manifest.webmanifest', 'runtime-status.json','keyboard-prediction-worker.mjs','keyboard-release-pin.json',
     'core/mdwnfr/__init__.py', 'core/mdwnfr/document.py',
     'core/mdwnfr/quadrat.py', 'core/mdwnfr/silhouette.py', 'core/mdwnfr/tables.py',
@@ -19,9 +19,8 @@ SHELL = (
     'core/mdwnfr/lexicon.py',
     'core/mdwnfr/history.py', 'core/mdwnfr/session.py',
     'core/mdwnfr/layout_sync.py', 'core/mdwnfr/api.py',
-    'core/mdwnfr/data/lexicon.json',
     'core/mdwnfr/data/glyph_geometry.json',
-    'lexicon-install.mjs', 'lexicon/lexicon.json', 'lexicon/manifest.json',
+    'lexicon/lexicon.json', 'lexicon/manifest.json',
     'vendor/hieroglyphic/keyboard_api.mjs','vendor/hieroglyphic/keyboard_search.mjs',
     'vendor/hieroglyphic/keyboard_catalog.js','vendor/hieroglyphic/lexicon_install.mjs',
     'vendor/hieroglyphic/THIRD_PARTY_NOTICES.md',
