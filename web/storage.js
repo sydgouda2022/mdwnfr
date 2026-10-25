@@ -208,4 +208,43 @@ export async function load(id){return operation('readonly',s=>s.get(id));}
 export async function list(){return operation('readonly',s=>s.getAll(),INDEX);}
 export async function remove(id,expectedRevision){return mutateDocument(id,null,expectedRevision);}
 export async function loadProfile(){return (await operation('readonly',s=>s.get('profile'),PROFILE))||null;}
-export async function saveProfile(profile){return operation('readwrite',s=>s.put({...profile,id:'profile'}),PROFILE);}
+// Atomic cross-tab profile operations: every change starts from persisted data.
+export async function updateProfile(change){
+ const db=await database();
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction(PROFILE,'readwrite'),store=tx.objectStore(PROFILE);
+  let updated;
+  store.get('profile').onsuccess=event=>{
+   try{
+    const old=event.target.result||{};
+    const p={id:'profile',global_choices:{...(old.global_choices||{})},
+     document_choices:{...(old.document_choices||{})},
+     personal_entries:[...(old.personal_entries||[])]};
+    if(change.op==='choice'){
+     const key=change.spelling,id=change.document_id;
+     if(typeof key!=='string'||!key||key.length>256||typeof id!=='string'||!id)
+      throw Error('Invalid spelling choice');
+     p.global_choices[key]=Math.min(10000,(Number(p.global_choices[key])||0)+1);
+     const choices={...(p.document_choices[id]||{})};
+     choices[key]=Math.min(10000,(Number(choices[key])||0)+1);
+     p.document_choices[id]=choices;
+    }else if(change.op==='add-word'){
+     if(typeof change.spelling!=='string'||!change.spelling||change.spelling.length>256)
+      throw Error('Invalid personal spelling');
+     if(!p.personal_entries.some(item=>item.signs===change.spelling)){
+      if(p.personal_entries.length>=5000)throw Error('My Words limit reached (5000)');
+      p.personal_entries.push({signs:change.spelling});
+     }
+    }else if(change.op==='delete-word'){
+     p.personal_entries=p.personal_entries.filter(item=>item.signs!==change.spelling);
+    }else if(change.op==='forget-document'){
+     delete p.document_choices[change.document_id];
+    }else throw Error('Invalid profile operation');
+    updated=p;store.put(p);
+   }catch(error){try{tx.abort();}catch{}reject(error);}
+  };
+  tx.oncomplete=()=>resolve(updated);
+  tx.onerror=()=>reject(tx.error||Error('Profile update failed'));
+  tx.onabort=()=>reject(tx.error||Error('Profile update aborted'));
+ });
+}

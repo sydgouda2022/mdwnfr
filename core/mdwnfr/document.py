@@ -241,7 +241,20 @@ def cartouche(orientation: str = 'vertical', words: list[list[str]] | None = Non
 
 def validate_cartouche_word(item: dict) -> None:
     if item.get('type')!='word':raise DocumentError('Cartouches accept whole words only')
-    validate_signs(item.get('signs'))
+    validate_word_record(item)
+
+
+def validate_word_record(obj: dict) -> None:
+    """Validate imported word styles as rigorously as native Unicode."""
+    validate_signs(obj.get('signs'))
+    color=obj.get('color')
+    if not isinstance(color,str) or not re.fullmatch(r'#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?',color):
+        raise DocumentError('Invalid word color')
+    if type(obj.get('bold')) is not bool:
+        raise DocumentError('Word bold must be a boolean')
+    ref=obj.get('lexicon_ref')
+    if ref is not None and (not isinstance(ref,str) or len(ref)>512):
+        raise DocumentError('Invalid word reference')
 
 
 def assert_document(doc: dict) -> None:
@@ -270,11 +283,11 @@ def assert_document(doc: dict) -> None:
             if not isinstance(obj, dict) or obj.get("type") not in SUPPORTED:
                 raise DocumentError("Unknown document object")
             oid = obj.get("id")
-            if not isinstance(oid, str) or oid in ids:
-                raise DocumentError("Document objects need unique persistent IDs")
+            if not isinstance(oid, str) or not oid or len(oid)>128 or oid in ids:
+                raise DocumentError("Document objects need unique nonempty persistent IDs")
             ids.add(oid)
             if obj["type"] == "word":
-                validate_signs(obj.get("signs"))
+                validate_word_record(obj)
             elif obj["type"] == "clipart":
                 validate_clipart(obj)
             elif obj["type"] == "image":
@@ -356,7 +369,7 @@ def transaction(document: dict, action: dict) -> dict:
             updated = items[idx].copy()
             if "color" in change:
                 value = change["color"]
-                if not isinstance(value, str) or not (value.startswith("#") and len(value) in (4, 7)):
+                if not isinstance(value, str) or not re.fullmatch(r'#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?',value):
                     raise DocumentError("Invalid color")
                 updated["color"] = value
             if "bold" in change:
@@ -410,8 +423,9 @@ def transaction(document: dict, action: dict) -> dict:
             if not isinstance(requested,list) or len(requested)>MAX_CARTOUCHE_WORDS:
                 raise DocumentError('Invalid cartouche word list')
             previous=obj['items']
-            obj['items']=[{**word(validate_signs(signs)),
-                'id': previous[j]['id'] if j<len(previous) else fresh_id()}
+            obj['items']=[{**(previous[j] if j<len(previous) else word(validate_signs(signs))),
+                'id': previous[j]['id'] if j<len(previous) else fresh_id(),
+                'signs':validate_signs(signs)}
                 for j,signs in enumerate(requested)]
         validate_cartouche(obj,validate_cartouche_word)
         items[idx]=obj
@@ -441,7 +455,8 @@ def transaction(document: dict, action: dict) -> dict:
                     # Keep an existing word ID when replacing the same cell slot.
                     before=previous.get('items',[])
                     ident=before[i]['id'] if i<len(before) else fresh_id()
-                    prepared.append({**word(glyphs),'id':ident})
+                    prepared.append({**(before[i] if i<len(before) else word(glyphs)),
+                                     'id':ident,'signs':glyphs})
                 rows[r][c]={'id':previous['id'],'mode':'text','items':prepared}
             elif mode=='formula':
                 rows[r][c]={'id':previous['id'],'mode':'formula','formula':action.get('formula')}

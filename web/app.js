@@ -1,4 +1,4 @@
-import {save,load,list,remove,loadProfile,saveProfile,listSnapshots,restoreSnapshot} from './storage.js';
+import {save,load,list,remove,loadProfile,updateProfile,listSnapshots,restoreSnapshot} from './storage.js';
 import {createKeyboardFromData} from './vendor/hieroglyphic/keyboard_api.mjs';
 import {NO_MIRROR_HIEROGLYPHS,mirrorSign,reverseVisualQuadrat} from './hieroglyph_facing.mjs';
 import {fitQuadrat} from './quadrat_preview.mjs';
@@ -43,7 +43,7 @@ function resetLayoutSynchronization(){
  layoutSyncedId=null;layoutSyncedRevision=null;layoutDeltas=[];
 }
 
-// Authoritative lexical decisions live in Python, never in browser JS.
+// Learned spelling preferences stay local; ranking belongs to the headless keyboard API.
 const emptyProfile=()=>({id:'profile',global_choices:{},document_choices:{},personal_entries:[]});
 let writingProfile=emptyProfile(),profileSaveQueue=Promise.resolve();
 let lexiconMeta=null;
@@ -70,18 +70,17 @@ function keyboardSuggest(offset=0,limit=8){
 }
 let expanded=false, expandedOffset=0, expandedLoading=false, expandedGeneration=0;
 function docChoices(){return doc?.id?(writingProfile.document_choices[doc.id]||{}):{};}
-function queueProfileSave(){
- const snapshot=structuredClone(writingProfile);
- profileSaveQueue=profileSaveQueue.catch(()=>{}).then(()=>saveProfile(snapshot));
+function queueProfileChange(change){
+ profileSaveQueue=profileSaveQueue.catch(()=>{}).then(async()=>{
+  writingProfile=await updateProfile(change);return writingProfile;
+ });
  return profileSaveQueue;
 }
 async function rememberChoice(candidate){
  const value=candidate.signs.join('');
  if(!doc||!value)return;
- writingProfile.global_choices[value]=Math.min(10000,(writingProfile.global_choices[value]||0)+1);
- const perDoc=writingProfile.document_choices[doc.id] ||= {};
- perDoc[value]=Math.min(10000,(perDoc[value]||0)+1);
- try{await queueProfileSave();}catch(e){status('Word saved; preference history could not save: '+e.message,true);}
+ try{await queueProfileChange({op:'choice',spelling:value,document_id:doc.id});}
+ catch(e){status('Word saved; preference history could not save: '+e.message,true);}
 }
 let txQueue=Promise.resolve();
 // Reversible Python-generated command patches, not full document copies.
@@ -1214,8 +1213,7 @@ async function initialize(){
   if(!Array.isArray(writingProfile.personal_entries)) writingProfile.personal_entries=[];
   // Keyboard prediction loads lazily in its dedicated, independent API worker.
   lexiconMeta=null;
-  // This verified JSON is the same source the Python worker indexes.
-  // The master SQLite lives in CI; it is NOT a missing PWA requirement.
+  // The independent keyboard API validates its pinned lexicon lazily.
   const notice=$('lexicon-notice');
   notice.hidden=true;
   notice.textContent='';
@@ -1964,10 +1962,8 @@ $('more-predictions').onclick=()=>loadExpanded(false);
 $('save-personal-word').onclick=async()=>{
  if(!buffer.length)return;
  const value=buffer.join('');
- if(!writingProfile.personal_entries.some(e=>e.signs===value)){
-  writingProfile.personal_entries.push({signs:value});
-  try{await queueProfileSave();}catch(e){status('Personal word not saved: '+e.message,true);return;}
- }
+ try{await queueProfileChange({op:'add-word',spelling:value});}
+ catch(e){status('Personal word not saved: '+e.message,true);return;}
  status('Saved to My Words');
  renderComposer();
 };
@@ -2157,10 +2153,7 @@ async function deleteDocument(id){
  try{
    await remove(id,entry.revision);
    // Do not retain per-document spelling preferences for deleted documents.
-   if(writingProfile.document_choices?.[id]){
-    delete writingProfile.document_choices[id];
-    await queueProfileSave();
-   }
+   await queueProfileChange({op:'forget-document',document_id:id});
    await renderDocList();
   }
  catch(e){showLibraryError('Could not delete document: '+e.message);}

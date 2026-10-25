@@ -72,8 +72,8 @@ const testSource=source.replace('const MAX_SNAPSHOT_BYTES=40*1024*1024;',
   'const MAX_SNAPSHOT_BYTES=4096;');
 assert.notEqual(testSource,source,'Expected production history budget');
 vm.runInContext(testSource.replaceAll('export async function ','async function ')+
- 'globalThis.storage={save,load,list,remove,listSnapshots,restoreSnapshot};',context);
-const {save,load,list,remove,listSnapshots,restoreSnapshot}=context.storage;
+ 'globalThis.storage={save,load,list,remove,listSnapshots,restoreSnapshot,updateProfile,loadProfile};',context);
+const {save,load,list,remove,listSnapshots,restoreSnapshot,updateProfile,loadProfile}=context.storage;
 const doc=(rev)=>({id:'d1',name:'Papyrus',revision:rev,items:[{type:'word',id:'w1',signs:['𓅓']},...Array.from({length:rev},(_,i)=>({type:'word',id:`w${i+2}`,signs:['𓏏']}))],surface:'A4',direction:'rtl',created_at:'2026-01-01',updated_at:new DateFake(now).toISOString()});
 await save(doc(0));
 assert.equal((await listSnapshots('d1')).length,1,'first document gets a baseline snapshot');
@@ -149,6 +149,19 @@ failNextDocumentWrite=true;
 await assert.rejects(restoreSnapshot('d3',original.key,4));
 assert.equal((await load('d3')).revision,4);
 assert.equal((await listSnapshots('d3')).length,beforeQuota);
+// Verify intent merging (native IndexedDB serializes readwrite transactions).
+await updateProfile({op:'choice',spelling:'𓅓',document_id:'d1'});
+await updateProfile({op:'choice',spelling:'𓏏',document_id:'d1'});
+await updateProfile({op:'add-word',spelling:'𓈖'});
+let profile=await loadProfile();
+assert.equal(profile.global_choices['𓅓'],1);
+assert.equal(profile.global_choices['𓏏'],1);
+assert.equal(profile.personal_entries.length,1);
+await updateProfile({op:'delete-word',spelling:'𓈖'});
+await updateProfile({op:'forget-document',document_id:'d1'});
+profile=await loadProfile();
+assert.equal(profile.personal_entries.length,0);
+assert.equal(profile.document_choices['d1'],undefined);
 await remove('d3',4);
 await remove('d2');
 await remove('d1',6);
