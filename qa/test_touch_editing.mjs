@@ -111,6 +111,19 @@ for(const engineName of engines){
     await pasteText('latin');
     await page.waitForFunction(()=>document.getElementById('state').textContent.includes('Paste only accepts'));
     await count(6);
+    // A *native* clipboard paste is always plain Unicode. Repeated text must
+    // never inherit the cached rich styles of a previously copied word.
+    await page.locator('.word').first().click();
+    await shortcut('C'); // Browser clipboard is denied; internal copy is styled.
+    await page.locator('.paper').click({position:{x:110,y:120}});
+    await pasteText('𓅓𓏏'); // Exact spelling of the copied blue word.
+    await count(7);
+    const blueAfterNativePaste=await page.locator('.word').evaluateAll(els=>els.filter(el=>{
+     const t=el.querySelector('.glyph-ink-svg text');
+     return t&&getComputedStyle(t).fill==='rgb(31, 75, 168)';
+    }).length);
+    assert.equal(blueAfterNativePaste,2,'Native clipboard provenance must not paste a styled internal object');
+    await shortcut('Z');await count(6);
     // On a blank insertion point the touch menu still offers Paste and Select All.
     await hold(page.locator('.paper'));
     assert.equal(await page.locator('#cut-selection').isEnabled(),false);

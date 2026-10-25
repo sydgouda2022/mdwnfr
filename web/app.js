@@ -1710,12 +1710,17 @@ async function cutSelection(event=null){
 async function pasteSelection(event=null){
  if(!doc)return;
  let textValue=event?.clipboardData?.getData('text/plain')??null;
+ // Rich objects are allowed ONLY when the text actually comes from the
+ // session clipboard fallback, never from a native paste event or OS read.
+ let useInternal=false;
  if(event)event.preventDefault();
- if(textValue===null&&internalClipboard&&!internalClipboard.systemWritten)textValue=internalClipboard.text;
+ if(textValue===null&&internalClipboard&&!internalClipboard.systemWritten){
+  textValue=internalClipboard.text;useInternal=true;
+ }
  if(textValue===null){
   try{textValue=await navigator.clipboard.readText();}
   catch(_){
-   if(internalClipboard)textValue=internalClipboard.text;
+   if(internalClipboard){textValue=internalClipboard.text;useInternal=true;}
    else{
     // WebKit can require its native Paste UI instead of granting readText.
     const answer=await modal({title:'Paste',description:'Touch and hold the field to paste hieroglyphic text.',action:'Paste',initialValue:''});
@@ -1726,7 +1731,7 @@ async function pasteSelection(event=null){
  }
  // The rich clipboard never supplies old object IDs to the transaction.
  let objects=[];
- if(internalClipboard&&textValue===internalClipboard.text){objects=internalClipboard.objects;}
+ if(useInternal&&internalClipboard&&textValue===internalClipboard.text){objects=internalClipboard.objects;}
  else{
   const tokens=(textValue||'').trim().split(/\s+/u).filter(Boolean);
   if(tokens.length>MAX_ATOMIC_OBJECTS){status('Paste exceeds 150,000-word limit',true);return;}

@@ -66,7 +66,12 @@ const DateFake=class extends Date {static now(){return now;}};
 const context=vm.createContext({indexedDB,IDBKeyRange:{only:value=>({value})},
  TextEncoder,structuredClone,crypto:webcrypto,Date:DateFake,console,setImmediate});
 const source=fs.readFileSync(new URL('../web/storage.js',import.meta.url),'utf8');
-vm.runInContext(source.replaceAll('export async function ','async function ')+
+// Exercise the real pruning logic with a smaller budget to avoid allocating
+// dozens of megabytes in every CI run. Production remains at 40 MiB.
+const testSource=source.replace('const MAX_SNAPSHOT_BYTES=40*1024*1024;',
+  'const MAX_SNAPSHOT_BYTES=4096;');
+assert.notEqual(testSource,source,'Expected production history budget');
+vm.runInContext(testSource.replaceAll('export async function ','async function ')+
  'globalThis.storage={save,load,list,remove,listSnapshots,restoreSnapshot};',context);
 const {save,load,list,remove,listSnapshots,restoreSnapshot}=context.storage;
 const doc=(rev)=>({id:'d1',name:'Papyrus',revision:rev,items:[{type:'word',id:'w1',signs:['𓅓']},...Array.from({length:rev},(_,i)=>({type:'word',id:`w${i+2}`,signs:['𓏏']}))],surface:'A4',direction:'rtl',created_at:'2026-01-01',updated_at:new DateFake(now).toISOString()});
@@ -120,6 +125,31 @@ for(let i=1;i<=100;i++){
 const thinned=await listSnapshots('d2');
 assert(thinned.length<=48,'bounded checkpoint count');
 assert(thinned.length<100,'aging checkpoints are thinned');
+
+// An illustrated document may exceed the automatic-history budget.
+// Restoring older content must first persist a full rollback copy.
+await save({...doc(0),id:'d3'});
+await save({...doc(1),id:'d3',embedded_image:'z'.repeat(8192)},0);
+const original=(await listSnapshots('d3'))[0];
+assert(original,'A small earlier version can be restored');
+let restoredLarge=await restoreSnapshot('d3',original.key,1);
+assert.equal(restoredLarge.revision,2);
+const largeCheckpoint=(await listSnapshots('d3')).find(x=>x.reason==='before-restore');
+assert(largeCheckpoint&&largeCheckpoint.bytes>4096,
+ 'A large pre-restore checkpoint must bypass the automatic snapshot budget');
+now+=6*60*1000;
+await save({...doc(3),id:'d3'},2);
+const stillThere=(await listSnapshots('d3')).find(x=>x.key===largeCheckpoint.key);
+assert(stillThere,'Routine autosaves must not prune the latest restore checkpoint');
+restoredLarge=await restoreSnapshot('d3',largeCheckpoint.key,3);
+assert.equal(restoredLarge.embedded_image.length,8192,'Rollback restores every byte');
+assert.equal(restoredLarge.revision,4);
+const beforeQuota=(await listSnapshots('d3')).length;
+failNextDocumentWrite=true;
+await assert.rejects(restoreSnapshot('d3',original.key,4));
+assert.equal((await load('d3')).revision,4);
+assert.equal((await listSnapshots('d3')).length,beforeQuota);
+await remove('d3',4);
 await remove('d2');
 await remove('d1',6);
 assert.equal((await list()).length,0);

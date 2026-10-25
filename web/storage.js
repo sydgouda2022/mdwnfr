@@ -22,18 +22,25 @@ function pruneSnapshotMetadata(records,now,protectedKey=null){
   [90*24*60*60*1000,7*24*60*60*1000],
   [SNAPSHOT_RETENTION_MS,30*24*60*60*1000],
  ];
- const keep=new Set(),buckets=new Set();let total=0;
- for(const entry of [...records].sort((a,b)=>b.captured_at-a.captured_at)){
+ // Keep the latest pre-restore checkpoint even if it exceeds the automatic
+ // snapshot budget. Without it, a large illustrated restoration is not
+ // reversible. Retain no more than one oversized pre-restore safety point.
+ const ordered=[...records].sort((a,b)=>b.captured_at-a.captured_at);
+ const latestRestore=ordered.find(entry=>entry.reason==='before-restore');
+ const retained=new Set(ordered.filter(entry=>
+  entry.key===protectedKey||entry.key===latestRestore?.key).map(entry=>entry.key));
+ const buckets=new Set();let total=0;
+ for(const entry of ordered){
+  if(retained.has(entry.key))continue;
   const age=Math.max(0,now-entry.captured_at);
   const group=periods.findIndex(([limit])=>age<=limit);
   if(group<0)continue;
   const period=periods[group][1],bucket=group+':'+Math.floor(entry.captured_at/period);
-  const forced=entry.key===protectedKey;
-  if(!forced&&(buckets.has(bucket)||keep.size>=MAX_SNAPSHOT_COUNT||total+entry.bytes>MAX_SNAPSHOT_BYTES))continue;
-  keep.add(entry.key);total+=entry.bytes;buckets.add(bucket);
+  if(buckets.has(bucket)||retained.size>=MAX_SNAPSHOT_COUNT||
+     total+entry.bytes>MAX_SNAPSHOT_BYTES)continue;
+  retained.add(entry.key);total+=entry.bytes;buckets.add(bucket);
  }
- // Do not sacrifice the pre-restore version, even when pruning older entries.
- return records.filter(entry=>!keep.has(entry.key));
+ return records.filter(entry=>!retained.has(entry.key));
 }
 
 let connection=null;
@@ -169,8 +176,9 @@ export async function restoreSnapshot(id,key,expectedRevision=undefined){
    if(!current||!source||source.document_id!==id||
        (expectedRevision!==undefined&&current.revision!==expectedRevision)){tx.abort();return;}
    const now=Date.now(),checkpointBytes=snapshotBytes(current);
-   // Never restore without a reversible pre-restore checkpoint.
-   if(checkpointBytes>MAX_SNAPSHOT_BYTES){tx.abort();return;}
+   // The 40 MiB budget limits AUTOMATIC history, not a mandatory rollback
+   // checkpoint. IndexedDB quota is the real limit, and the single
+   // transaction aborts unchanged if storage quota is exhausted.
    const originalKey=snapshotKey(id,now);
    snapshots.put({key:originalKey,document_id:id,document:structuredClone(current)});
    metas.put({key:originalKey,document_id:id,captured_at:now,revision:current.revision,
@@ -182,7 +190,7 @@ export async function restoreSnapshot(id,key,expectedRevision=undefined){
    const req=metas.index('by_document').getAll(IDBKeyRange.only(id));
    req.onsuccess=()=>{
     const checkpoint={key:originalKey,document_id:id,captured_at:now,revision:current.revision,
-              bytes:checkpointBytes,reason:'before-restore'};
+              name:current.name||'Untitled',bytes:checkpointBytes,reason:'before-restore'};
     const entries=[...req.result.filter(entry=>entry.key!==originalKey),checkpoint];
     for(const item of pruneSnapshotMetadata(entries,now,originalKey)){
      snapshots.delete(item.key);metas.delete(item.key);
