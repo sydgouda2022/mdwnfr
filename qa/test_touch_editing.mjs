@@ -63,7 +63,8 @@ for(const engineName of engines){
     assert.ok(layout.width<=260,'The inspector must be slim');
     assert.ok(layout.left>=0&&layout.right<=viewport.width&&layout.top>=0&&layout.bottom<=viewport.height);
     assert.deepEqual(layout.bad,[],'All editing targets must be at least 44 CSS px');
-    assert.equal(await page.locator('#font-family option').count(),1);
+    assert.equal(await page.locator('#font-family').textContent(),'𓅓 𓈖 𓂋');
+    assert.equal(await page.locator('#font-family option').count(),0);
     await page.locator('#color-picker').click();
     await page.locator('#format-colors').waitFor({state:'visible'});
     assert.equal(await page.locator('#format-main').isVisible(),false,'Colors replace the same inspector');

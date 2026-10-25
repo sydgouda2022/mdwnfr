@@ -93,6 +93,10 @@ let layoutCache=null;
 let itemIndexById=new Map(),placementById=new Map();
 // Stable logical indices are independent of viewport and page-detail eviction.
 let logicalIndexById=new Map();
+function objectById(id){
+ const idx=logicalIndexById.get(id);
+ return idx===undefined?null:doc?.items[idx];
+}
 let pageSlots=[],pageObserver=null;
 const MAX_DETAILED_PAGES=7;
 let pageUsageClock=0;
@@ -371,7 +375,7 @@ function paintPageContent(slot,p,shell){
    node.style.width=mm(isArt?item.width_mm:c.width);node.style.height=mm(item.height);
    if(range&&itemIndex>=range.start&&itemIndex<range.end)node.classList.add('selected','in-range');
    node.setAttribute('role','button');node.setAttribute('tabindex','0');
-   node.setAttribute('aria-label',isArt?(item.type==='image'?'Image '+(doc?.items.find(o=>o.id===item.id)?.name||'Imported image'):'Clip art '+(artworkById.get(item.artwork_id)?.name||item.artwork_id)):'Word '+item.signs.join(''));
+   node.setAttribute('aria-label',isArt?(item.type==='image'?'Image '+(objectById(item.id)?.name||'Imported image'):'Clip art '+(artworkById.get(item.artwork_id)?.name||item.artwork_id)):'Word '+item.signs.join(''));
    node.addEventListener('click',e=>{e.stopPropagation();if(!suppressWordClick)selectWord(item.id,e.shiftKey);});
    if(isArt)node.addEventListener('pointerdown',e=>beginClipartDrag(e,item,c,p,node));
    else node.addEventListener('pointerdown',e=>beginMouseRangeDrag(e,item.id));
@@ -384,7 +388,7 @@ function paintPageContent(slot,p,shell){
     const asset=artworkById.get(item.artwork_id);
     const img=document.createElement('img');img.className='clipart-image';
     // IDs are validated against the bundled catalog by the Python core.
-    const original=doc?.items.find(o=>o.id===item.id);
+    const original=objectById(item.id);
     img.src=item.type==='image'?original?.data_url:'/artwork/'+(asset?.file||item.artwork_id+'.png');
     img.alt=item.type==='image'?(original?.name||'Imported image'):(asset?.name||item.artwork_id);img.draggable=false;
     // Python provides the same resolved orientation used for 2D clearance.
@@ -518,6 +522,18 @@ function updateHistoryState(){
  $('undo').disabled=!canUndo||!doc;
  $('redo').disabled=!canRedo||!doc;
 }
+function editableStyleWords(selection=selectedItems()){
+ const direct=selection.filter(item=>item.type==='word');
+ if(direct.length)return direct;
+ if(selection.length!==1)return [];
+ const item=selection[0];
+ if(item.type==='cartouche')return item.items;
+ if(item.type==='table'&&selectedTableCell?.tableId===item.id){
+  const cell=item.rows[selectedTableCell.row]?.[selectedTableCell.column];
+  return cell?.mode==='text'?cell.items:[];
+ }
+ return [];
+}
 function updateFormatState(){
  updateHistoryState();
  const selection=selectedItems();
@@ -545,7 +561,7 @@ function updateFormatState(){
   $('clipart-float').value=Number(clip.x_offset_mm??0).toFixed(1);
   $('clipart-vertical').value=Math.round(100*(clip.y_align??0.5));}
 
- const words=selection.filter(i=>i.type==='word');
+ const words=editableStyleWords(selection);
  const hasWords=words.length>0;
  $('bold').disabled=!hasWords;$('delete').disabled=!selection.length;
  $('color-black').disabled=!hasWords;$('color-red').disabled=!hasWords;
@@ -885,7 +901,7 @@ function clipartDropIndex(page,clientX,clientY,excludeId){
 function beginNestedDrag(e,placement,column,page,node){
  if(e.button!==0 || e.target.closest('.table-cell-view'))return;
  e.stopPropagation();
- const original=doc?.items.find(o=>o.id===placement.id);
+ const original=objectById(placement.id);
  if(!original)return;
  const source=itemIndexById.get(placement.id);
  const startX=e.clientX,startY=e.clientY;
@@ -1012,7 +1028,7 @@ function beginClipartResize(e,item,node,edge){
  if(e.button!==0)return;
  e.preventDefault();e.stopPropagation();suppressPaperClick=true;suppressWordClick=true;
  selectWord(item.id);
- const original=doc.items.find(x=>x.id===item.id);
+ const original=objectById(item.id);
  if(!original)return;
  const startX=e.clientX,startY=e.clientY;
  const ratio=item.width_mm/item.height;
@@ -1060,7 +1076,7 @@ function refreshColourState(){
 }
 function chooseColour(value){
  const colour=normalizeColour(value);
- if(!colour||!selectedItems().some(item=>item.type==='word'))return false;
+ if(!colour||!editableStyleWords().length)return false;
  selectedColour=colour;$('color-hex').removeAttribute('aria-invalid');
  refreshColourState();styleSelected({color:colour});return true;
 }
@@ -1864,7 +1880,7 @@ function updateSelection(){
  }
  drawInsertionCaret();drawSelectionHandles();updateFormatState();
 }
-function openWord(id){const target=doc.items.find(x=>x.id===id);if(!target||target.type!=='word')return;
+function openWord(id){const target=objectById(id);if(!target||target.type!=='word')return;
  selectionAnchorId=id;selectionFocusId=id;selectedId=id;editingId=id;buffer=target.signs.slice();renderComposer();updateSelection();if(activePanel!=='keyboard')switchPanel('keyboard');}
 // Glyphs change VISUAL facing only; logical input and codes never change.
 function facingSignNode(sign,kind=''){
@@ -2075,13 +2091,27 @@ for(const edge of ['top','bottom','left','right']){
  $('margin-'+edge).onchange=e=>{if(!doc)return;apply({op:'set_document',margins_mm:{top:18,bottom:18,left:18,right:18,...doc.margins_mm,[edge]:Number(e.target.value)}})};
 }
 function styleSelected(patch){
- const words=selectedItems().filter(item=>item.type==='word');
+ const selected=selectedItems();
+ const words=selected.filter(item=>item.type==='word');
  if(words.length)return apply({op:'set_styles',styles:words.map(item=>({id:item.id,...patch}))});
+ if(selected.length!==1)return false;
+ const owner=selected[0],copy=structuredClone(owner);
+ if(owner.type==='cartouche'){
+  copy.items=copy.items.map(word=>({...word,...patch}));
+  return apply({op:'replace_cartouche',id:owner.id,object:copy});
+ }
+ if(owner.type==='table'&&selectedTableCell?.tableId===owner.id){
+  const cell=copy.rows[selectedTableCell.row]?.[selectedTableCell.column];
+  if(cell?.mode!=='text'||!cell.items.length)return false;
+  cell.items=cell.items.map(word=>({...word,...patch}));
+  return apply({op:'replace_table',id:owner.id,object:copy});
+ }
+ return false;
 }
 $('color-black').onclick=()=>styleSelected({color:'#192433'});
 $('color-red').onclick=()=>styleSelected({color:'#ac2533'});
 $('bold').onclick=()=>{
- const words=selectedItems().filter(item=>item.type==='word');
+ const words=editableStyleWords();
  if(words.length)styleSelected({bold:!words.every(item=>item.bold)});
 };
 $('delete').onclick=()=>{hideEditMenu();deleteSelection();};
