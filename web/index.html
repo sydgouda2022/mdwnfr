@@ -51,7 +51,7 @@
       </button>
       <img class="editor-app-icon" src="/icons/app-192.png" alt="" aria-hidden="true"/>
       <div class="doc-title-wrap"><input id="docname" class="doc-title" aria-label="Document title" value="Untitled" maxlength="120"/><div class="subtitle">MdwNfr</div></div>
-      <span id="state" class="status" role="status">Loading…</span>
+      <span id="state" class="status" role="status">Loading…</span><button id="export-unsaved" type="button" hidden aria-label="Export unsaved document before closing">Export unsaved</button>
       <button id="format-toggle" type="button" class="icon-control panel-trigger" aria-label="Format panel" aria-controls="format-panel" aria-expanded="false" title="Format (Ctrl/Cmd+Shift+2)">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16M7 15l5-11 5 11M9 12h6"/></svg>
       </button>
@@ -180,9 +180,9 @@
       <div class="composer-top"><div class="composer-title" id="composer-title">Compose a word</div><button id="clear" type="button" class="flat-button">Clear</button><button id="backspace" type="button" class="flat-button" title="Erase one sign">⌫</button></div>
       <div id="composer" class="composer" aria-label="Uncommitted hieroglyphic signs"></div>
       <div id="quadrat-preview" class="quadrat-preview" aria-hidden="true" hidden></div>
-      <div class="suggestion-toolbar" id="suggestion-toolbar" hidden><span>Spelling suggestions</span><button type="button" id="save-personal-word" disabled>Save to My Words</button><button type="button" id="expand-predictions" aria-expanded="false" disabled>More suggestions</button></div>
+      <div class="suggestion-toolbar" id="suggestion-toolbar" hidden><span>Spelling suggestions</span><button type="button" id="save-personal-word" disabled>Save to My Words</button><button type="button" id="manage-personal-words">My Words</button><button type="button" id="expand-predictions" aria-expanded="false" disabled>More suggestions</button></div>
       <div class="suggestions" id="suggestions" hidden></div>
-      <div class="expanded-predictions" id="expanded-predictions" aria-label="Expanded spelling suggestions" hidden>
+      <div id="personal-words-list" hidden aria-label="Manage My Words"></div><div class="expanded-predictions" id="expanded-predictions" aria-label="Expanded spelling suggestions" hidden>
         <div class="expanded-grid" id="expanded-results"></div>
         <button id="more-predictions" type="button" hidden>Load more</button>
       </div>

@@ -32,7 +32,8 @@ let artworkEntries=null,artworkById=new Map();
 let selectedTableCell=null; // {tableId,row,column}; coordinates are UI-only
 // Selection endpoints are stable object IDs, never viewport coordinates.
 let selectionAnchorId=null,selectionFocusId=null;
-let internalClipboard=null; // A session-local rich fragment; the OS receives Unicode text.
+let internalClipboard=null;
+const RICH_MIME='application/x-mdwnfr-fragment+json';
 let suppressWordClick=false,suppressPaperClick=false;
 let buffer=[],activeGroup='unilaterals',zoom=1,zoomChoice='fit-page',layoutVersion=0;
 let queuedLayout=null,layoutInFlight=false;
@@ -1096,6 +1097,7 @@ function showLibraryError(message=''){
 }
 function showLibrary(){
  ++layoutVersion;queuedLayout=null;resetLayoutSynchronization();repairedDetailRevisions.clear();libraryScreen.hidden=false;editorScreen.hidden=true;
+ $('export-unsaved').hidden=true;
  selectedId=null;selectionAnchorId=null;selectionFocusId=null;selectedTableCell=null;editingId=null;buffer=[];doc=null;caretIndex=0;layoutCache=null;canUndo=false;canRedo=false;updateHistoryState();
  clearPageVirtualization();$('pages').replaceChildren();closePanels();showLibraryError();
  document.title='MdwNfr — Documents';
@@ -1347,10 +1349,13 @@ async function flushAutosave(){
   autosaveQueue=job;
  }
  try{await autosaveQueue;
-  if(snapshot&&doc&&doc.id===snapshot.id&&doc.revision===snapshot.revision)
+  if(snapshot&&doc&&doc.id===snapshot.id&&doc.revision===snapshot.revision){
+   $('export-unsaved').hidden=true;
    status('Revision '+snapshot.revision+' · Saved locally');
+  }
  }catch(error){
   if(snapshot && (!autosaveWanted||autosaveWanted.revision<snapshot.revision))autosaveWanted=snapshot;
+  $('export-unsaved').hidden=false;
   throw error;
  }
  if(autosaveWanted)return flushAutosave();
@@ -1682,10 +1687,22 @@ function nearestWordToScreenPoint(x,y){
 async function copySelection(event=null){
  const items=selectedItems();if(!items.length)return false;
  const plain=items.filter(item=>item.type==='word').map(item=>item.signs.join('')).join(' ');
- internalClipboard={text:plain,objects:items,systemWritten:false}; // Preserve the rich fragment when system clipboard access is denied.
- if(event?.clipboardData){event.clipboardData.setData('text/plain',plain);event.preventDefault();internalClipboard.systemWritten=true;}
- else{
-  try{await navigator.clipboard.writeText(plain);internalClipboard.systemWritten=true;}catch(_){status('Copied inside MdwNfr; system clipboard unavailable');}
+ const rich=JSON.stringify({format:'mdwnfr-fragment-v1',objects:items});
+ internalClipboard={text:plain,objects:items,systemWritten:false};
+ if(event?.clipboardData){
+  event.clipboardData.setData('text/plain',plain);
+  event.clipboardData.setData(RICH_MIME,rich);
+  event.preventDefault();internalClipboard.systemWritten=true;
+ }else{
+  try{
+   if(typeof ClipboardItem==='function'&&navigator.clipboard?.write){
+    await navigator.clipboard.write([new ClipboardItem({
+     'text/plain':new Blob([plain],{type:'text/plain'}),
+     [RICH_MIME]:new Blob([rich],{type:RICH_MIME})
+    })]);
+   }else await navigator.clipboard.writeText(plain);
+   internalClipboard.systemWritten=true;
+  }catch(_){status('Copied inside MdwNfr; system clipboard unavailable');}
  }
  return true;
 }
@@ -1708,29 +1725,44 @@ async function cutSelection(event=null){
 async function pasteSelection(event=null){
  if(!doc)return;
  let textValue=event?.clipboardData?.getData('text/plain')??null;
- // Rich objects are allowed ONLY when the text actually comes from the
- // session clipboard fallback, never from a native paste event or OS read.
+ let richValue=event?.clipboardData?.getData(RICH_MIME)||null;
+ // A private MIME type proves rich-fragment provenance; text equality does not.
  let useInternal=false;
  if(event)event.preventDefault();
  if(textValue===null&&internalClipboard&&!internalClipboard.systemWritten){
   textValue=internalClipboard.text;useInternal=true;
  }
  if(textValue===null){
-  try{textValue=await navigator.clipboard.readText();}
-  catch(_){
+  try{
+   if(navigator.clipboard.read){
+    for(const item of await navigator.clipboard.read()){
+     if(item.types.includes(RICH_MIME)){
+      richValue=await (await item.getType(RICH_MIME)).text();break;
+     }
+    }
+   }
+   textValue=await navigator.clipboard.readText();
+  }catch(_){
    if(internalClipboard){textValue=internalClipboard.text;useInternal=true;}
    else{
-    // WebKit can require its native Paste UI instead of granting readText.
-    const answer=await modal({title:'Paste',description:'Touch and hold the field to paste hieroglyphic text.',action:'Paste',initialValue:''});
+    const answer=await modal({title:'Paste',description:'Paste hieroglyphic Unicode from the clipboard.',action:'Paste',initialValue:''});
     if(!answer.confirmed)return false;
     textValue=answer.value;
    }
   }
  }
- // The rich clipboard never supplies old object IDs to the transaction.
  let objects=[];
- if(useInternal&&internalClipboard&&textValue===internalClipboard.text){objects=internalClipboard.objects;}
- else{
+ if(richValue){
+  try{
+   if(richValue.length>60*1024*1024)throw Error('Fragment too large');
+   const fragment=JSON.parse(richValue);
+   if(fragment?.format!=='mdwnfr-fragment-v1'||!Array.isArray(fragment.objects))
+    throw Error('Invalid MdwNfr fragment');
+   objects=fragment.objects;
+  }catch(e){status('Invalid rich clipboard fragment: '+e.message,true);return false;}
+ }else if(useInternal&&internalClipboard&&textValue===internalClipboard.text){
+  objects=internalClipboard.objects;
+ }else{
   const tokens=(textValue||'').trim().split(/\s+/u).filter(Boolean);
   if(tokens.length>MAX_ATOMIC_OBJECTS){status('Paste exceeds 150,000-word limit',true);return;}
   objects=tokens.map(token=>({type:'word',signs:[...token],color:'#192433',bold:false,lexicon_ref:null}));
@@ -1739,6 +1771,7 @@ async function pasteSelection(event=null){
   }))){status('Paste only accepts hieroglyphic Unicode words',true);return;}
  }
  if(!objects.length)return;
+ if(objects.length>MAX_ATOMIC_OBJECTS){status('Paste exceeds 150,000 objects',true);return false;}
  const range=selectedRange();
  const index=range?range.start:caretIndex;
  const count=range?range.end-range.start:0;
@@ -1959,12 +1992,32 @@ $('expand-predictions').onclick=()=>{
  if(expanded)loadExpanded(true);
 };
 $('more-predictions').onclick=()=>loadExpanded(false);
+$('manage-personal-words').onclick=()=>{
+ const target=$('personal-words-list');target.hidden=!target.hidden;
+ if(!target.hidden)renderPersonalWords();
+};
+function renderPersonalWords(){
+ const target=$('personal-words-list');target.replaceChildren();
+ if(!writingProfile.personal_entries.length){target.textContent='No saved personal words.';return;}
+ for(const entry of writingProfile.personal_entries){
+  const row=document.createElement('div');row.className='personal-item';
+  const spelling=document.createElement('span');spelling.textContent=entry.signs;
+  const removeButton=document.createElement('button');removeButton.type='button';removeButton.textContent='Delete';
+  removeButton.setAttribute('aria-label','Remove personal word '+entry.signs);
+  removeButton.onclick=async()=>{
+   try{await queueProfileChange({op:'delete-word',spelling:entry.signs});renderPersonalWords();renderComposer();}
+   catch(e){status('My Words: '+e.message,true);}
+  };
+  row.append(spelling,removeButton);target.append(row);
+ }
+}
 $('save-personal-word').onclick=async()=>{
  if(!buffer.length)return;
  const value=buffer.join('');
  try{await queueProfileChange({op:'add-word',spelling:value});}
  catch(e){status('Personal word not saved: '+e.message,true);return;}
  status('Saved to My Words');
+ if(!$('personal-words-list').hidden)renderPersonalWords();
  renderComposer();
 };
 async function commit(candidate){
@@ -2250,6 +2303,12 @@ function downloadUnsavedDocumentCopy(){
  document.body.append(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
+$('export-unsaved').onclick=()=>{try{downloadUnsavedDocumentCopy();}catch(e){status('Recovery export failed: '+e.message,true);}};
+window.addEventListener('beforeunload',event=>{
+ if(doc&&doc.id===persistedDocumentId&&doc.revision!==persistedRevision){
+  event.preventDefault();event.returnValue='';
+ }
+});
 // Library appears immediately, even if the Python engine is still loading.
 showLibrary();
 showOfflineReadiness();
