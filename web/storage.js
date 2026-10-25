@@ -270,6 +270,13 @@ export async function updateProfile(change){
      const choices={...(p.document_choices[id]||{})};
      choices[key]=Math.min(10000,(Number(choices[key])||0)+1);
      p.document_choices[id]=choices;
+     for(const map of [p.global_choices,choices]){
+      const keys=Object.keys(map);
+      if(keys.length>2048){
+       keys.sort((a,b)=>(Number(map[a])||0)-(Number(map[b])||0)||a.localeCompare(b));
+       for(const stale of keys.slice(0,keys.length-2048))delete map[stale];
+      }
+     }
     }else if(change.op==='add-word'){
      if(typeof change.spelling!=='string'||!change.spelling||change.spelling.length>256)
       throw Error('Invalid personal spelling');
@@ -279,6 +286,14 @@ export async function updateProfile(change){
      }
     }else if(change.op==='delete-word'){
      p.personal_entries=p.personal_entries.filter(item=>item.signs!==change.spelling);
+    }else if(change.op==='replace-word'){
+     if(typeof change.spelling!=='string'||!change.spelling||change.spelling.length>256)
+      throw Error('Invalid personal spelling');
+     const index=p.personal_entries.findIndex(item=>item.signs===change.previous);
+     if(index<0)throw Error('Personal word not found');
+     if(p.personal_entries.some((item,i)=>i!==index&&item.signs===change.spelling))
+      throw Error('Personal spelling already exists');
+     p.personal_entries[index]={signs:change.spelling};
     }else if(change.op==='forget-document'){
      delete p.document_choices[change.document_id];
     }else throw Error('Invalid profile operation');

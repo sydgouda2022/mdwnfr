@@ -13,7 +13,7 @@
 @media (max-height:680px){.composer{min-height:36px;margin:3px 0}.suggestions{height:47px}.key{min-height:34px}.numkey{min-height:34px}.composer-section{padding-top:4px;padding-bottom:4px}}
 
 /* Documents library is the app's launch screen; editor is a distinct view. */
-[hidden]{display:none !important}
+
 .library-screen{flex:1;min-height:0;overflow:auto;background:linear-gradient(165deg,#f2f6fa,#e8eef5)}
 .library-header{background:var(--blue);color:white;padding:24px clamp(16px,5vw,60px);border-bottom:4px solid var(--gold)}
 .library-header-inner{max-width:1050px;margin:auto;display:flex;align-items:center;gap:16px}
@@ -181,7 +181,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 /* 0.1.10: placeholder surfaces are geometry-only until an on-demand page request. */
 .page-shell:not(:has(.paper)){background:var(--paper);box-shadow:0 4px 18px #243a5422;border:1px solid #e3e1d9;}
 
-/* Legacy artwork: isolated visual objects, never part of word composition. */
+/* Artwork remains independent of logical word composition. */
 .artwork-picker{margin:9px 0;padding:9px;border:1px solid #d6e1e9;border-radius:11px;background:#f8fafc}
 .artwork-picker input{width:100%;max-width:none!important;margin-bottom:8px;padding:8px;border:1px solid #cad7df;border-radius:7px}
 .artwork-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;max-height:260px;overflow-y:auto}
@@ -189,7 +189,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .artwork-choice img{height:72px;width:100%;object-fit:contain}
 .artwork-choice span{font-size:10px;line-height:1.25;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .clipart-controls{border:1px solid #e0e8ef;border-radius:10px;padding:9px;margin-top:10px;display:flex;flex-wrap:wrap;gap:9px;font-size:11px}
-.clipart-controls[hidden]{display:none}
+.clipart-controls
 .clipart-controls label{display:flex;gap:6px;align-items:center}
 .clipart-controls select,.clipart-controls input{min-height:28px;max-width:100px}
 .clipart-note{color:#688096;font-size:10px;width:100%}
@@ -218,7 +218,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .table-cell-word .sign{position:absolute;line-height:1;display:block;white-space:nowrap;user-select:none}
 .table-cell-error{font-size:10px;color:#b32436;padding:2px;overflow:hidden}
 .table-controls{margin:10px 0;border:1px solid #d6e1e9;border-radius:10px;padding:9px;display:grid;gap:8px;font-size:11px}
-.table-controls[hidden]{display:none}
+.table-controls
 .table-controls label{display:grid;gap:4px}
 .table-controls input,.table-controls textarea{box-sizing:border-box;width:100%;font-family:inherit;border:1px solid #bdccda;border-radius:5px;padding:5px;background:#fff}
 .table-buttons{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
@@ -243,8 +243,8 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .cartouche-controls textarea{width:100%;min-height:55px;font-family:var(--gfont),sans-serif;font-size:17px;border:1px solid #cedde7;border-radius:8px;padding:7px}
 .cartouche-controls .table-buttons{display:flex;gap:8px}
 
-/* v0.1.34 UI rebuild: centered physical paper, readable sign-key catalog. */
-[hidden]{display:none!important}
+/* Editor writing surface and native hieroglyph keyboard layout. */
+
 /* Paper pages are a vertical document, never a wrapping thumbnail grid. */
 .editor-screen .pages{display:flex;flex-direction:column;flex-wrap:nowrap;
  min-width:100%;width:max-content;align-items:center;justify-content:flex-start;gap:28px}

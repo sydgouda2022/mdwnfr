@@ -2045,13 +2045,25 @@ function renderPersonalWords(){
  for(const entry of writingProfile.personal_entries){
   const row=document.createElement('div');row.className='personal-item';
   const spelling=document.createElement('span');spelling.textContent=entry.signs;
+  const editButton=document.createElement('button');editButton.type='button';editButton.textContent='Edit';
+  editButton.setAttribute('aria-label','Edit personal word '+entry.signs);
+  editButton.onclick=async()=>{
+   const response=await modal({title:'Edit personal word',initialValue:entry.signs,action:'Save word'});
+   if(!response.confirmed)return;
+   if(!/^[\u{13000}-\u{1342F}]+$/u.test(response.value)){
+    status('My Words accepts verified hieroglyphic Unicode only',true);return;
+   }
+   try{await queueProfileChange({op:'replace-word',previous:entry.signs,spelling:response.value});
+    renderPersonalWords();renderComposer();}
+   catch(e){status('My Words: '+e.message,true);}
+  };
   const removeButton=document.createElement('button');removeButton.type='button';removeButton.textContent='Delete';
   removeButton.setAttribute('aria-label','Remove personal word '+entry.signs);
   removeButton.onclick=async()=>{
    try{await queueProfileChange({op:'delete-word',spelling:entry.signs});renderPersonalWords();renderComposer();}
    catch(e){status('My Words: '+e.message,true);}
   };
-  row.append(spelling,removeButton);target.append(row);
+  row.append(spelling,editButton,removeButton);target.append(row);
  }
 }
 $('save-personal-word').onclick=async()=>{

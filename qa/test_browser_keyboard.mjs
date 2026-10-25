@@ -63,6 +63,14 @@ try{
   },null,{timeout:30000});
   const preview=await page.locator('#quadrat-preview .glyph-ink-svg text').allTextContents();
   assert.deepEqual(preview,['𓇋','𓇋'],'Live quadrat uses the chosen native Unicode signs');
+  await page.locator('#save-personal-word').click();
+  await page.locator('#manage-personal-words').click();
+  const ownSaved=page.locator('#personal-words-list .personal-item');
+  await ownSaved.waitFor({state:'visible'});
+  assert.equal(await ownSaved.count(),1);
+  await ownSaved.locator('button[aria-label^="Remove personal word"]').click();
+  await page.waitForFunction(()=>document.getElementById('personal-words-list')?.textContent.includes('No saved'));
+  await page.locator('#manage-personal-words').click();
   const own=page.locator('#suggestions button.user-choice').first();
   await own.waitFor({state:'visible'});
   await own.click();

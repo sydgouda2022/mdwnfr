@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 const source=readFileSync(new URL('../web/app.js',import.meta.url),'utf8');
 const start=source.indexOf('function renderPagesOverview(){');
-const end=source.indexOf('// Legacy v4 artwork',start);
+const end=source.indexOf('async function ensureArtworkCatalog()',start);
 const frames=[];
 class Node{
  constructor(tag){this.tag=tag;this.children=[];this.style={};this.attrs={};this.offsetTop=50;this.scrollTop=0;

@@ -7,7 +7,8 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'core'))
 from mdwnfr.api import handle_json
-from mdwnfr.document import new_document, transaction
+from mdwnfr.document import new_document, transaction, assert_document, DocumentError
+from copy import deepcopy
 from mdwnfr.quadrat import compose
 from mdwnfr.layout import layout_document
 from mdwnfr.layout_sync import summarize_layout
@@ -44,6 +45,43 @@ class QuadratWorkflowTests(unittest.TestCase):
             self.assertTrue(all(0<=bar['x']<=1 and 0<=bar['y']<=1
                 and 0<bar['w']<=1 and 0<bar['h']<=1
                 for bar in page['preview_columns']))
+
+    def test_malformed_imported_word_style_is_rejected(self):
+        doc=transaction(new_document(),{'op':'insert_word','signs':['𓅓']})
+        for field,value in [('color','#zzzzzz'),('color','red'),('bold','false'),
+                            ('lexicon_ref',123)]:
+            invalid=deepcopy(doc)
+            invalid['items'][0][field]=value
+            with self.subTest(field=field,value=value):
+                with self.assertRaises(DocumentError):
+                    assert_document(invalid)
+        blank=deepcopy(doc);blank['items'][0]['id']=''
+        with self.assertRaises(DocumentError):assert_document(blank)
+
+    def test_nested_word_format_survives_text_replacement(self):
+        original=transaction(new_document(),{'op':'insert_cartouche','words':[['𓅓']]})
+        owner=deepcopy(original['items'][0]);owner['items'][0]['bold']=True
+        owner['items'][0]['color']='#ac2533'
+        decorated=transaction(original,{'op':'replace_cartouche','id':owner['id'],'object':owner})
+        changed=transaction(decorated,{'op':'set_cartouche_words','id':owner['id'],
+                                      'words':[['𓈖']]})
+        self.assertTrue(changed['items'][0]['items'][0]['bold'])
+        self.assertEqual(changed['items'][0]['items'][0]['color'],'#ac2533')
+
+        original=transaction(new_document(),{'op':'insert_table','rows':2,'columns':2})
+        owner=original['items'][0]
+        filled=transaction(original,{'op':'set_table_cell','id':owner['id'],
+                                    'row':0,'column':0,'words':[['𓅓']]})
+        replacement=deepcopy(filled['items'][0])
+        replacement['rows'][0][0]['items'][0]['bold']=True
+        replacement['rows'][0][0]['items'][0]['color']='#ac2533'
+        decorated=transaction(filled,{'op':'replace_table','id':owner['id'],
+                                      'object':replacement})
+        changed=transaction(decorated,{'op':'set_table_cell','id':owner['id'],
+                                      'row':0,'column':0,'words':[['𓈖']]})
+        nested=changed['items'][0]['rows'][0][0]['items'][0]
+        self.assertTrue(nested['bold'])
+        self.assertEqual(nested['color'],'#ac2533')
 
     def test_word_replacement_preserves_one_object_identity(self):
         doc=new_document('Keyboard flow test')

@@ -1238,7 +1238,7 @@ def expand_compact_page(page: dict, document_by_id: dict[str, dict],
                         glyph_metrics: dict | None = None,
                         width: float | None = None, direction: str = 'rtl',
                         margins_mm: dict | None = None, surface: str | None = None) -> dict:
-    """Materialize an exact legacy page from compact, read-only column records.
+    """Materialize an exact visible page from compact, read-only column records.
 
     This is a projection, NOT a second typesetting algorithm: row grouping,
     equalization, and positioning are decisions already made by _layout.
