@@ -244,6 +244,52 @@ class ObjectSequenceLayout(unittest.TestCase):
         art=next(col for col in page['columns'] if col['kind']=='clipart')
         self.assertEqual(art['span'],0)
 
+    def test_diagnostic_unused_legal_quadrat_origins(self):
+        # Coverage instrumentation: tests MUST not mistake some text around art
+        # for optimal filling of ALL reachable vertical sectors.
+        from mdwnfr.silhouette import free_word_starts
+        from mdwnfr.quadrat import compose
+        spelling=['𓎆','𓏺','𓅓']
+        for prefix in (220,520,800):
+            doc=new_document('Placement diagnostics',font_size_pt=10)
+            art=clipart('horus-falcon-raster',60,'normal')
+            art['y_align']=.25
+            doc['items']=[word(spelling) for _ in range(prefix)]+[art]+[
+                word(spelling) for _ in range(1400)]
+            layout=layout_document(doc)
+            pg=next(p for p in layout['pages'] if any(c['kind']=='clipart' for c in p['columns']))
+            drawn=next(p for c in pg['columns'] if c['kind']=='clipart'
+                       for p in c['placements'])
+            w=layout['column_width_mm']
+            bottom=pg['height']-layout['margins_mm']['bottom']
+            direction=doc['direction']
+            img_x=pg['width']-layout['margins_mm']['right']-drawn['x']-drawn['width_mm']
+            flip='mirror' if drawn['resolved_flip']=='normal' else 'normal'
+            obstacle=(drawn['artwork_id'],None,art.get('mask'),drawn['width_mm'],
+                      drawn['height'],img_x,flip,drawn['y'])
+            q=compose(spelling,w)
+            gaps=[]
+            for col in pg['columns']:
+                if col['kind']!='words':continue
+                x=col['x']
+                if x<drawn['x']-2*w or x>drawn['x']+drawn['width_mm']+2*w:continue
+                logical=pg['width']-layout['margins_mm']['right']-x-w
+                intervals=free_word_starts(q,column_left=logical,top=layout['margins_mm']['top'],
+                    bottom=bottom,clearance=w/4,obstacles=[obstacle])
+                used=[(p['y'],p['y']+p['height']) for p in col['placements']]
+                available=0
+                for a,b in intervals:
+                    y=a
+                    while y+q.height<=b+q.height+1e-4:
+                        if not any(max(lo,y)<min(hi,y+q.height)-1e-4 for lo,hi in used):
+                            available+=1
+                        y+=q.height
+                if available:
+                    gaps.append((round(x,1),len(used),available,
+                                 [(round(a,1),round(b,1)) for a,b in intervals]))
+            print('LAYOUT_HOLES',prefix,'bird',tuple(round(drawn[k],1)
+                        for k in ('x','y','width_mm','height')),'counts',gaps,flush=True)
+
     def test_dense_short_words_use_image_columns_below_visible_ink(self):
         from mdwnfr.layout import object_clearance_mm
         for direction in ('ltr','rtl'):
