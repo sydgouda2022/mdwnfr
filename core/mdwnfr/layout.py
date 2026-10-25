@@ -305,7 +305,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
     glyph_metrics = glyph_metrics or {}
     for item in doc['items']:
         if item['type'] not in ('word','clipart','image','table','cartouche'):
-            raise DocumentError(f"Layout of {item['type']} is planned for a later milestone")
+            raise DocumentError(f"Unsupported layout object: {item['type']}")
     surface = doc['surface']
     papyrus = surface == 'papyrus'
     width = column_width_mm(doc['font_size_pt'])
@@ -1187,7 +1187,9 @@ def incremental_layout_document(doc: dict, previous_document: dict | None = None
     """Reuse completed unaffected columns, then stop at a stable suffix.
 
     Invalid/missing prior snapshots fall back to full layout. The immutable
-    output format is IDENTICAL to layout_document; statistics are separate.
+    Full-mode output matches layout_document. Compact mode deliberately returns
+    lightweight placement tuples which can be expanded for visible pages.
+    Statistics are returned separately.
     """
     previous = ((previous_document, previous_layout, previous_metrics)
                 if previous_document is not None and previous_layout is not None else None)

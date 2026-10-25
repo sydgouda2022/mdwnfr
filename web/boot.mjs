@@ -4,7 +4,7 @@ async function activate(worker) {
   if(!worker||worker.state==='activated')return;
   if(worker.state==='redundant')throw new Error('Update installation failed');
   await new Promise((resolve,reject)=>{
-    const timer=setTimeout(()=>{worker.removeEventListener('statechange',changed);reject(new Error('Update installation timed out'));},60000);
+    const timer=setTimeout(()=>{worker.removeEventListener('statechange',changed);reject(new Error('Update installation timed out'));},15000);
     function changed(){
       if(worker.state!=='activated'&&worker.state!=='redundant')return;
       clearTimeout(timer);worker.removeEventListener('statechange',changed);
@@ -19,8 +19,24 @@ async function boot() {
     let updateError=null;
     try{
       const registration=await navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'});
-      await registration.update().catch(error=>{updateError=error;});
-      await activate(registration.installing||registration.waiting||registration.active);
+      // An already-coherent offline release must not wait for a network update.
+      // New releases still use the existing atomic activation path.
+      let coherent=false;
+      if(navigator.serviceWorker.controller){
+        try{
+          const current=document.querySelector('meta[name="mdwnfr-build"]')?.content;
+          const response=await fetch('/index.html',{cache:'no-store'});
+          if(response.ok){
+           const html=new DOMParser().parseFromString(await response.text(),'text/html');
+           coherent=html.querySelector('meta[name="mdwnfr-build"]')?.content===current;
+          }
+        }catch(_){}
+      }
+      if(coherent)void registration.update().catch(()=>{});
+      else{
+       await registration.update().catch(error=>{updateError=error;});
+       await activate(registration.installing||registration.waiting||registration.active);
+      }
     }catch(error){updateError=error;}
     if(navigator.serviceWorker.controller){
       // A normal fetch of index.html (not a navigation) comes from the active

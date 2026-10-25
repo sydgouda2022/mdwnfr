@@ -38,7 +38,7 @@ jobs:
       - name: Install matching licensed Egyptian glyph font
         run: |
           set -euo pipefail
-          python -m pip install --disable-pip-version-check 'fonttools[woff]' brotli Pillow
+          python -m pip install --disable-pip-version-check 'fonttools[woff]==4.67.0' 'brotli==1.2.1' 'Pillow==13.0.0'
           mkdir -p web/assets/fonts
           curl -fLsS --retry 3 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansegyptianhieroglyphs/NotoSansEgyptianHieroglyphs-Regular.ttf' -o /tmp/mdwnfr-font.ttf
           echo 'b792accc6207ca9caa59fc67f53926b6985a99d255dd432d7c68b68a6dfd62f8  /tmp/mdwnfr-font.ttf' | sha256sum -c -
@@ -72,7 +72,7 @@ jobs:
           node qa/test_pages_overview.mjs
       - name: Install Wrangler only after explicit production cutover
         if: github.event_name != 'pull_request' && vars.CUTOVER_ENABLED == 'true'
-        run: npm install --global wrangler@4
+        run: npm install --global wrangler@4.45.4
       - name: Deploy verified MdwNfr worker ONLY after explicit cutover
         if: github.event_name != 'pull_request' && vars.CUTOVER_ENABLED == 'true'
         env:
@@ -83,3 +83,17 @@ jobs:
           wrangler deploy --config wrangler.toml
           curl --fail --silent --show-error --retry 5 https://mdwnfr.sydgouda.workers.dev/ > /tmp/mdwnfr-production-check.html
           test -s /tmp/mdwnfr-production-check.html
+          curl --fail --silent --show-error --retry 5 https://mdwnfr.sydgouda.workers.dev/runtime-status.json > /tmp/mdwnfr-runtime.json
+          curl --fail --silent --show-error --retry 5 https://mdwnfr.sydgouda.workers.dev/offline-assets.json > /tmp/mdwnfr-offline.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          runtime=json.loads(Path('/tmp/mdwnfr-runtime.json').read_text())
+          publication=json.loads(Path('/tmp/mdwnfr-offline.json').read_text())
+          assert runtime.get('offline_ready') is True, 'Deployed Python runtime incomplete'
+          assert publication.get('complete') is True, 'Deployed offline asset publication incomplete'
+          paths={item['path'] for item in publication['assets']}
+          assert {'/worker.js','/app.js','/keyboard-prediction-worker.mjs',
+                  '/vendor/pyodide/pyodide.asm.wasm','/lexicon/lexicon.json'} <= paths
+          print('Production runtime and offline asset inventory verified')
+          PY

@@ -27,7 +27,7 @@ jobs:
         run: |
           set -euo pipefail
           python tools/sync_keyboards.py --verify
-          python -m pip install --disable-pip-version-check 'fonttools[woff]' brotli Pillow
+          python -m pip install --disable-pip-version-check 'fonttools[woff]==4.67.0' 'brotli==1.2.1' 'Pillow==13.0.0'
           mkdir -p web/assets/fonts
           curl -fLsS --retry 3 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansegyptianhieroglyphs/NotoSansEgyptianHieroglyphs-Regular.ttf' -o /tmp/mdwnfr-font.ttf
           echo 'b792accc6207ca9caa59fc67f53926b6985a99d255dd432d7c68b68a6dfd62f8  /tmp/mdwnfr-font.ttf' | sha256sum -c -

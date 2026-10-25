@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """One-way, SHA-256-checked importer of the independent keyboard dependency.
 
-Run locally or hourly from Actions. Does not update saved user documents,
-appointments, learning, or service-worker databases. Every dependency is
+Run locally or under a reviewed CI workflow. Does not update saved user
+documents, learning preferences, or service-worker databases. Every dependency is
 pinned to an exact public Git commit and may be rolled back by reverting the
 lockfile and vendor files. Network failures never replace the current catalog.
 """
@@ -16,7 +16,6 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCK = ROOT / "keyboard-lock.json"
-KIND = ROOT.name.lower()
 AGENT = {"User-Agent": "four-stream-migration-audit"}
 PREFIX = "https://raw.githubusercontent.com/{repo}/{sha}/{path}"
 
