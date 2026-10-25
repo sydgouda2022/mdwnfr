@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""One-way importer of standalone keyboard API and its verified release data.
+"""One-way SHA-256-verified consumer of the standalone Hieroglyphic Keyboard API.
 
-Run locally or hourly from Actions. Does not update saved user documents,
-appointments, learning, or service-worker databases. Every dependency is
-pinned to an exact public Git commit and may be rolled back by reverting the
-lockfile and vendor files. Network failures never replace the current catalog.
+Never imports a second dictionary implementation into MdwNfr. Only a pinned,
+verified upstream release can update its browser assets. It never touches
+documents, user learning, appointments, or installed IndexedDB storage.
 """
+from __future__ import annotations
 import argparse
 import hashlib
 import json
@@ -14,143 +14,98 @@ from pathlib import Path
 import tempfile
 import urllib.request
 
-ROOT = Path(__file__).resolve().parents[1]
-LOCK = ROOT / "keyboard-lock.json"
-KIND = ROOT.name.lower()
-AGENT = {"User-Agent": "four-stream-migration-audit"}
-PREFIX = "https://raw.githubusercontent.com/{repo}/{sha}/{path}"
+ROOT=Path(__file__).resolve().parents[1]
+LOCK=ROOT/'keyboard-lock.json'
+REPO='sydgouda2022/hieroglyphic-keyboard'
+MODULES=('keyboard_api.mjs','keyboard_search.mjs','_generic_search.mjs',
+         'lexicon_install.mjs','keyboard_catalog.js')
+PREFIX='https://raw.githubusercontent.com/{repo}/{sha}/{path}'
 
-def digest(b):
-    return hashlib.sha256(b).hexdigest()
+def digest(data: bytes)->str:
+    return hashlib.sha256(data).hexdigest()
 
-def fetch(url):
-    req = urllib.request.Request(url, headers=AGENT)
-    with urllib.request.urlopen(req, timeout=90) as response:
-        if response.status != 200:
-            raise ValueError(f"HTTP {response.status}: {url}")
+def fetch(url: str)->bytes:
+    req=urllib.request.Request(url,headers={'User-Agent':'mdwnfr-keyboard-api-v1'})
+    with urllib.request.urlopen(req,timeout=90) as response:
+        if response.status!=200:
+            raise ValueError(f'HTTP {response.status}: {url}')
         return response.read()
 
-def current_lock():
-    j = json.loads(LOCK.read_text("utf8"))
-    if j.get("format") != "keyboard-dependencies-v1":
-        raise ValueError("Unsupported dependency lock schema")
-    names = set(j["dependencies"])
-    if names not in ({"coptic-keyboard", "hieroglyphic-keyboard"}, {"hieroglyphic-keyboard"}):
-        raise ValueError("Unexpected dependency graph")
-    return j
+def lockfile()->dict:
+    data=json.loads(LOCK.read_text('utf-8'))
+    if data.get('format')!='keyboard-dependencies-v1' or set(data.get('dependencies',{}))!={'hieroglyphic-keyboard'}:
+        raise ValueError('Unsupported independent keyboard dependency graph')
+    if data['dependencies']['hieroglyphic-keyboard']['upstream_repository']!=REPO:
+        raise ValueError('Unexpected keyboard publisher')
+    return data
 
-def verify():
-    j = current_lock()
-    for name, locked in j["dependencies"].items():
-        sub = "coptic-lexicon" if name == "coptic-keyboard" else "lexicon"
-        p = ROOT / "web" / sub
-        manifest = (p / "manifest.json").read_bytes()
-        catalog = (p / "lexicon.json").read_bytes()
-        m = json.loads(manifest)
-        expected = "cop" if name == "coptic-keyboard" else "egy"
-        if m["language"] != expected or m["sha256"] != digest(catalog):
-            raise ValueError(f"Invalid {name} release data")
-        if m["bytes"] != len(catalog) or m["spelling_records"] != len(json.loads(catalog)["rows" if expected == "cop" else "entries"]):
-            raise ValueError(f"Corrupted {name} counts")
-        if locked["manifest_sha256"] != digest(manifest) or locked["lexicon_sha256"] != digest(catalog):
-            raise ValueError(f"Untracked {name} release modification")
-    if "coptic-keyboard" not in j["dependencies"]:
-        vendor = ROOT / "web/vendor/hieroglyphic"
-        for name in ("keyboard_api.mjs", "keyboard_search.mjs",
-                     "_generic_search.mjs", "lexicon_install.mjs",
-                     "keyboard_catalog.js"):
-            if not (vendor / name).is_file():
-                raise ValueError("Missing standalone Hieroglyphic Keyboard API: " + name)
-    print("Keyboard dependencies match exact locked hashes.")
+def verify()->None:
+    entry=lockfile()['dependencies']['hieroglyphic-keyboard']
+    catalog=(ROOT/'web/lexicon/lexicon.json').read_bytes()
+    manifest=(ROOT/'web/lexicon/manifest.json').read_bytes()
+    meta=json.loads(manifest)
+    if (meta.get('language')!='egy' or meta.get('sha256')!=digest(catalog)
+            or meta.get('bytes')!=len(catalog) or
+            entry['manifest_sha256']!=digest(manifest) or
+            entry['lexicon_sha256']!=digest(catalog)):
+        raise ValueError('Independent keyboard release hash mismatch')
+    if meta['spelling_records']!=len(json.loads(catalog)['entries']):
+        raise ValueError('Independent keyboard release count mismatch')
+    hashes=entry.get('api_files_sha256')
+    if not isinstance(hashes,dict) or set(hashes)!=set(MODULES):
+        raise ValueError('Missing locked keyboard API checksums')
+    for name, expected in hashes.items():
+        if digest((ROOT/'web/vendor/hieroglyphic'/name).read_bytes())!=expected:
+            raise ValueError('Unverified keyboard API module: '+name)
+    print('Verified independently pinned Hieroglyphic Keyboard API and lexicon.')
 
-def stage(name, sha):
-    repo = f"sydgouda2022/{name}"
-    def get(path):
-        return fetch(PREFIX.format(repo=repo, sha=sha, path=path))
-    raw_manifest = get("release/manifest.json")
-    manifest = json.loads(raw_manifest)
-    language = "cop" if name == "coptic-keyboard" else "egy"
-    if manifest["language"] != language:
-        raise ValueError(f"Wrong keyboard language: {name}")
-    catalog = get("release/lexicon.json")
-    if digest(catalog) != manifest["sha256"] or len(catalog) != manifest["bytes"]:
-        raise ValueError(f"Upstream {name} release SHA-256 mismatch")
-    rows = json.loads(catalog)["rows" if language == "cop" else "entries"]
-    minimum = 20000 if language == "cop" else 40000
-    if len(rows) != manifest["spelling_records"] or len(rows) < minimum:
-        raise ValueError(f"Upstream {name} release records regression")
-    dest = "web/coptic-lexicon" if language == "cop" else "web/lexicon"
-    files = {
-        f"{dest}/lexicon.json": catalog,
-        f"{dest}/manifest.json": raw_manifest,
-        f"{dest}/coverage.json": get("release/coverage.json")
+def update()->bool:
+    lock=lockfile()
+    pinned=lock['dependencies']['hieroglyphic-keyboard']
+    latest=json.loads(fetch('https://api.github.com/repos/'+REPO+'/commits/main'))['sha']
+    if latest==pinned['source_commit']:
+        verify()
+        return False
+    def source(path:str)->bytes:
+        return fetch(PREFIX.format(repo=REPO,sha=latest,path=path))
+    manifest=source('release/manifest.json')
+    catalog=source('release/lexicon.json')
+    meta=json.loads(manifest)
+    if (meta.get('language')!='egy' or meta['sha256']!=digest(catalog)
+            or meta['bytes']!=len(catalog) or
+            meta['spelling_records']!=len(json.loads(catalog)['entries']) or
+            meta['spelling_records']<40000):
+        raise ValueError('Unverified or regressed keyboard lexicon')
+    modules={name:source('src/'+name) for name in MODULES}
+    if b"API_VERSION='1.0.0'" not in modules['keyboard_api.mjs']:
+        raise ValueError('Keyboard API major version requires explicit integration')
+    files={
+      'web/lexicon/lexicon.json':catalog,
+      'web/lexicon/manifest.json':manifest,
+      'web/lexicon/coverage.json':source('release/coverage.json'),
+      **{'web/vendor/hieroglyphic/'+name:value for name,value in modules.items()}
     }
-    if language == "cop":
-        files["web/coptic-install.mjs"] = get("src/coptic_install.mjs")
-    else:
-        files["web/lexicon-install.mjs"] = get("src/lexicon_install.mjs")
-    if "coptic-keyboard" in current_lock()["dependencies"]:
-        files[f"web/keyboards/{language}/keyboard_search.mjs"] = get("src/keyboard_search.mjs")
-        try:
-            files[f"web/keyboards/{language}/_generic_search.mjs"] = get("src/_generic_search.mjs")
-        except Exception:
-            # Earlier publisher versions exposed the generic kernel directly.
-            # Never suppress failure for the required public module.
-            pass
-        if language == "egy":
-            files["web/assets/dictionaries/signs.json"] = get("release/signs.json")
-    else:
-        if language != "egy":
-            raise ValueError("Coptic is not a MdwNfr dependency")
-        for module in ("keyboard_api.mjs", "keyboard_search.mjs",
-                       "_generic_search.mjs", "lexicon_install.mjs",
-                       "keyboard_catalog.js"):
-            files["web/vendor/hieroglyphic/" + module] = get("src/" + module)
-        # MdwNfr never imports a second Python dictionary or SQLite authority.
-    return manifest, raw_manifest, catalog, files
-
-def update():
-    lock = current_lock()
-    before = json.dumps(lock, sort_keys=True)
-    staged = {}
-    changed = []
-    for name, entry in lock["dependencies"].items():
-        repo = entry["upstream_repository"]
-        if repo != f"sydgouda2022/{name}":
-            raise ValueError("Untrusted upstream dependency: " + repo)
-        sha = json.loads(fetch(f"https://api.github.com/repos/{repo}/commits/main"))["sha"]
-        if sha == entry.get("source_commit"):
-            continue
-        manifest, raw_manifest, catalog, files = stage(name, sha)
-        staged.update(files)
-        entry.update({
-            "source_commit": sha,
-            "version": manifest["release"],
-            "manifest_sha256": digest(raw_manifest),
-            "lexicon_sha256": digest(catalog)
-        })
-        changed.append(name)
-    if changed:
-        staged["keyboard-lock.json"] = (json.dumps(lock, indent=2, ensure_ascii=False) + "\n").encode()
-        # No file changes until all upstream dependencies verified and staged.
-        with tempfile.TemporaryDirectory(prefix="keyboard-stage-") as tmp:
-            temp = Path(tmp)
-            for path, data in staged.items():
-                p = temp / path
-                p.parent.mkdir(parents=True, exist_ok=True)
-                p.write_bytes(data)
-            for path in staged:
-                dest = ROOT / path
-                dest.parent.mkdir(parents=True, exist_ok=True)
-                os.replace(temp / path, dest)
+    pinned.update(source_commit=latest,version=meta['release'],
+                  manifest_sha256=digest(manifest),lexicon_sha256=digest(catalog),
+                  api_files_sha256={name:digest(value) for name,value in modules.items()})
+    files['keyboard-lock.json']=(json.dumps(lock,indent=2,ensure_ascii=False)+'\n').encode()
+    # Stage and validate EVERY file before replacing the checked-out copy.
+    with tempfile.TemporaryDirectory(prefix='mdwnfr-keyboard-') as folder:
+        staging=Path(folder)
+        for path, data in files.items():
+            target=staging/path
+            target.parent.mkdir(parents=True,exist_ok=True)
+            target.write_bytes(data)
+        for path in files:
+            target=ROOT/path
+            target.parent.mkdir(parents=True,exist_ok=True)
+            os.replace(staging/path,target)
     verify()
-    # The app owns its document and editing state; this importer mutates only
-    # files enumerated by the reviewed publisher contract and dependency lock.
-    print("Updated:", ", ".join(changed) if changed else "none")
-    return bool(changed)
+    print('Consumed pinned Hieroglyphic Keyboard release:',latest)
+    return True
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--verify", action="store_true")
-    args = parser.parse_args()
+if __name__=='__main__':
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--verify',action='store_true')
+    args=parser.parse_args()
     verify() if args.verify else update()

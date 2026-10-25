@@ -7,7 +7,14 @@
       "source_commit": "a751efe790d11a3da812f172f5853486f69e7650",
       "version": "late-egyptian-development-48f7769c20b1560f",
       "manifest_sha256": "c16fca798db1a61a79c122297e0bae1135b78a94c516631802abf4c84151eb01",
-      "lexicon_sha256": "48f7769c20b1560f76b0080e8ac5155b5e42c2b9fe2c1fe696f765e803dd5a39"
+      "lexicon_sha256": "48f7769c20b1560f76b0080e8ac5155b5e42c2b9fe2c1fe696f765e803dd5a39",
+      "api_files_sha256": {
+        "keyboard_api.mjs": "ca7af10ac1779c0ad5e3600c4e4feb6b71624aeaa2c6e26f1b9faab4f4f56786",
+        "keyboard_search.mjs": "30a92c5c1b04ada9a8d289aa9d352849fcaab6b82628cfd6eebcfaafbd067984",
+        "_generic_search.mjs": "0906446d2249eef49aa57e185f3afb2f263ea9c93fc538cbd89d672d53dd8e1f",
+        "lexicon_install.mjs": "fdd8613efaeaf89f99cedd24dbd191210b0f4979cd35b2ca5544a67e5c4615ed",
+        "keyboard_catalog.js": "4f6db467c32c37a16d92a31c5db9a7f9c69ce40fe0d37aefffac4463a5d197a1"
+      }
     }
   }
 }
