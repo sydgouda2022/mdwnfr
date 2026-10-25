@@ -2182,15 +2182,37 @@ async function showOfflineReadiness(){
  const notice=$('offline-notice');
  try{
   const response=await fetch('/runtime-status.json',{cache:'no-store'});
-  if(!response.ok)throw new Error('runtime manifest not found');
+  if(!response.ok)throw new Error('Missing runtime manifest');
   const state=await response.json();
-  notice.hidden=state.offline_ready===true;
-  if(!notice.hidden)notice.textContent='Offline editing is not installed: local Pyodide and/or the hieroglyph font are missing. Documents remain device-local, but starting the Python editor may require Internet access.';
- }catch(_){
+  let installed=false;
+  if(state.offline_ready===true&&navigator.serviceWorker?.controller&&'caches' in window){
+   const names=(await caches.keys()).filter(name=>/^mdwnfr-offline-[a-f0-9]{16}$/.test(name));
+   for(const name of names){
+    const cache=await caches.open(name);
+    const manifest=await cache.match('/offline-assets.json');
+    if(!manifest)continue;
+    const publication=await manifest.json();
+    if(publication.complete!==true)continue;
+    const critical=['/index.html','/app.js','/keyboard-prediction-worker.mjs',
+     '/keyboard-release-pin.json','/vendor/pyodide/pyodide.asm.wasm',
+     '/assets/fonts/hieroglyphs.woff2'];
+    const assets=new Set(publication.assets.map(item=>item.path));
+    if(critical.every(path=>assets.has(path)&&publication.assets.some(entry=>entry.path===path))&&
+       (await Promise.all(critical.map(path=>cache.match(path)))).every(Boolean)){
+      installed=true;break;
+    }
+   }
+  }
+  notice.hidden=installed;
+  if(!installed)notice.textContent=state.offline_ready===true
+   ?'Offline editing is not yet confirmed on this device. Keep an exported backup until the verified installation finishes.'
+   :'Offline editing is not installed: the local Python runtime or hieroglyph font is incomplete.';
+ }catch(error){
   notice.hidden=false;
-  notice.textContent='Could not verify offline editor readiness. Keep a separate document backup before relying on offline use.';
+  notice.textContent='Could not verify the offline editor installation. Export a backup before relying on offline use.';
  }
 }
+if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('controllerchange',()=>{void showOfflineReadiness();});
 // Library appears immediately, even if the Python engine is still loading.
 showLibrary();
 showOfflineReadiness();
