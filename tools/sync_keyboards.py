@@ -24,7 +24,7 @@ def digest(b):
     return hashlib.sha256(b).hexdigest()
 
 def git_blob_sha(b):
-    return hashlib.sha1(b"blob "+str(len(b)).encode("ascii")+b"\\0"+b).hexdigest()
+    return hashlib.sha1(b"blob "+str(len(b)).encode("ascii")+bytes([0])+b).hexdigest()
 
 def fetch(url):
     req = urllib.request.Request(url, headers=AGENT)
