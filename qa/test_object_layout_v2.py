@@ -161,30 +161,40 @@ class ObjectSequenceLayout(unittest.TestCase):
                         [item['id'] for item in doc['items'] if item['type']=='word'])
                     self.assertEqual(ids_in_layout(result).count(bird['id']),1)
 
-    def test_diagnostic_dense_wrap_coverage(self):
-        # Deterministic coverage report for densely repeated words around Horus.
-        for before_count in (6,150,320,480):
-            doc=new_document('Bird field',direction='rtl',surface='A3',font_size_pt=10)
-            art=clipart('horus-falcon-raster',60,'normal')
-            art['y_align']=.25
-            doc['items']=[word(['𓅓','𓏏','𓈖']) for _ in range(before_count)]+[art]+[word(['𓅓','𓏏','𓈖']) for _ in range(720)]
-            layout=layout_document(doc)
-            page=next(p for p in layout['pages'] if any(c['kind']=='clipart' for c in p['columns']))
-            image=next(placement for col in page['columns'] if col['kind']=='clipart'
-                       for placement in col['placements'])
-            w=layout['column_width_mm']
-            columns={}
-            for col in page['columns']:
-                if col['kind']!='words' or not col['placements']:continue
-                key=round(col['x'],3)
-                b=columns.setdefault(key,[])
-                b.extend((p['y'],p['y']+p['height']) for p in col['placements'])
-            span=[(x,round(min(a for a,b in runs),1),round(max(b for a,b in runs),1),len(runs))
-                  for x,runs in sorted(columns.items(),reverse=True)
-                  if image['x']-3*w<=x<=image['x']+image['width_mm']+3*w]
-            print('BIRD_COVERAGE',before_count,'width',round(w,2),
-                  'bird',tuple(round(image[k],2) for k in ('x','y','width_mm','height')),
-                  'coverage',span,flush=True)
+    def test_contour_reclaims_all_available_top_and_bottom_slots(self):
+        """A float must never reserve entire columns above or below the ink."""
+        for direction in ('rtl','ltr'):
+            for before_count in (6,150,320):
+                with self.subTest(direction=direction,before_count=before_count):
+                    doc=new_document('Dense Horus flow',direction=direction,
+                                     surface='A3',font_size_pt=10)
+                    bird=clipart('horus-falcon-raster',60,'normal')
+                    bird['y_align']=.25
+                    before=[word(['𓅓','𓏏','𓈖']) for _ in range(before_count)]
+                    after=[word(['𓅓','𓏏','𓈖']) for _ in range(720)]
+                    doc['items']=[*before,bird,*after]
+                    page=layout_document(doc)['pages'][0]
+                    image=next(p for c in page['columns'] if c['kind']=='clipart'
+                               for p in c['placements'])
+                    w=layout_document(doc)['column_width_mm']
+                    bottom=page['height']-18
+                    near=[c for c in page['columns'] if c['kind']=='words'
+                          and c['placements'] and c['x']<image['x']+image['width_mm']
+                          and c['x']+w>image['x']]
+                    self.assertGreaterEqual(len(near),3)
+                    lower=[c for c in near if any(
+                        p['y']>image['y']+image['height']+w/4
+                        for p in c['placements'])]
+                    self.assertGreaterEqual(len(lower),2,
+                         'Dense following words must reclaim more than one column below Horus')
+                    upper=[c for c in near if any(
+                        p['y']+p['height']<image['y']-w/4
+                        for p in c['placements'])]
+                    self.assertGreaterEqual(len(upper),2,
+                         'Available top sectors above the silhouette must receive quadrats')
+                    self.assertEqual(words_in_layout(layout_document(doc)),
+                                     [p['id'] for p in before+after])
+
     def test_dense_short_words_use_image_columns_below_visible_ink(self):
         from mdwnfr.layout import object_clearance_mm
         for direction in ('ltr','rtl'):

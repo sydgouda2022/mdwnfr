@@ -341,124 +341,103 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         obstacles = []
         word_ink = []
 
-    def lane_slot():
-        return overlay[0] + overlay[2] if overlay is not None else slot
-
     def finish_lane(overflow=False):
-        """Finish only the active reading lane, preserving every quadrat ID."""
+        """Commit one reading column; only WORD columns advance the cursor."""
         nonlocal pending, slot, lane_cursor
         if not pending:
             return
-        # A full unencumbered lane may expand BETWEEN whole quadrats.
-        # Contour lanes never stretch text across a silhouette interruption.
-        plain = overlay is None and not obstacles
-        adjustable = plain and overflow and len(pending) > 1
-        last_gap = pending[-1][1].flexible_gaps[-1]
-        natural = sum(q.height for _, q, _ in pending)
-        extra = max(0.0, bottom - lane_start - natural) if adjustable else 0.0
-        shares = ([((extra + last_gap) / (len(pending)-1))] * (len(pending)-1)
-                  + [-last_gap] if adjustable else [0.0]*(len(pending)-1)+[-last_gap])
-        cursor = lane_start
-        placements = []
-        runs = []
-        for i, (item, q, origin) in enumerate(pending):
+        # A silhouette does not invalidate justification in unrelated lanes.
+        left=slot*width
+        clearance=object_clearance_mm(width)
+        near=any(ob[5]-clearance<left+width and ob[5]+ob[3]+clearance>left
+                 for ob in obstacles)
+        adjustable = not near and overflow and len(pending)>1
+        last_gap=pending[-1][1].flexible_gaps[-1]
+        natural=sum(q.height for _,q,_ in pending)
+        extra=max(0.,bottom-lane_start-natural) if adjustable else 0.
+        shares=([((extra+last_gap)/(len(pending)-1))]*(len(pending)-1)+[-last_gap]
+                if adjustable else [0.]*(len(pending)-1)+[-last_gap])
+        cursor=lane_start
+        placements=[]
+        runs=[]
+        for i,(item,q,origin) in enumerate(pending):
             if adjustable:
-                origin = cursor
-            shift = shares[i] if adjustable else (-last_gap if i == len(pending)-1 else 0.0)
+                origin=cursor
+            shift=shares[i] if adjustable else (-last_gap if i==len(pending)-1 else 0.)
             if compact:
                 placements.append((item['id'],round(origin,5),
                                    round(q.height+shift,5),shift))
             else:
-                shape = (expand_to_ink_bottom(q,shift) if i == len(pending)-1
-                         else expand_after_word(q,shift) if adjustable else q)
-                placements.append({'id': item['id'], 'type':'word',
-                    'signs':item['signs'], 'color':item.get('color','#192433'),
-                    'bold':item.get('bold',False), 'y':round(origin,5),
+                shape=(expand_to_ink_bottom(q,shift) if i==len(pending)-1
+                       else expand_after_word(q,shift) if adjustable else q)
+                placements.append({'id':item['id'],'type':'word',
+                    'signs':item['signs'],'color':item.get('color','#192433'),
+                    'bold':item.get('bold',False),'y':round(origin,5),
                     'height':round(shape.height,5),
                     'quadrat':_quadrat_object_payload(item,shape)})
-            if i == 0 or origin > pending[i-1][2] + pending[i-1][1].height + 1e-4:
-                runs.append([origin + min(g.y for g in q.signs),
-                             origin + max(g.y+g.height for g in q.signs)])
+            if i==0 or origin>pending[i-1][2]+pending[i-1][1].height+1e-4:
+                runs.append([origin+min(g.y for g in q.signs),
+                             origin+max(g.y+g.height for g in q.signs)])
             else:
-                runs[-1][1] = origin + max(g.y+g.height for g in q.signs)
-            logical_left = lane_slot()*width
+                runs[-1][1]=origin+max(g.y+g.height for g in q.signs)
             for glyph in q.signs:
-                # All collision calculations use the logical reading axis.
-                word_ink.append((logical_left+glyph.x,
-                                 origin+glyph.y, glyph.width, glyph.height))
-            cursor = origin + q.height + (shares[i] if adjustable else 0.0)
+                word_ink.append((left+glyph.x,origin+glyph.y,glyph.width,glyph.height))
+            cursor=origin+q.height+(shares[i] if adjustable else 0.)
 
-        span = 0 if overlay is not None else 1
-        seed = {'placements':placements,'kind':'words','span':span,
-                'text_top':round(placements[0][1] if compact else placements[0]['y'],5),
-                'text_bottom':round(runs[-1][1],5),
-                'text_runs':[(round(a,5),round(b,5)) for a,b in runs],
-                'terminal_gap_removed':True}
-        if adjustable:
-            seed['word_boundary_justify'] = True
-            seed['ink_bottom_aligned'] = True
-        if overlay is not None:
-            seed.update(slot_offset=-overlay[1]+overlay[2],slot_width=1)
-        columns.append(seed)
-        stats['computed_columns'] += 1
-        pending = []
-        lane_cursor = top
-        if overlay is None:
-            slot += 1
+        columns.append({'placements':placements,'kind':'words','span':1,
+            'text_top':round(placements[0][1] if compact else placements[0]['y'],5),
+            'text_bottom':round(runs[-1][1],5),
+            'text_runs':[(round(a,5),round(b,5)) for a,b in runs],
+            'terminal_gap_removed':True,
+            **({'word_boundary_justify':True,'ink_bottom_aligned':True}
+                if adjustable else {})})
+        stats['computed_columns']+=1
+        pending=[]
+        lane_cursor=top
+        slot+=1
 
     def advance_lane(overflow=False):
-        nonlocal overlay, lane_start, lane_cursor, slot
+        nonlocal lane_start,lane_cursor
         finish_lane(overflow)
-        if overlay is not None:
-            overlay[2] += 1
-            if overlay[2] >= overlay[1]:
-                overlay = None
-        if overlay is None and capacity is not None and slot >= capacity:
+        if capacity is not None and slot>=capacity:
             clear_page()
-        lane_start = top
-        lane_cursor = top
+        lane_start=top
+        lane_cursor=top
 
-    def word_origins(shape, item):
-        # One source of truth for ALL obstacles: image, clipart, table,
-        # cartouche. No before/after-object or reserved-height branches.
-        lane_x=lane_slot()*width
+    def word_origins(shape,item):
+        """Intersect actual glyph-ink regions with ALL placed object silhouettes."""
+        lane_x=slot*width
         clearance=object_clearance_mm(width)
         nearby=[ob for ob in obstacles
-                if ob[5]-clearance < lane_x+width and
-                   ob[5]+ob[3]+clearance > lane_x]
+                if ob[5]-clearance<lane_x+width and ob[5]+ob[3]+clearance>lane_x]
         return free_word_starts(shape,column_left=lane_x,
-            top=top,bottom=bottom,clearance=clearance,
-            obstacles=nearby,
+            top=top,bottom=bottom,clearance=clearance,obstacles=nearby,
             ink_expansion=max((g.font_size for g in shape.signs),default=0)*.006
                           if item.get('bold',False) else 0)
 
     def insert_word(item):
-        nonlocal lane_cursor, slot
-        shape = quadrat_for(tuple(item['signs']))
-        if shape.height > usable_height + 1e-8:
+        nonlocal lane_cursor,slot
+        shape=quadrat_for(tuple(item['signs']))
+        if shape.height>usable_height+1e-8:
             raise DocumentError('Quadrat exceeds writing height; reduce font size')
-        # Deterministic first legal word origin in the current reading lane.
         while True:
-            if overlay is None and capacity is not None and slot >= capacity:
+            if capacity is not None and slot>=capacity:
                 clear_page()
-            permitted = word_origins(shape,item)
-            chosen = next((max(a,lane_cursor) for a,b in permitted
-                          if max(a,lane_cursor) <= min(b,bottom-shape.height)+1e-7),None)
+            permitted=word_origins(shape,item)
+            chosen=next((max(a,lane_cursor) for a,b in permitted
+                         if max(a,lane_cursor)<=min(b,bottom-shape.height)+1e-7),None)
             if chosen is not None:
                 pending.append((item,shape,round(chosen,5)))
-                lane_cursor = round(chosen+shape.height,5)
+                lane_cursor=round(chosen+shape.height,5)
                 return
             if pending:
                 advance_lane(overflow=True)
-            elif overlay is not None:
-                advance_lane()
             else:
-                # This lane is unavailable for the current quadrat. Keep the
-                # page's physical position but never fabricate missing words.
+                # A genuinely unavailable complete column: scan the next one.
                 columns.append({'placements':[],'kind':'words','span':1,
                                 'text_top':top,'text_bottom':top})
-                stats['computed_columns'] += 1
-                slot += 1
+                stats['computed_columns']+=1
+                slot+=1
                 if capacity is not None and slot>=capacity:
                     clear_page()
 
@@ -501,133 +480,128 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         raise DocumentError('Unsupported object: '+kind)
 
     def place_object(item):
-        nonlocal slot, overlay, lane_cursor, lane_start
-        # Objects interrupt the LOGICAL sequence, not the physical text lane.
-        # Record the unfinished column's next word origin before committing
-        # the prefix. Text following the object may use the rest of that same
-        # physical column if the artwork is placed on this page beside it.
-        # Moving the text to a fresh column here creates an unjustified empty
-        # vertical channel alongside every inserted illustration.
-        continuation_y = lane_cursor if pending and overlay is None else None
-        finish_lane()
-        # An object's geometry is an obstacle, not a permanent column owner.
-        overlay = None
-        fragments = measure(item)
-        for fragment_index,(iw,ih,profile,geometry) in enumerate(fragments):
-            preceding_slot = slot-1 if continuation_y is not None and fragment_index==0 else None
-            initial_slot = slot
-            if fragment_index:
-                # A continued table owns a NEW page; previous silhouettes,
-                # word ink and cursor positions must never bleed across it.
-                overlay = None
-                clear_page()
-            wanted_y = top + (usable_height-ih)*(item.get('y_align',0.5) if len(fragments)==1 else 0)
-            requested = float(item.get('x_offset_mm',0.0)) if len(fragments)==1 else 0.0
-            if requested > 0 and capacity is not None:
-                # A3 preferences never make the same object impossible on A4.
-                requested=min(requested,max(0.0,capacity*width-iw))
-            span=max(1,ceil((iw+max(0.0,requested)-1e-8)/width))
-            if capacity is not None and span > capacity:
-                raise DocumentError('Object exceeds the selected writing width')
-            # Candidate slots are checked against previously placed ink and
-            # silhouettes. Negative offsets may move into a previous slot,
-            # but never through glyphs that have already been composed.
-            max_scan = (capacity or max(span,32)) + ceil(abs(requested)/width)+2
-            for _ in range(max_scan):
-                if capacity is not None and slot+span>capacity:
-                    clear_page()
-                free_band = span*width-iw
-                delta = (-abs(requested) if requested<0 else min(requested,max(0,free_band))
-                         if requested>0 else
-                         free_band*(1-item.get('x_align',0.0 if item['type'] in ('table','cartouche')
-                                             else .5)
-                                    if doc['direction']=='rtl' else
-                                    item.get('x_align',0.0 if item['type'] in ('table','cartouche')
-                                             else .5)))
-                x = slot*width+delta
-                if x < -1e-7 or (capacity is not None and x+iw>capacity*width+1e-7):
-                    blocked = True
-                else:
-                    facing = (_logical_auto_flip(item,x,iw,page_width,margins,
-                                               doc['direction'],papyrus)
-                              if item['type'] in ('clipart','image') else
-                              ('mirror' if doc['direction']=='rtl' else 'normal'))
-                    if doc['direction']=='rtl' and item['type'] in ('clipart','image'):
-                        facing = 'normal' if facing=='mirror' else 'mirror'
-                    test_obstacle = (item.get('artwork_id'),profile.get('bands'),profile.get('mask'),
-                                     iw,ih,x,facing,wanted_y)
-                    blocked = any(
-                        not any(a<=y+1e-6 and b>=y+h-1e-6
-                                for a,b in free_sectors(item.get('artwork_id'),
-                                    bands=profile.get('bands'),mask=profile.get('mask'),
-                                    image_width=iw,image_height=ih,x_offset=x,
-                                    slot_left=px,slot_right=px+pw,top=y,bottom=y+h,
-                                    clearance=object_clearance_mm(width),
-                                    flip=facing,image_top=wanted_y))
-                        for px,y,pw,h in word_ink
-                        if px < x+iw+width and px+pw>x-width)
-                    if not blocked:
-                        blocked = any(silhouettes_collide(
-                             {'x':px,'y':py,'width':pw,'height':ph,'mask':mask,
-                              'flip':flip,'artwork_id':aid},
-                             {'x':x,'y':wanted_y,'width':iw,'height':ih,
-                              'mask':profile.get('mask'),'flip':facing,
-                              'artwork_id':item.get('artwork_id')},
-                             object_clearance_mm(width))
-                             for aid,_,mask,pw,ph,px,flip,py in obstacles)
-                if not blocked:
-                    break
-                columns.append({'placements':[],'text_top':top,'text_bottom':top,
-                                'kind':'words','span':1})
-                stats['computed_columns'] += 1
-                slot += 1
-            else:
-                raise DocumentError('Unable to place object without overlapping earlier content')
+        """Place one obstacle without consuming a single reading column.
 
-            # One object geometry contract; variants differ only in how they
-            # measure their own silhouette and internal children.
-            if compact:
-                placement = (item['id'],round(wanted_y,5),round(ih,5),round(iw,5))
-            else:
-                placement = {'id':item['id'],'type':item['type'],
-                  'y':round(wanted_y,5),'height':round(ih,5),
-                  'width_mm':round(iw,5)}
-                if item['type'] in ('clipart','image'):
-                    physical_x = (margins['left']+x if doc['direction']=='ltr'
-                         else page_width-margins['right']-x-iw if not papyrus else x)
-                    placement.update(artwork_id=item.get('artwork_id'),flip=item['flip'],
-                                     resolved_flip=_physical_auto_flip(item,physical_x,page_width,
-                                                                      doc['direction'],papyrus))
-                else:
-                    placement[item['type']] = geometry
-            if item['type'] in ('table','cartouche'):
-                nested_masks[item['id']] = profile['mask']
-            seed = {'placements':[placement], 'text_top':round(wanted_y,5),
-                    'text_bottom':round(wanted_y+ih,5), 'span':span,
-                    'kind':'clipart' if item['type'] in ('clipart','image') else item['type'],
-                    'float_offset':requested}
+        The object is anchored at/after the current reading slot. Its visible
+        silhouette, never an enclosing group of reserved columns, restricts
+        subsequent quadrat origins. Already placed glyphs constrain the anchor.
+        """
+        nonlocal slot,lane_cursor,lane_start
+        fragments=measure(item)
+        for fragment_index,(iw,ih,profile,geometry) in enumerate(fragments):
             if fragment_index:
-                seed['table_fragment_index'] = fragment_index
-                seed['break_before'] = True
-            elif item['type']=='table':
-                seed['table_fragment_index'] = 0
+                # A table continuation starts on a genuinely new page.
+                finish_lane()
+                if capacity is not None and slot<capacity:
+                    columns.append({'placements':[],'kind':'words','span':capacity-slot,
+                                    'text_top':top,'text_bottom':top})
+                clear_page()
+                lane_start=top
+                lane_cursor=top
+
+            wanted_y=top+(usable_height-ih)*(item.get('y_align',.5)
+                                               if len(fragments)==1 else 0.)
+            requested=float(item.get('x_offset_mm',0.)) if len(fragments)==1 else 0.
+            if requested>0 and capacity is not None:
+                requested=min(requested,max(0.,capacity*width-iw))
+            span=max(1,ceil((iw+max(0.,requested)-1e-8)/width))
+            if capacity is not None and span>capacity:
+                raise DocumentError('Object exceeds the selected writing width')
+
+            def choose_anchor():
+                # Skip only ANCHOR CANDIDATES, not readable text columns.
+                # Moving an object in x does not force word flow to skip x.
+                scan=range(slot,(capacity-span+1) if capacity is not None
+                           else slot+max(span,32)+ceil(abs(requested)/width)+2)
+                preceding=word_ink[:]
+                for source,quadr,_y in pending:
+                    for glyph in quadr.signs:
+                        preceding.append((slot*width+glyph.x,_y+glyph.y,
+                                          glyph.width,glyph.height))
+                for candidate in scan:
+                    free_band=span*width-iw
+                    align=item.get('x_align',0. if item['type'] in ('table','cartouche') else .5)
+                    delta=(-abs(requested) if requested<0
+                           else min(requested,max(0.,free_band)) if requested>0
+                           else free_band*((1-align) if doc['direction']=='rtl' else align))
+                    x=candidate*width+delta
+                    if x < -1e-7 or (capacity is not None and x+iw>capacity*width+1e-7):
+                        continue
+                    facing=(_logical_auto_flip(item,x,iw,page_width,margins,
+                                               doc['direction'],papyrus)
+                            if item['type'] in ('clipart','image') else
+                            ('mirror' if doc['direction']=='rtl' else 'normal'))
+                    if doc['direction']=='rtl' and item['type'] in ('clipart','image'):
+                        facing='normal' if facing=='mirror' else 'mirror'
+                    new=(item.get('artwork_id'),profile.get('bands'),profile.get('mask'),
+                         iw,ih,x,facing,wanted_y)
+                    clearance=object_clearance_mm(width)
+                    clashes_word=any(not any(a<=y+1e-6 and b>=y+h-1e-6
+                        for a,b in free_sectors(item.get('artwork_id'),
+                            bands=profile.get('bands'),mask=profile.get('mask'),
+                            image_width=iw,image_height=ih,x_offset=x,
+                            slot_left=px,slot_right=px+pw,top=y,bottom=y+h,
+                            clearance=clearance,flip=facing,image_top=wanted_y))
+                        for px,y,pw,h in preceding if px<x+iw+clearance and px+pw>x-clearance)
+                    if clashes_word:continue
+                    if any(silhouettes_collide(
+                            {'x':px,'y':py,'width':pw,'height':ph,'mask':mask,
+                             'flip':flip,'artwork_id':aid},
+                            {'x':x,'y':wanted_y,'width':iw,'height':ih,
+                             'mask':profile.get('mask'),'flip':facing,
+                             'artwork_id':item.get('artwork_id')},
+                            clearance)
+                            for aid,_,mask,pw,ph,px,flip,py in obstacles):
+                        continue
+                    return candidate,x,new
+                return None
+
+            placement_plan=choose_anchor()
+            if placement_plan is None and capacity is not None:
+                # The image cannot legally fit on this page. Only in this
+                # genuine overflow case is the remaining page terminated.
+                finish_lane()
+                if slot<capacity:
+                    columns.append({'placements':[],'kind':'words','span':capacity-slot,
+                                    'text_top':top,'text_bottom':top})
+                clear_page()
+                lane_start=top
+                lane_cursor=top
+                placement_plan=choose_anchor()
+            if placement_plan is None:
+                raise DocumentError('Object has no collision-free anchor')
+            anchor,x,new_obstacle=placement_plan
+            if compact:
+                placement=(item['id'],round(wanted_y,5),round(ih,5),round(iw,5))
+            else:
+                placement={'id':item['id'],'type':item['type'],
+                           'y':round(wanted_y,5),'height':round(ih,5),
+                           'width_mm':round(iw,5)}
+                if item['type'] in ('clipart','image'):
+                    px=(margins['left']+x if doc['direction']=='ltr'
+                        else page_width-margins['right']-x-iw if not papyrus else x)
+                    placement.update(artwork_id=item.get('artwork_id'),flip=item['flip'],
+                        resolved_flip=_physical_auto_flip(item,px,page_width,
+                                                           doc['direction'],papyrus))
+                else:placement[item['type']]=geometry
+            if item['type'] in ('table','cartouche'):
+                nested_masks[item['id']]=profile['mask']
+            # span=0 is intentional: an obstacle is painted on top of the
+            # available-space map, never inserted as N empty text columns.
+            seed={'placements':[placement],'text_top':round(wanted_y,5),
+                  'text_bottom':round(wanted_y+ih,5),'span':0,
+                  'slot_offset':anchor-slot,'slot_width':span,
+                  'kind':'clipart' if item['type'] in ('clipart','image') else item['type'],
+                  'float_offset':requested}
+            if fragment_index:
+                seed['table_fragment_index']=fragment_index
+                seed['break_before']=True
+            elif item['type']=='table':seed['table_fragment_index']=0
             columns.append(seed)
-            stats['computed_columns'] += 1
-            obstacles.append(test_obstacle)
-            base = slot
-            slot += span
-            # Revisit an incomplete preceding word lane BEFORE the silhouette
-            # lanes. Its next origin is after the preceding quadrat, never at
-            # page top, so reading order and word IDs stay unchanged. This is
-            # legal only when the object occupies the immediately following
-            # slots on the same page. A skipped slot/page is a real boundary.
-            resume = (preceding_slot is not None and initial_slot == base
-                      and preceding_slot >= 0 and continuation_y < bottom)
-            overlay = ([preceding_slot,span+1,0] if resume
-                       else [base,span,0])
-            lane_start = continuation_y if resume else top
-            lane_cursor = continuation_y if resume else top
-            continuation_y = None
+            stats['computed_columns']+=1
+            obstacles.append(new_obstacle)
+            # Keep pending quadrats, current slot and their natural y cursor.
+            # Their column can continue once the object occupies its contour.
 
     for item in doc['items']:
         if item['type']=='word':

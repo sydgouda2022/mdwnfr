@@ -434,8 +434,9 @@ class ArtworkWordFlow(unittest.TestCase):
                     with self.subTest(direction=direction,offset=offset,font_size=font_size):
                         doc=self.document(direction,offset,font_size=font_size)
                         layout=layout_document(doc)
-                        self.assertTrue(any(c.get('span')==0 and c['placements']
-                            for p in layout['pages'] for c in p['columns']))
+                        self.assertTrue(any(c.get('span')==0 and c['kind']=='clipart'
+                            for p in layout['pages'] for c in p['columns']),
+                            'Artwork overlays the writing grid without consuming slots')
                         self.assert_natural_ink(layout)
                         words=[p['id'] for page in layout['pages'] for c in page['columns']
                                if c['kind']=='words' for p in c['placements']]
