@@ -1999,6 +1999,20 @@ $('bold').onclick=()=>{
 $('delete').onclick=()=>{hideEditMenu();deleteSelection();};
 $('library').onclick=()=>{closePanels();backToLibrary();};
 $('create-document').onclick=createDocument;
+$('import-document').onclick=()=>$('import-file').click();
+$('import-file').addEventListener('change',async event=>{
+ const file=event.target.files?.[0];event.target.value='';if(!file||libraryBusy||!ready)return;
+ setLibraryBusy(true);showLibraryError();
+ try{
+  if(file.size>60*1024*1024)throw new Error('Backup exceeds 60 MiB');
+  const entry=JSON.parse(await file.text());
+  if(!entry||typeof entry!=='object'||Array.isArray(entry))throw new Error('Invalid backup');
+  await rpc('validate',{document:entry});
+  if(await load(entry.id))throw new Error('Document already exists. Existing content was not overwritten.');
+  await save(entry);await renderDocList();status('Imported '+entry.name);
+ }catch(error){showLibraryError('Import failed: '+error.message);}
+ finally{setLibraryBusy(false);}
+});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&doc)flushAutosave().catch(()=>{});});
 
 // All modal completion paths settle the promise; cancel/outside/Escape never mutate the DB.
@@ -2122,6 +2136,16 @@ async function renderDocList(){
   open.setAttribute('aria-label','Open '+(entry.name||'Untitled'));
   open.onclick=()=>openDocument(entry.id);
   const actions=document.createElement('div');actions.className='document-actions';
+  const exportButton=document.createElement('button');exportButton.type='button';exportButton.className='document-action';
+  exportButton.textContent='Export';exportButton.setAttribute('aria-label','Export '+entry.name);
+  exportButton.onclick=async()=>{
+   try{
+    const current=await load(entry.id);if(!current)throw new Error('Document missing');
+    const url=URL.createObjectURL(new Blob([JSON.stringify(current,null,2)],{type:'application/json'}));
+    const link=document.createElement('a');link.href=url;link.download='mdwnfr-'+entry.id+'.mdwnfr.json';
+    document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+   }catch(error){showLibraryError('Export failed: '+error.message);}
+  };
   const rename=document.createElement('button');rename.type='button';rename.className='document-action rename-action';rename.textContent='Rename';
   rename.setAttribute('aria-label','Rename '+(entry.name||'Untitled'));
   rename.onclick=()=>renameDocument(entry.id);
@@ -2131,7 +2155,7 @@ async function renderDocList(){
   const history=document.createElement('button');history.type='button';history.className='document-action';
   history.textContent='History';history.setAttribute('aria-label','History '+(entry.name||'Untitled'));
   history.onclick=()=>restoreDocumentHistory(entry.id);
-  actions.append(history,rename,del);card.append(open,actions);root.append(card);
+  actions.append(exportButton,history,rename,del);card.append(open,actions);root.append(card);
  }
  setLibraryBusy(libraryBusy);
 }

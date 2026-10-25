@@ -245,6 +245,19 @@ def validate_cartouche_word(item: dict) -> None:
 
 
 def assert_document(doc: dict) -> None:
+    if not isinstance(doc,dict):raise DocumentError('Invalid document payload')
+    if not isinstance(doc.get('id'),str) or not doc['id'] or len(doc['id'])>128:
+        raise DocumentError('Invalid document ID')
+    if type(doc.get('revision')) is not int or doc['revision']<0:
+        raise DocumentError('Invalid document revision')
+    if doc.get('surface') not in (*SURFACES,'papyrus'):
+        raise DocumentError('Invalid document surface')
+    size=doc.get('font_size_pt')
+    if type(size) not in (int,float) or not math.isfinite(size) or not 6<=size<=72:
+        raise DocumentError('Invalid font size')
+    height=doc.get('papyrus_height_mm')
+    if type(height) not in (int,float) or not math.isfinite(height) or not 80<=height<=2000:
+        raise DocumentError('Invalid papyrus height')
     if doc.get("schema") != 1 or doc.get("direction") not in ("rtl", "ltr"):
         raise DocumentError("Invalid document schema")
     valid_name(doc.get("name"))

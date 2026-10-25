@@ -16,3 +16,9 @@ repository until an explicit migration cutover.
 The public Hieroglyphic Keyboard API v2 is pinned in `web/vendor/hieroglyphic/` and supplies sign lookup. The existing Python prediction bridge remains until the consumer migration is tested. MdwNfr still owns editing, documents and layout. The lexicon is incomplete. Local recovery snapshots are not external backups.
 
 The browser predictor now runs in `web/keyboard-prediction-worker.mjs`, using the independent verified headless v2 API. Python remains the document and quadrat authority; its older prediction RPC is retained for native test compatibility only.
+
+## Portable backups
+
+The library supports per-document `.mdwnfr.json` Export and Import. Imported documents pass Python validation, and duplicate document IDs are rejected without overwriting content. Keep exports outside the browser to survive data clearing or device loss.
+
+Keyboard dependency upgrades require a reviewed change; CI verifies the pinned release without pushing automatically to main.
