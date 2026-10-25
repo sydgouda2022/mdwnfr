@@ -27,7 +27,8 @@ self.onmessage=async ({data})=>{
   const suggestions=candidates.slice(offset,offset+limit).map(x=>({
    signs:[...x.text],source:x.raw?'user':x.personal?'personal':'lexicon',
    lexicon_ref:x.lexicon_ref||null,
-   source_tier:x.source==='RAMSES-CORPUS'?'ramses_corpus':x.personal?'personal':'lemma_linked',
+   source_tier:x.source==='RAMSES-CORPUS'?'ramses_corpus':x.personal?'personal':
+    x.lexicalIdentityVerified===true?'lemma_linked':x.attested===true?'unlinked_attestation':'unverified',
    lexical_identity_verified:x.lexicalIdentityVerified===true,attested:x.attested===true
   }));
   self.postMessage({id,ok:true,suggestions,total:candidates.length,

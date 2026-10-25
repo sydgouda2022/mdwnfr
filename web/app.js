@@ -1241,7 +1241,15 @@ async function openDocument(id){
 async function backToLibrary(){
  // Pending edits must be saved before leaving the editor.
  await txQueue;
- try{await flushAutosave();}catch(e){status('Save failed: '+e.message,true);return;}
+ try{await flushAutosave();}catch(e){
+  status('Save failed: '+e.message,true);
+  const choice=await modal({title:'Unsaved document',
+   description:'The document could not be saved. Download a separate copy of your edits before reopening. The editor will remain open.',
+   action:'Download unsaved copy'});
+  if(choice.confirmed)try{downloadUnsavedDocumentCopy();}
+  catch(error){status('Backup failed: '+error.message,true);}
+  return;
+ }
  await profileSaveQueue.catch(()=>{});
  showLibrary();
  try{await renderDocList();}catch(e){showLibraryError('Could not load documents: '+e.message);}
@@ -1254,7 +1262,7 @@ async function createDocument(){
   let name='Untitled';
   for(let i=2;names.has(name);i++)name='Untitled '+i;
   const entry=(await rpc('new',{name})).document;
-  await save(entry);
+  await save(entry,null);
   setLibraryBusy(false);
   await openDocument(entry.id);
  }catch(e){showLibraryError('Could not create document: '+e.message);status('Could not create document',true);setLibraryBusy(false);}
@@ -1901,9 +1909,16 @@ function suggestionButton(candidate){
  if(candidate.source==='user')button.classList.add('user-choice');
  if(candidate.source==='personal')button.classList.add('personal-choice');
   if(candidate.source_tier==='ramses_corpus')button.classList.add('ramses-choice');
+ if(candidate.source_tier==='unlinked_attestation')button.classList.add('unlinked-choice');
  const rtc=candidate.source_tier==='ramses_corpus';
  
- button.setAttribute('aria-label',(candidate.source==='user'?'Use own spelling ':candidate.source==='personal'?'Use personal spelling ':rtc?'Use Ramses corpus spelling ':'Choose lemma-linked spelling ')+candidate.signs.join(''));
+ const provenance=candidate.source==='user'?'Use own spelling ':
+  candidate.source==='personal'?'Use personal spelling ':
+  rtc?'Use Ramses corpus word-model sequence (unlinked) ':
+  candidate.source_tier==='unlinked_attestation'?'Use attested spelling with unresolved lemma ':
+  candidate.source_tier==='lemma_linked'?'Use verified lemma-linked spelling ':'Use unverified spelling ';
+ button.setAttribute('aria-label',provenance+candidate.signs.join(''));
+ button.title=provenance.trim();
  button.onclick=()=>commit(candidate);
  return button;
 }
@@ -2025,7 +2040,7 @@ $('import-file').addEventListener('change',async event=>{
   if(!entry||typeof entry!=='object'||Array.isArray(entry))throw new Error('Invalid backup');
   await rpc('validate',{document:entry});
   if(await load(entry.id))throw new Error('Document already exists. Existing content was not overwritten.');
-  await save(entry);await renderDocList();status('Imported '+entry.name);
+  await save(entry,null);await renderDocList();status('Imported '+entry.name);
  }catch(error){showLibraryError('Import failed: '+error.message);}
  finally{setLibraryBusy(false);}
 });
@@ -2075,7 +2090,7 @@ async function renameDocument(id){
   const latest=await load(id);
   if(!latest)throw new Error('Document no longer exists');
   const result=await rpc('transact',{document:latest,action:{op:'set_document',name:decision.value,base_revision:latest.revision}});
-  await save(result.document);
+  await save(result.document,latest.revision);
   await renderDocList();
  }catch(e){showLibraryError('Could not rename document: '+e.message);}
  finally{setLibraryBusy(false);}
@@ -2222,6 +2237,18 @@ async function showOfflineReadiness(){
 }
 if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('controllerchange',()=>{void showOfflineReadiness();});
 
+// Export an unsaved conflict copy with a new document ID so it can be
+// reimported without overwriting the newer persisted document.
+function downloadUnsavedDocumentCopy(){
+ if(!doc)throw new Error('No document to export');
+ const copy={...structuredClone(doc),id:crypto.randomUUID().replaceAll('-',''),
+  name:(doc.name+' (recovered)').slice(0,120),revision:0};
+ const url=URL.createObjectURL(new Blob([JSON.stringify(copy,null,2)],{type:'application/json'}));
+ const link=document.createElement('a');link.href=url;
+ link.download='mdwnfr-recovery-'+copy.id+'.mdwnfr.json';
+ document.body.append(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
 // Library appears immediately, even if the Python engine is still loading.
 showLibrary();
 showOfflineReadiness();
