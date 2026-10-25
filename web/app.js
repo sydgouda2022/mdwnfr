@@ -91,6 +91,8 @@ let layoutCache=null;
 // Display-only indexes, reconstructed after every immutable layout publication.
 // They are never authoritative document data or geometry calculations.
 let itemIndexById=new Map(),placementById=new Map();
+// Stable logical indices are independent of viewport and page-detail eviction.
+let logicalIndexById=new Map();
 let pageSlots=[],pageObserver=null;
 const MAX_DETAILED_PAGES=7;
 let pageUsageClock=0;
@@ -1184,6 +1186,7 @@ function rpc(method,payload={}){
 }
 worker.postMessage({id:0,method:'boot'});
 function setUiFromDoc(){
+ logicalIndexById=new Map(doc.items.map((item,index)=>[item.id,index]));
  $('docname').value=doc.name;$('direction').value=doc.direction;
  const oldFacing=$('editor-screen').dataset.writingDirection;
  $('editor-screen').dataset.writingDirection=doc.direction;
@@ -1571,9 +1574,9 @@ function placeCaretFromPoint(e,page){
 }
 function selectedRange(){
  if(!doc||!selectionAnchorId||!selectionFocusId)return null;
- const a=doc.items.findIndex(item=>item.id===selectionAnchorId);
- const b=doc.items.findIndex(item=>item.id===selectionFocusId);
- return a<0||b<0?null:{start:Math.min(a,b),end:Math.max(a,b)+1};
+ const a=logicalIndexById.get(selectionAnchorId);
+ const b=logicalIndexById.get(selectionFocusId);
+ return a===undefined||b===undefined?null:{start:Math.min(a,b),end:Math.max(a,b)+1};
 }
 function selectedItems(){
  const range=selectedRange();return range?doc.items.slice(range.start,range.end):[];
@@ -1585,7 +1588,7 @@ function clearSelection(){
  selectedId=null;selectionAnchorId=null;selectionFocusId=null;
 }
 function selectWord(id,extend=false){
- if(!doc?.items.some(item=>item.id===id))return;
+ if(!doc||!logicalIndexById.has(id))return;
  if(!extend||!selectionAnchorId)selectionAnchorId=id;
  selectionFocusId=id;
  selectedId=selectionAnchorId===selectionFocusId?id:null;
