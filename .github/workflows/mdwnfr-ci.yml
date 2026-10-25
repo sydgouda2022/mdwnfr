@@ -13,6 +13,12 @@ on:
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch:
+    inputs:
+      deploy_now:
+        description: 'Deploy the tested main branch to the public Cloudflare Workers PWA'
+        type: boolean
+        required: true
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -71,10 +77,10 @@ jobs:
           node qa/test_service_worker_cache.mjs
           node qa/test_pages_overview.mjs
       - name: Install Wrangler only after explicit production cutover
-        if: github.event_name != 'pull_request' && vars.CUTOVER_ENABLED == 'true'
+        if: github.event_name != 'pull_request' && (vars.CUTOVER_ENABLED == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_now))
         run: npm install --global wrangler@4.45.4
       - name: Deploy verified MdwNfr worker ONLY after explicit cutover
-        if: github.event_name != 'pull_request' && vars.CUTOVER_ENABLED == 'true'
+        if: github.event_name != 'pull_request' && (vars.CUTOVER_ENABLED == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_now))
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
