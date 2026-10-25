@@ -6,7 +6,7 @@ Python session owns both undo/redo stacks and authoritative edit validation.
 """
 from __future__ import annotations
 from copy import deepcopy
-from .document import transaction, validated_margins
+from .document import transaction, validated_margins, symbol_ids_for_word
 
 DOCUMENT_PROPERTIES = ('name', 'direction', 'surface', 'font_size_pt', 'papyrus_height_mm', 'margins_mm')
 
@@ -59,8 +59,10 @@ def recorded_transaction(document: dict, action: dict) -> dict:
         old = next(item for item in before if item['id'] == action['id'])
         updated = next(item for item in after if item['id'] == action['id'])
         undo = {'op':'replace_signs','id':action['id'],'signs':deepcopy(old['signs']),
+                'symbol_ids':symbol_ids_for_word(old),
                 'lexicon_ref':old.get('lexicon_ref')}
         redo = {'op':'replace_signs','id':action['id'],'signs':deepcopy(updated['signs']),
+                'symbol_ids':symbol_ids_for_word(updated),
                 'lexicon_ref':updated.get('lexicon_ref')}
     elif op == 'set_word_style':
         old = next(item for item in before if item['id'] == action['id'])

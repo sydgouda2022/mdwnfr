@@ -9,7 +9,7 @@ from __future__ import annotations
 from copy import deepcopy
 from functools import lru_cache
 from math import ceil
-from .document import SURFACES, assert_document, DocumentError, artwork_catalog, validated_margins
+from .document import SURFACES, assert_document, DocumentError, artwork_catalog, validated_margins, symbol_ids_for_word
 from .quadrat import compose, expand_internal, expand_after_word, expand_to_ink_bottom, _shape_ratio
 from .silhouette import free_sectors, free_word_starts, solid_object_mask, cartouche_object_mask, silhouettes_collide
 from .tables import typeset_table, paginate_table, TableError
@@ -261,6 +261,14 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
     return pages
 
 
+def _quadrat_object_payload(item: dict, quad) -> dict:
+    """Project persistent symbol IDs into a quadrat without moving its glyphs."""
+    payload=quad.payload()
+    for atom, uid in zip(payload['signs'],symbol_ids_for_word(item)):
+        atom['id']=uid
+    return payload
+
+
 def _layout(doc: dict, glyph_metrics: dict | None,
             previous: tuple[dict, dict, dict | None] | None,
             compact: bool = False) -> tuple[dict, dict]:
@@ -366,7 +374,8 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                 placements.append({'id': item['id'], 'type':'word',
                     'signs':item['signs'], 'color':item.get('color','#192433'),
                     'bold':item.get('bold',False), 'y':round(origin,5),
-                    'height':round(shape.height,5),'quadrat':shape.payload()})
+                    'height':round(shape.height,5),
+                    'quadrat':_quadrat_object_payload(item,shape)})
             if i == 0 or origin > pending[i-1][2] + pending[i-1][1].height + 1e-4:
                 runs.append([origin + min(g.y for g in q.signs),
                              origin + max(g.y+g.height for g in q.signs)])
@@ -710,7 +719,8 @@ def expand_compact_page(page: dict, document_by_id: dict[str, dict],
             placements.append({'id': ident, 'type': 'word', 'signs': signs,
                                'color': obj.get('color', '#192433'),
                                'bold': obj.get('bold', False),
-                               'y': y, 'height': height, 'quadrat': quadrat.payload(),
+                               'y': y, 'height': height,
+                                'quadrat': _quadrat_object_payload(obj,quadrat),
                                'x': column['x']})
         detailed_columns.append({**column, 'placements': placements})
     return {**page, 'columns': detailed_columns}

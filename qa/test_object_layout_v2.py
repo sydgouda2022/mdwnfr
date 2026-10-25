@@ -56,6 +56,50 @@ class ObjectSequenceLayout(unittest.TestCase):
         compact,_=incremental_layout_document(doc,compact=True)
         self.assertEqual(expand_compact_layout(compact,{o['id']:o for o in doc['items']}),second)
 
+    def test_each_quadrat_sign_has_persistent_identity(self):
+        from mdwnfr.document import transaction
+        from mdwnfr.history import recorded_transaction
+        doc=new_document('Symbol atoms')
+        first=word(['𓅓','𓏏','𓈖'])
+        doc['items']=[first]
+        ids=first['symbol_ids']
+        self.assertEqual(len(set(ids)),3)
+        before=layout_document(doc)
+        quad=next(pl['quadrat'] for page in before['pages']
+                  for col in page['columns'] for pl in col['placements']
+                  if pl['id']==first['id'])
+        self.assertEqual([g['id'] for g in quad['signs']],ids)
+        resized=deepcopy(doc)
+        resized['surface']='A3'
+        resized['revision']=1
+        after=layout_document(resized)
+        q2=next(pl['quadrat'] for page in after['pages']
+                for col in page['columns'] for pl in col['placements']
+                if pl['id']==first['id'])
+        self.assertEqual([g['id'] for g in q2['signs']],ids)
+        command={'op':'replace_signs','id':first['id'],
+                 'signs':['𓅓','𓇋','𓏏','𓈖']}
+        result=recorded_transaction(doc,command)
+        edited=result['document']['items'][0]
+        self.assertEqual([edited['symbol_ids'][i] for i in (0,2,3)],ids)
+        undone=transaction(result['document'],result['undo'])
+        self.assertEqual(undone['items'][0]['symbol_ids'],ids)
+
+    def test_legacy_words_keep_deterministic_atom_ids(self):
+        from mdwnfr.document import assert_document
+        doc=new_document('Legacy identity')
+        item=word(['𓅓','𓏏'])
+        del item['symbol_ids']
+        doc['items']=[item]
+        assert_document(doc)
+        first=layout_document(doc)
+        doc['surface']='A3'
+        second=layout_document(doc)
+        atoms=lambda snapshot: [g['id'] for pg in snapshot['pages']
+            for col in pg['columns'] for pl in col['placements']
+            if pl['type']=='word' for g in pl['quadrat']['signs']]
+        self.assertEqual(atoms(first),atoms(second))
+
     def test_dense_short_words_use_image_columns_below_visible_ink(self):
         from mdwnfr.layout import object_clearance_mm
         for direction in ('ltr','rtl'):

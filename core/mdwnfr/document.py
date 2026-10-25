@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any
 from copy import deepcopy
 from uuid import uuid4
+from difflib import SequenceMatcher
 from functools import lru_cache
 from pathlib import Path
 import json, math, re, base64, hashlib
@@ -204,10 +205,35 @@ def new_document(name: str = "Untitled", direction: str = "rtl",
 
 def word(signs: list[str], color: str = "#192433", bold: bool = False,
          lexicon_ref: str | None = None) -> dict:
+    glyphs=validate_signs(signs)
     return {
-        "id": fresh_id(), "type": "word", "signs": validate_signs(signs),
+        "id": fresh_id(), "type": "word", "signs":glyphs,
+        "symbol_ids":[fresh_id() for _ in glyphs],
         "color": color, "bold": bool(bold), "lexicon_ref": lexicon_ref
     }
+
+
+def symbol_ids_for_word(obj: dict) -> list[str]:
+    """Stable sign IDs, independent of page coordinates and typography.
+
+    Pre-v2 words derive symbol IDs from their existing persistent word ID;
+    document validation never mutates an existing source during migration.
+    """
+    if 'symbol_ids' in obj:
+        return list(obj['symbol_ids'])
+    return [hashlib.sha256((obj['id']+':'+str(i)).encode()).hexdigest()
+            for i in range(len(obj['signs']))]
+
+
+def reconcile_symbol_ids(existing: dict, signs: list[str]) -> list[str]:
+    """Preserve unchanged glyphs across word edits; identify new glyphs."""
+    glyphs=validate_signs(signs)
+    results=[fresh_id() for _ in glyphs]
+    identities=symbol_ids_for_word(existing)
+    for a,b,length in SequenceMatcher(a=existing['signs'],b=glyphs,
+                                       autojunk=False).get_matching_blocks():
+        results[b:b+length]=identities[a:a+length]
+    return results
 
 
 def validate_nested_position(obj: dict) -> None:
@@ -250,6 +276,7 @@ def replace_nested_word(existing: dict | None, signs: list[str]) -> dict:
     if existing is None:
         return word(glyphs)
     return {**existing, 'signs':glyphs,
+            'symbol_ids':reconcile_symbol_ids(existing,glyphs),
             'lexicon_ref':existing.get('lexicon_ref') if existing['signs']==glyphs else None}
 
 
@@ -264,6 +291,13 @@ def validate_word_record(obj: dict) -> None:
     ref=obj.get('lexicon_ref')
     if ref is not None and (not isinstance(ref,str) or len(ref)>512):
         raise DocumentError('Invalid word reference')
+    if 'symbol_ids' in obj:
+        atoms=obj['symbol_ids']
+        if not isinstance(atoms,list) or len(atoms)!=len(obj['signs']):
+            raise DocumentError('Every symbol must have one ID')
+        if len(set(atoms))!=len(atoms) or any(
+                not isinstance(uid,str) or not uid or len(uid)>128 for uid in atoms):
+            raise DocumentError('Invalid symbol identity')
 
 
 def assert_document(doc: dict) -> None:
@@ -297,6 +331,9 @@ def assert_document(doc: dict) -> None:
             ids.add(oid)
             if obj["type"] == "word":
                 validate_word_record(obj)
+                for symbol_id in symbol_ids_for_word(obj):
+                    if symbol_id in ids:raise DocumentError('Duplicate symbol ID')
+                    ids.add(symbol_id)
             elif obj["type"] == "clipart":
                 validate_clipart(obj)
             elif obj["type"] == "image":
@@ -329,6 +366,8 @@ def _copy_object_with_new_ids(obj: dict) -> dict:
         elif isinstance(value, dict):
             if value.get("type") in SUPPORTED or value.get('mode') in ('text','formula'):
                 value["id"] = fresh_id()
+            if value.get('type')=='word':
+                value['symbol_ids']=[fresh_id() for _ in value['signs']]
             for child in value.values(): replace_ids(child)
     replace_ids(item)
     return item
@@ -550,7 +589,18 @@ def transaction(document: dict, action: dict) -> dict:
         if op == "replace_signs":
             if items[idx]["type"] != "word":
                 raise DocumentError("Only word spellings can be replaced")
-            items[idx]["signs"] = validate_signs(action["signs"])
+            glyphs=validate_signs(action["signs"])
+            if 'symbol_ids' in action:
+                atom_ids=action['symbol_ids']
+                if (not isinstance(atom_ids,list) or len(atom_ids)!=len(glyphs)
+                        or len(set(atom_ids))!=len(atom_ids) or any(
+                            not isinstance(uid,str) or not uid or len(uid)>128 for uid in atom_ids)):
+                    raise DocumentError('Invalid replacement symbol identities')
+                atom_ids=atom_ids.copy()
+            else:
+                atom_ids=reconcile_symbol_ids(items[idx],glyphs)
+            items[idx]["signs"]=glyphs
+            items[idx]["symbol_ids"]=atom_ids
             items[idx]["lexicon_ref"] = action.get("lexicon_ref")
         elif op == "set_word_style":
             if items[idx]["type"] != "word":

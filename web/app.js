@@ -296,6 +296,7 @@ function drawQuadratInk(host,quadrat,color,bold){
  svg.append(layer);
  for(const glyph of quadrat.signs){
   const text=document.createElementNS(ns,'text');text.textContent=glyph.sign;
+   if(glyph.id)text.setAttribute('data-symbol-id',glyph.id);
   text.setAttribute('x',String(glyph.text_x));
   text.setAttribute('y',String(glyph.text_y));
   text.setAttribute('font-size',String(glyph.font_size));

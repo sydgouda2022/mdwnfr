@@ -26,6 +26,14 @@ def validate_cartouche(obj: dict, check_word=None) -> None:
         if check_word: check_word(item)
 
 
+def _tag_quadrat(q,item):
+    from .document import symbol_ids_for_word
+    payload=q.payload()
+    for glyph,uid in zip(payload['signs'],symbol_ids_for_word(item)):
+        glyph['id']=uid
+    return payload
+
+
 def typeset_cartouche(obj: dict, sign_width: float, available_width: float,
                       available_height: float, metrics: dict | None = None,
                       direction: str = 'rtl') -> dict:
@@ -89,14 +97,14 @@ def typeset_cartouche(obj: dict, sign_width: float, available_width: float,
             placements.append({'id':item['id'],'signs':item['signs'],'color':item.get('color','#192433'),
                'bold':item.get('bold',False),'x':round(cursor,5),
                'y':round(pad_cross+(inner_h-q.height)/2,5),'height':round(q.height,5),
-               'quadrat':q.payload()})
+               'quadrat':_tag_quadrat(q,item)})
             cursor+=q.width+gap
     else:
         cursor=pad_long
         for item,q in zip(words,quadrats):
             placements.append({'id':item['id'],'signs':item['signs'],'color':item.get('color','#192433'),
                'bold':item.get('bold',False),'x':round(pad_cross+(inner_w-q.width)/2,5),
-               'y':round(cursor,5),'height':round(q.height,5),'quadrat':q.payload()})
+               'y':round(cursor,5),'height':round(q.height,5),'quadrat':_tag_quadrat(q,item)})
             cursor+=q.height+gap
     cw=round(cw,5);ch=round(ch,5)
     # An Egyptian royal name-ring: oval-headed rope loop and a DISTINCT

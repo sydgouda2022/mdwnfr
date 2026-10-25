@@ -169,6 +169,7 @@ def typeset_table(obj:dict, sign_width:float, width_mm:float, usable_height:floa
                   metrics:dict|None=None, direction:str='rtl') -> dict:
     """One authoritative nested compositor, using the normal word quadrats."""
     from .quadrat import compose, _shape_ratio
+    from .document import symbol_ids_for_word
     values=evaluate_table(obj)
     ncols=len(obj['rows'][0]); nrows=len(obj['rows'])
     padding=max(1.0,sign_width*.12)
@@ -180,19 +181,26 @@ def typeset_table(obj:dict, sign_width:float, width_mm:float, usable_height:floa
         for ci,entry in enumerate(row):
             words=[];formula_error=None
             if entry['mode']=='text':
-                words=[(it['id'],it['signs'],it.get('color','#192433'),it.get('bold',False))
-                       for it in entry['items']]
+                words=[(it['id'],it['signs'],it.get('color','#192433'),it.get('bold',False),
+                        symbol_ids_for_word(it)) for it in entry['items']]
             else:
                 value=values[(ri,ci)]
                 try: signs=list(egyptian_number(value))
                 except (TableError,TypeError) as exc:
                     signs=[];formula_error=str(exc)
-                if signs:words=[(entry['id'], signs, '#192433',False)]
+                if signs:
+                    import hashlib
+                    atoms=[hashlib.sha256((entry['id']+':formula:'+str(i)).encode()).hexdigest()
+                           for i in range(len(signs))]
+                    words=[(entry['id'], signs, '#192433',False,atoms)]
             advance=padding; glyphs=[]
-            for oid,signs,color,bold in words:
+            for oid,signs,color,bold,atom_ids in words:
                 ratios={s:_shape_ratio(s,metrics or {}) for s in signs}
                 q=compose(signs,each-2*padding,ratios)
-                glyphs.append({'id':oid,'x':padding,'y':advance,'height':q.height,'quadrat':q.payload(),
+                quad=q.payload()
+                for glyph,uid in zip(quad['signs'],atom_ids):
+                    glyph['id']=uid
+                glyphs.append({'id':oid,'x':padding,'y':advance,'height':q.height,'quadrat':quad,
                                'color':color,'bold':bold})
                 advance+=q.height + padding*.5
             row_height=max(row_height,advance+padding*.5)
