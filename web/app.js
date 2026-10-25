@@ -1104,7 +1104,7 @@ function showEditor(){
  document.title='MdwNfr — '+doc.name;
 }
 function setLibraryBusy(value){
- libraryBusy=value;$('create-document').disabled=value||!ready;
+ libraryBusy=value;$('create-document').disabled=value||!ready;$('import-document').disabled=value||!ready;
  for(const btn of document.querySelectorAll('.document-grid button')){
   const needsEngine=btn.classList.contains('document-open')||btn.classList.contains('rename-action');
   btn.disabled=value||(needsEngine&&!ready);
@@ -2213,6 +2213,39 @@ async function showOfflineReadiness(){
  }
 }
 if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('controllerchange',()=>{void showOfflineReadiness();});
+
+// Explicit portable backups. Never trust an imported filename, schema, or embedded ID.
+async function exportDocumentBackup(id){
+ try{
+  const item=await load(id);
+  if(!item)throw Error('Document missing');
+  const bytes=new Blob([JSON.stringify({format:'mdwnfr-backup-v1',document:item},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(bytes),anchor=document.createElement('a');
+  anchor.href=url;anchor.download='mdwnfr-'+id+'.json';anchor.click();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+ }catch(e){showLibraryError('Backup failed: '+e.message);}
+}
+$('import-document').onclick=()=>$('import-file').click();
+$('import-file').addEventListener('change',async event=>{
+ const file=event.target.files?.[0];event.target.value='';
+ if(!file)return;
+ if(file.size>90*1024*1024){showLibraryError('Backup exceeds 90 MiB');return;}
+ setLibraryBusy(true);
+ try{
+  const package_=JSON.parse(await file.text());
+  if(package_?.format!=='mdwnfr-backup-v1'||!package_.document)
+   throw Error('Unsupported MdwNfr backup format');
+  const original=package_.document;
+  await rpc('validate',{document:original});
+  // Never overwrite a current document: allocate a fresh ID and revision.
+  const replacement={...original,id:crypto.randomUUID().replaceAll('-',''),revision:0,
+    name:original.name+' (imported)'};
+  await rpc('validate',{document:replacement});
+  await save(replacement);await renderDocList();
+ }catch(e){showLibraryError('Import failed: '+e.message);}
+ finally{setLibraryBusy(false);}
+});
+
 // Library appears immediately, even if the Python engine is still loading.
 showLibrary();
 showOfflineReadiness();

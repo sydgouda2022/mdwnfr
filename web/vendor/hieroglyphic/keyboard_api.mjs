@@ -7,7 +7,7 @@ import {SIGN_CATALOG} from './keyboard_catalog.js';
 import {prepareKeyboardIndex,predictKeyboard} from './keyboard_search.mjs';
 import {validEgyptianWord,ensureLexiconImpl,idbStore} from './lexicon_install.mjs';
 
-export const API_VERSION='2.0.0';
+export const API_VERSION='2.0.1';
 export const KEYBOARD_GROUPS=Object.freeze(['uni','bi','tri']);
 const GROUPS=Object.freeze({uni:'single',bi:'dual',tri:'triple',
  uniliteral:'single',biliteral:'dual',triliteral:'triple'});
@@ -91,12 +91,16 @@ export async function createHieroglyphicKeyboard({
   expectedSha256,fetcher,online,refresh,timeoutMs
  };
  const build=async()=>{
-  const storage=store||idbStore('hieroglyphic-keyboard-v2:'+storageNamespace);
+  // Pin-specific storage prevents competing releases from overwriting one another.
+  const storage=store||idbStore('hieroglyphic-keyboard-v2:'+storageNamespace+
+   (expectedSha256?':'+expectedSha256:''));
   const installed=await ensureLexiconImpl({...config,store:storage});
   const engine=createKeyboardFromData({lexicon:installed.payload,manifest:installed.manifest});
   return Object.freeze({...engine,info:Object.freeze({...engine.info,status:installed.status})});
  };
- if(store||refresh)return build(); // injected stores have independent ownership
+ // Injected stores or fetchers have caller-specific identity; never coalesce them.
+ // A refresh must not share an in-flight ordinary cached read.
+ if(store||refresh||fetcher!==globalThis.fetch)return build();
  const key=JSON.stringify([storageNamespace,config.manifestUrl,config.payloadUrl,
   expectedSha256,online,timeoutMs]);
  if(loadInFlight.has(key))return loadInFlight.get(key);

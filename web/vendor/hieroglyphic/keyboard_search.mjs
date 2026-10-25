@@ -3,6 +3,7 @@
  * Dataset entries are typed records. Legacy array records are deliberately
  * rejected because they cannot preserve verifiable provenance.
  */
+import {validEgyptianWord} from './lexicon_install.mjs';
 const cmp=(a,b)=>a<b?-1:a>b?1:0;
 const TEXT_SOURCES=new Set(['TLA-LE19','AES-LATE-CURATED','TLA-LE19+AES-LATE-CURATED']);
 const MODEL_SOURCE='RAMSES-WORD-MODEL-2023';
@@ -81,8 +82,8 @@ export function predictKeyboard(index,raw,{limit=4,learned={},previous=''}={}){
  // Personal strings are never promoted to corpus attestations.
  if(learned&&typeof learned==='object')for(const [key,n] of Object.entries(learned)){
   if(!key.startsWith('egy:')||!(Number(n)>0))continue;
-  const text=key.slice(4);
-  if(!text||text===lookup||found.has(text)||!keyboardKey(text).startsWith(lookup))continue;
+  const text=keyboardKey(key.slice(4));
+  if(!validEgyptianWord(text)||text===lookup||found.has(text)||!text.startsWith(lookup))continue;
   found.set(text,{row:{text,key:text,id:null,source:'PERSONAL',
    sourceId:null,sourceRef:null,frequency:0,attested:false,
    lexicalIdentityVerified:false,lemma:null},refs:[]});

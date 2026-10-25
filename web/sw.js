@@ -24,6 +24,8 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
   const publication=await response.json();
   if(publication.format!=='mdwnfr-offline-publication-v1'||publication.complete!==true||!Array.isArray(publication.assets))
     throw Error('Unsupported offline publication');
+  // Never delete a previously installed cache if a repeated installation fails.
+  const previouslyInstalled=await caches.has(CACHE);
   const cache=await caches.open(CACHE);
   try {
     // Serial verification bounds transient memory, including on smaller iPhones.
@@ -32,7 +34,7 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
     await cache.put(MANIFEST,new Response(JSON.stringify(publication),{
       headers:{'Content-Type':'application/json'}}));
     await self.skipWaiting();
-  }catch(error){await caches.delete(CACHE);throw error;}
+  }catch(error){if(!previouslyInstalled)await caches.delete(CACHE);throw error;}
 })()));
 
 self.addEventListener('activate',event=>event.waitUntil((async()=>{

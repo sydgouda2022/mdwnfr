@@ -71,6 +71,9 @@ jobs:
           python tools/build_static.py
           node qa/test_service_worker_cache.mjs
           node qa/test_pages_overview.mjs
+          node --test qa/test_hieroglyph_facing.mjs
+          node tools/test_recovery_storage.mjs
+          node tools/test_layout_detail_guard.mjs
       - name: Install Wrangler only after explicit production cutover
         if: github.event_name != 'pull_request' && vars.CUTOVER_ENABLED == 'true'
         run: npm install --global wrangler@4
