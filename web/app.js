@@ -1216,6 +1216,7 @@ async function openDocument(id){
   if(entry?.items?.some(item=>item.type==='clipart'))await ensureArtworkCatalog();
   if(!entry)throw new Error('Document not found. It may have been deleted.');
   await rpc('session_open',{document:entry});
+  layoutRestarts=0;
   persistedRevision=entry.revision;resetLayoutSynchronization();repairedDetailRevisions.clear();doc=entry;selectedTableCell=null;selectedId=null;selectionAnchorId=null;selectionFocusId=null;editingId=null;buffer=[];canUndo=false;canRedo=false;layoutCache=null;
   caretIndex=doc.items.length;
   showEditor();refreshZoomOptions();setUiFromDoc();drawKeys();renderComposer();
@@ -2219,7 +2220,9 @@ async function showOfflineReadiness(){
   if(!response.ok)throw new Error('runtime manifest not found');
   const state=await response.json();
   notice.hidden=state.offline_ready===true && Boolean(navigator.serviceWorker?.controller);
-  if(!notice.hidden)notice.textContent='Offline editing is not installed: local Pyodide and/or the hieroglyph font are missing. Documents remain device-local, but starting the Python editor may require Internet access.';
+  if(!notice.hidden)notice.textContent=state.offline_ready===true
+    ?'Offline files are packaged, but this tab has not yet verified an installed offline service worker.'
+    :'Offline editing is not installed: local Pyodide and/or the hieroglyph font are missing. Documents remain device-local, but starting the Python editor may require Internet access.';
  }catch(_){
   notice.hidden=false;
   notice.textContent='Could not verify offline editor readiness. Keep a separate document backup before relying on offline use.';

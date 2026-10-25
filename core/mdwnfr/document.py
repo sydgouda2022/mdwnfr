@@ -266,6 +266,9 @@ def assert_document(doc: dict) -> None:
     if doc.get("schema") != 1 or doc.get("direction") not in ("rtl", "ltr"):
         raise DocumentError("Invalid document schema")
     valid_name(doc.get("name"))
+    for stamp in ('created_at','updated_at'):
+        if stamp in doc and (not isinstance(doc[stamp],str) or len(doc[stamp])>80):
+            raise DocumentError('Invalid document timestamp: '+stamp)
     validated_margins(doc)
     ids: set[str] = set()
     def check_stream(items: list) -> None:
