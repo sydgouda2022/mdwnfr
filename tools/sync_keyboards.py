@@ -99,6 +99,8 @@ def stage(name, sha):
         if language != "egy":
             raise ValueError("Coptic is not a MdwNfr dependency")
         files["web/keyboard_catalog.js"] = get("src/keyboard_catalog.js")
+        for module in ("keyboard_api.mjs","keyboard_search.mjs","keyboard_catalog.js","lexicon_install.mjs"):
+            files[f"web/vendor/hieroglyphic/{module}"] = get(f"src/{module}")
         files["core/mdwnfr/data/lexicon.json"] = catalog
         files["data/lexicon.sqlite3"] = get("release/lexicon.sqlite3")
     return manifest, raw_manifest, catalog, files

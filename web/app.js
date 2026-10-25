@@ -47,6 +47,27 @@ function resetLayoutSynchronization(){
 const emptyProfile=()=>({id:'profile',global_choices:{},document_choices:{},personal_entries:[]});
 let writingProfile=emptyProfile(),profileSaveQueue=Promise.resolve();
 let lexiconMeta=null;
+let keyboardWorker=null,keyboardRequest=0;
+const keyboardPending=new Map();
+function keyboardSuggest(offset=0,limit=8){
+ if(!keyboardWorker){
+  keyboardWorker=new Worker('/keyboard-prediction-worker.mjs',{type:'module'});
+  keyboardWorker.onmessage=({data})=>{
+   const request=keyboardPending.get(data.id);if(!request)return;
+   keyboardPending.delete(data.id);data.ok?request.resolve(data):request.reject(new Error(data.error));
+  };
+  keyboardWorker.onerror=event=>{
+   for(const request of keyboardPending.values())request.reject(new Error(event.message||'Keyboard worker failed'));
+   keyboardPending.clear();keyboardWorker.terminate();keyboardWorker=null;
+  };
+ }
+ return new Promise((resolve,reject)=>{
+  const id=++keyboardRequest;keyboardPending.set(id,{resolve,reject});
+  keyboardWorker.postMessage({id,prefix:buffer.slice(),offset,limit,
+   global_choices:writingProfile.global_choices,document_choices:docChoices(),
+   personal_entries:writingProfile.personal_entries});
+ });
+}
 let expanded=false, expandedOffset=0, expandedLoading=false, expandedGeneration=0;
 function docChoices(){return doc?.id?(writingProfile.document_choices[doc.id]||{}):{};}
 function queueProfileSave(){
@@ -1183,8 +1204,8 @@ async function initialize(){
  try {
   writingProfile={...emptyProfile(),...(await loadProfile()||{})};
   if(!Array.isArray(writingProfile.personal_entries)) writingProfile.personal_entries=[];
-  const info=await rpc('lexicon_info');
-  lexiconMeta=info.lexicon;
+  // Keyboard prediction loads lazily in its dedicated, independent API worker.
+  lexiconMeta=null;
   // This verified JSON is the same source the Python worker indexes.
   // The master SQLite lives in CI; it is NOT a missing PWA requirement.
   const notice=$('lexicon-notice');
@@ -1816,12 +1837,7 @@ function drawKeys(){
 
 function typeSign(sign){if(commitPending)return;buffer.push(sign);renderComposer();}
 let predVersion=0,previewTimer=null,commitPending=false;
-function predictionRequest(offset=0,limit=8){
- return {prefix:buffer,offset,limit,
-   personal_entries:writingProfile.personal_entries,
-   global_choices:writingProfile.global_choices,
-   document_choices:docChoices()};
-}
+// Prediction requests are handled by the headless keyboard worker.
 function renderComposer(){
  const table=selectedTable();
  $('composer-title').textContent=table&&selectedTableCell?.tableId===table.id
@@ -1858,7 +1874,7 @@ function renderComposer(){
    }).catch(error=>{if(current===predVersion)status('Word preview: '+error.message,true);});
   },90);
  }
- rpc('suggest',predictionRequest(0,8)).then(answer=>{
+ keyboardSuggest(0,8).then(answer=>{
   if(current!==predVersion)return;
   showSuggestions(answer.suggestions);
   $('expand-predictions').textContent='All suggestions ('+answer.total+')';
@@ -1886,7 +1902,7 @@ async function loadExpanded(reset){
  const offset=reset?0:expandedOffset;
  expandedLoading=true;$('more-predictions').disabled=true;
  try{
-  const answer=await rpc('suggest',predictionRequest(offset,40));
+  const answer=await keyboardSuggest(offset,40);
   if(current!==predVersion||epoch!==expandedGeneration||!expanded)return;
   const wrap=$('expanded-results');if(reset)wrap.replaceChildren();
   for(const candidate of answer.suggestions)wrap.append(suggestionButton(candidate));

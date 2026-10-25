@@ -1,4 +1,3 @@
-import {ensureLexicon} from '/lexicon-install.mjs';
 /* Dedicated browser adapter. ALL content/geometry decisions remain Python. */
 const LAYOUT_ONLY = new URL(self.location.href).searchParams.get('role') === 'layout';
 const LOCAL = '/vendor/pyodide/';
@@ -38,13 +37,7 @@ async function boot() {
     const contour=await fetch('/core/mdwnfr/data/artwork_silhouettes.json',{cache:'force-cache'});
     if(!contour.ok)throw new Error('Installed artwork silhouettes not available');
     pyodide.FS.writeFile('/home/pyodide/mdwnfr/data/artwork_silhouettes.json',await contour.text());
-    // Layout worker does not load the lexicon or personal vocabulary.
-    if (!LAYOUT_ONLY) {
-    // First-run verified installation: local IndexedDB -> integrity check -> atomic repair.
-    // No source corpora at runtime. Never touch document/user profile stores.
-    const installed=await ensureLexicon();
-    pyodide.FS.writeFile('/home/pyodide/mdwnfr/data/lexicon.json',new Uint8Array(installed.bytes));
-    }
+    // Dictionary prediction runs in the independent headless keyboard worker.
     pyodide.runPython("import sys;sys.path.insert(0, '/home/pyodide')");
     handler=pyodide.runPython('from mdwnfr.api import handle_json; handle_json');
     initialized=true;
