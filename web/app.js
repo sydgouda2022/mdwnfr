@@ -18,6 +18,7 @@ const worker=new Worker('/worker.js',{type:'module'});
 // Separate Python layout worker: lengthy reflow never blocks document edits.
 // Created lazily by the browser on first layout job; it loads no lexicon.
 let layoutWorker=null;
+let layoutRestarts=0;
 function getLayoutWorker(){
  if(!layoutWorker){
   layoutWorker=new Worker('/worker.js?role=layout',{type:'module'});
@@ -1111,6 +1112,13 @@ function handleLayoutError(e){
  status('Layout worker error: '+e.message,true);
  for(const {reject} of layoutPending.values())reject(new Error(e.message));
  layoutPending.clear();
+ layoutWorker?.terminate();
+ layoutWorker=null;
+ resetLayoutSynchronization();
+ if(layoutRestarts++<2&&doc&&!editorScreen.hidden){
+  // Restart from authoritative editor state, never a stale layout worker.
+  void reflow();
+ }
 }
 function layoutRpc(method,payload){
  return new Promise((resolve,reject)=>{
@@ -2157,7 +2165,14 @@ async function deleteDocument(id){
  const decision=await modal({title:'Delete document?',description:'“'+entry.name+'” will be permanently deleted from this device. This action cannot be undone.',action:'Delete',destructive:true});
  if(!decision.confirmed)return;
  setLibraryBusy(true);showLibraryError();
- try{await remove(id);await renderDocList();}
+ try{
+   await remove(id);
+   if(writingProfile.document_choices?.[id]){
+    delete writingProfile.document_choices[id];
+    await queueProfileSave();
+   }
+   await renderDocList();
+  }
  catch(e){showLibraryError('Could not delete document: '+e.message);}
  finally{setLibraryBusy(false);}
 }
@@ -2203,7 +2218,7 @@ async function showOfflineReadiness(){
   const response=await fetch('/runtime-status.json',{cache:'no-store'});
   if(!response.ok)throw new Error('runtime manifest not found');
   const state=await response.json();
-  notice.hidden=state.offline_ready===true;
+  notice.hidden=state.offline_ready===true && Boolean(navigator.serviceWorker?.controller);
   if(!notice.hidden)notice.textContent='Offline editing is not installed: local Pyodide and/or the hieroglyph font are missing. Documents remain device-local, but starting the Python editor may require Internet access.';
  }catch(_){
   notice.hidden=false;

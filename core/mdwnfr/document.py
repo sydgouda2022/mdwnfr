@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any
 from copy import deepcopy
 from uuid import uuid4
+from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 import json, math, re, base64, hashlib
@@ -198,7 +199,9 @@ def new_document(name: str = "Untitled", direction: str = "rtl",
     return {
         "schema": 1, "id": fresh_id(), "revision": 0, "name": valid_name(name),
         "direction": direction, "surface": surface, "font_size_pt": float(font_size_pt),
-        "papyrus_height_mm": 300.0, "margins_mm": DEFAULT_MARGINS_MM.copy(), "items": []
+        "papyrus_height_mm": 300.0, "margins_mm": DEFAULT_MARGINS_MM.copy(), "items": [],
+        "created_at":datetime.now(timezone.utc).isoformat(),
+        "updated_at":datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -416,6 +419,9 @@ def transaction(document: dict, action: dict) -> dict:
                 raise DocumentError('Invalid cartouche word list')
             previous=obj['items']
             obj['items']=[{**word(validate_signs(signs)),
+                **({'color':previous[j].get('color','#192433'),
+                    'bold':previous[j].get('bold',False)}
+                   if j<len(previous) else {}),
                 'id': previous[j]['id'] if j<len(previous) else fresh_id()}
                 for j,signs in enumerate(requested)]
         validate_cartouche(obj,validate_cartouche_word)
@@ -446,7 +452,11 @@ def transaction(document: dict, action: dict) -> dict:
                     # Keep an existing word ID when replacing the same cell slot.
                     before=previous.get('items',[])
                     ident=before[i]['id'] if i<len(before) else fresh_id()
-                    prepared.append({**word(glyphs),'id':ident})
+                    prepared.append({**word(glyphs),
+                        **({'color':before[i].get('color','#192433'),
+                            'bold':before[i].get('bold',False)}
+                           if i<len(before) else {}),
+                        'id':ident})
                 rows[r][c]={'id':previous['id'],'mode':'text','items':prepared}
             elif mode=='formula':
                 rows[r][c]={'id':previous['id'],'mode':'formula','formula':action.get('formula')}
@@ -578,5 +588,6 @@ def transaction(document: dict, action: dict) -> dict:
     else:
         raise DocumentError(f"Unknown command: {op}")
     result["revision"] += 1
+    result["updated_at"]=datetime.now(timezone.utc).isoformat()
     assert_document(result)
     return result

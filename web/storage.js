@@ -37,10 +37,14 @@ function pruneSnapshotMetadata(records,now,protectedKey=null){
 }
 
 let connection=null;
+const wordCount=items=>(items||[]).reduce((n,item)=>n+
+  (item.type==='word'?1:item.type==='cartouche'?wordCount(item.items):
+    item.type==='table'?item.rows.reduce((sum,row)=>sum+row.reduce(
+      (sub,cell)=>sub+(cell.mode==='text'?wordCount(cell.items):0),0),0):0),0);
 const summary=doc=>({id:doc.id,name:doc.name,revision:doc.revision,
   surface:doc.surface,direction:doc.direction,
   item_count:Array.isArray(doc.items)?doc.items.length:0,
-  word_count:Array.isArray(doc.items)?doc.items.filter(item=>item.type==='word').length:0,
+  word_count:wordCount(doc.items),
   created_at:doc.created_at||'',updated_at:doc.updated_at||''});
 function database(){
  if(connection)return connection;
@@ -58,6 +62,7 @@ function database(){
   req.onsuccess=()=>{const db=req.result;
    db.onversionchange=()=>{db.close();connection=null;};resolve(db);};
   req.onerror=()=>{connection=null;reject(req.error);};
+   req.onblocked=()=>{connection=null;reject(new Error('Document database is blocked by another tab'));};
  });
  return connection;
 }
