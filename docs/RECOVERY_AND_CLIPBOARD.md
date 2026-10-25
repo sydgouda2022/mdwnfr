@@ -1,15 +1,21 @@
-# Recovery, backups and clipboard
+# Document recovery and clipboard contract
 
-MdwNfr stores documents locally in IndexedDB. It does not sync or upload them. Export documents regularly from the Documents library; local history alone is **not** an independent backup.
+MdwNfr stores documents locally in IndexedDB, not in a remote account. Export `.mdwnfr.json` backups to another device or storage location; on-device history is not an independent backup.
 
-## Multiple tabs
+## Revision safety
 
-Saves, renames, deletions and restores compare the exact stored document revision within an IndexedDB readwrite transaction. On conflict the newer saved copy is preserved. If an editor cannot save when navigating back to the library, it offers a separate JSON recovery download with a new document ID. Do not discard unsaved edits before exporting a copy.
+Document saves, renames, deletes, and restores compare exact persisted revisions inside IndexedDB readwrite transactions. Stale tabs cannot overwrite newer committed content. Spelling preferences and My Words instead use atomic intent-based profile updates so a second tab cannot erase a first tab's new choices. Preference maps retain the highest-weighted 2048 spellings; My Words supports up to 5000 entries.
 
-## Snapshot size
+Uncommitted editor changes trigger a before-unload warning, and a failed autosave exposes an **Export unsaved** button. Use it before closing or reloading. The exported recovery copy receives a fresh document ID and can be imported without overwriting the saved original.
 
-Automatic snapshots are thinned by age, count (48) and an approximately 40 MiB per-document budget; a large automatic snapshot may be skipped. On explicit history restoration, MdwNfr first writes a **full** pre-restore rollback checkpoint even when the document exceeds that automatic budget. The most recent pre-restore checkpoint is protected from routine pruning. This is bounded to one exceptional oversized checkpoint. The browser's real IndexedDB quota still applies: if the transaction fails, the existing document remains unchanged. Export a separate file for large illustrated documents.
+## History for large documents
+
+Normal automatic history has a 40 MiB budget and 48-point aging policy. Documents larger than the budget, up to a 120 MiB upper bound, receive **best-effort** automatic oversized checkpoints in a separate transaction. A backup-quota failure cannot cancel an otherwise valid document save. Only the latest oversized auto checkpoint is retained. A history restore always attempts a full reversible pre-restore checkpoint, regardless of the automatic budget.
+
+No browser storage technique can promise recovery after full quota exhaustion, cleared site data, device loss, or crash before a checkpoint completes. Large illustrated documents should be exported regularly.
 
 ## Clipboard provenance
 
-Native paste events and successful system clipboard reads are treated as external **plain native Egyptian Unicode**, even if the text matches an earlier internal copy. Rich MdwNfr objects can be pasted only when the browser denies system clipboard access and the editor deliberately uses its own session clipboard. The browser may allow local-only cut/copy even when its system clipboard permissions are denied; the app reports that restriction.
+MdwNfr uses Unicode plain text for external programs and its private rich-fragment format when the browser supports clipboard custom data. Native clipboard events use `application/x-mdwnfr-fragment+json`; the asynchronous Clipboard API uses the browser's `web ` custom-format prefix. Unknown clipboard content is treated as plain Unicode, and matching text alone never triggers a hidden rich-object paste. Browser permission denial can fall back to the current tab's internal clipboard; the app reports when content is only available inside MdwNfr.
+
+Imported documents and rich clipboard objects are validated by the Python core. Object IDs are regenerated on paste.

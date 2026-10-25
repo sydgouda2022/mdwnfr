@@ -34,3 +34,14 @@ Document library order reflects successful IndexedDB save times. Keyboard Enter/
 ## Packaged browser assets
 
 The PWA and source now contain a single pinned prediction implementation: the independent headless keyboard API with one browser lexicon. Redundant Python predictor, duplicate database, standalone legacy sign catalog, and legacy lexicon installer have been removed from MdwNfr. Independent keyboard development and dataset compilation belong in `sydgouda2022/hieroglyphic-keyboard`. The verified editor still runs entirely offline after its complete runtime installs. See `docs/RECOVERY_AND_CLIPBOARD.md` for data-safety limits.
+
+
+## Reliability and responsive editing
+
+- Autosave uses persisted-revision checks. Failed saves expose a recovery export and uncommitted changes warn on tab close.
+- My Words can be added, browsed, edited, and deleted. Profile updates are serialized by IndexedDB across tabs.
+- Table-cell and cartouche formatting is undoable through Python-validated replace operations; replacing nested text retains existing word styles.
+- Pages show bounded miniatures derived from actual Python layout coordinates. Fully completed, word-only pages ahead of illustrated edits can be reused safely; artwork-influenced pages still recompute.
+- The isolated Pyodide layout worker is started on demand and released after 45 seconds idle. Returning to Documents releases it immediately. Detail requests restore authoritative layout when needed.
+- The inspector exposes page margins, while its sole bundled font is displayed as a label rather than a nonfunctional menu.
+- CI verifies native formatting, recovery transactions, pinned keyboard source, Chromium/WebKit touch workflows and offline startup. Production cutover remains explicitly gated.

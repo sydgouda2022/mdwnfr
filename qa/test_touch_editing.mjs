@@ -125,6 +125,28 @@ for(const engineName of engines){
     }).length);
     assert.equal(blueAfterNativePaste,2,'Native clipboard provenance must not paste a styled internal object');
     await shortcut('Z');await count(6);
+    // A native rich MdwNfr fragment DOES preserve styles, but must receive
+    // fresh persistent object identities rather than trusting clipboard IDs.
+    await page.evaluate(()=>{
+     const transfer=new DataTransfer();
+     transfer.setData('text/plain','𓅓');
+     transfer.setData('application/x-mdwnfr-fragment+json',JSON.stringify({
+      format:'mdwnfr-fragment-v1',objects:[{type:'word',id:'external-object-id',
+       signs:['𓅓'],color:'#ac2533',bold:true,lexicon_ref:null}]
+     }));
+     document.dispatchEvent(new ClipboardEvent('paste',{clipboardData:transfer,bubbles:true,cancelable:true}));
+    });
+    await count(7);
+    const richPaste=await page.locator('.word').evaluateAll(els=>({
+     ids:els.map(el=>el.dataset.id),
+     red:els.filter(el=>{
+      const t=el.querySelector('.glyph-ink-svg text');
+      return t&&getComputedStyle(t).fill==='rgb(172, 37, 51)';
+     }).length
+    }));
+    assert.equal(richPaste.ids.includes('external-object-id'),false,'Clipboard object IDs must be replaced');
+    assert.equal(richPaste.red,1,'Private native clipboard format must preserve formatting');
+    await shortcut('Z');await count(6);
     // On a blank insertion point the touch menu still offers Paste and Select All.
     await hold(page.locator('.paper'));
     assert.equal(await page.locator('#cut-selection').isEnabled(),false);
