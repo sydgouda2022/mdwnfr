@@ -14,8 +14,12 @@ copytree(ROOT/'web',DEST,ignore=ignore_patterns('__pycache__','*.pyc','.DS_Store
 copytree(ROOT/'core',DEST/'core',ignore=ignore_patterns('__pycache__','*.pyc','.DS_Store'))
 # Startup can detect when a newly activated worker owns a different HTML schema.
 # Hash source bytes before inserting the marker, avoiding a circular fingerprint.
-release_files=('index.html','boot.mjs','app.js','style.css','editor_controls.mjs','core/mdwnfr/document.py')
-release=hashlib.sha256(b'\0'.join((DEST/name).read_bytes() for name in release_files)).hexdigest()[:16]
+# Include every shipped source module and keyboard API, not just editor.js.
+release_files=sorted(p for p in DEST.rglob('*') if p.is_file() and
+                     p.relative_to(DEST).as_posix() not in ('sw.js','index.html','offline-assets.json'))
+release=hashlib.sha256(b'\0'.join(
+    p.relative_to(DEST).as_posix().encode()+b'\0'+p.read_bytes()
+    for p in release_files)).hexdigest()[:16]
 index=DEST/'index.html'
 index.write_text(index.read_text(encoding='utf-8').replace(
     'name="mdwnfr-build" content="development"',
@@ -83,7 +87,11 @@ print('Offline publication:', 'COMPLETE' if publication['complete'] else 'SHELL 
 
 # Content-addressed service-worker cache for repeatable IDE rebuilds.
 import re
-cache_fingerprint=hashlib.sha256((DEST/'offline-assets.json').read_bytes()).hexdigest()[:16]
+# Service-worker-only upgrades need an independent cache name, so a failed
+# install can never delete the preceding working release.
+cache_fingerprint=hashlib.sha256(
+    (DEST/'offline-assets.json').read_bytes()+b'\0'+(DEST/'sw.js').read_bytes()
+).hexdigest()[:16]
 sw=DEST/'sw.js'
 sw_source=sw.read_text(encoding='utf-8')
 sw_source=re.sub(r"const CACHE = 'mdwnfr-offline-[^']+';",

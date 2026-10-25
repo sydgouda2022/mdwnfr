@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-way, SHA-256-checked importer of the two independent keyboard libraries.
+"""One-way importer of standalone keyboard API and its verified release data.
 
 Run locally or hourly from Actions. Does not update saved user documents,
 appointments, learning, or service-worker databases. Every dependency is
@@ -55,8 +55,12 @@ def verify():
         if locked["manifest_sha256"] != digest(manifest) or locked["lexicon_sha256"] != digest(catalog):
             raise ValueError(f"Untracked {name} release modification")
     if "coptic-keyboard" not in j["dependencies"]:
-        if (ROOT / "core/mdwnfr/data/lexicon.json").read_bytes() != (ROOT / "web/lexicon/lexicon.json").read_bytes():
-            raise ValueError("MdwNfr browser and Python catalog diverged")
+        vendor = ROOT / "web/vendor/hieroglyphic"
+        for name in ("keyboard_api.mjs", "keyboard_search.mjs",
+                     "_generic_search.mjs", "lexicon_install.mjs",
+                     "keyboard_catalog.js"):
+            if not (vendor / name).is_file():
+                raise ValueError("Missing standalone Hieroglyphic Keyboard API: " + name)
     print("Keyboard dependencies match exact locked hashes.")
 
 def stage(name, sha):
@@ -98,9 +102,11 @@ def stage(name, sha):
     else:
         if language != "egy":
             raise ValueError("Coptic is not a MdwNfr dependency")
-        files["web/keyboard_catalog.js"] = get("src/keyboard_catalog.js")
-        files["core/mdwnfr/data/lexicon.json"] = catalog
-        files["data/lexicon.sqlite3"] = get("release/lexicon.sqlite3")
+        for module in ("keyboard_api.mjs", "keyboard_search.mjs",
+                       "_generic_search.mjs", "lexicon_install.mjs",
+                       "keyboard_catalog.js"):
+            files["web/vendor/hieroglyphic/" + module] = get("src/" + module)
+        # MdwNfr never imports a second Python dictionary or SQLite authority.
     return manifest, raw_manifest, catalog, files
 
 def update():
