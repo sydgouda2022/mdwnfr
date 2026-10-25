@@ -1855,7 +1855,7 @@ function renderComposer(){
  $('suggestions').hidden=!buffer.length;
  $('save-personal-word').disabled=!buffer.length;
  $('expand-predictions').disabled=!buffer.length;
- $('expand-predictions').textContent='All suggestions';
+ $('expand-predictions').textContent='More suggestions';
  expanded=false;expandedOffset=0;expandedLoading=false;expandedGeneration++;
  $('expanded-results').replaceChildren();$('more-predictions').hidden=true;
  $('expanded-predictions').hidden=true;
@@ -1881,7 +1881,7 @@ function renderComposer(){
  keyboardSuggest(0,8).then(answer=>{
   if(current!==predVersion)return;
   showSuggestions(answer.suggestions);
-  $('expand-predictions').textContent='All suggestions ('+answer.total+')';
+  $('expand-predictions').textContent='Top suggestions ('+answer.total+' max)'';
  }).catch(e=>{if(current===predVersion)status('Prediction: '+e.message,true);});
 }
 function suggestionButton(candidate){

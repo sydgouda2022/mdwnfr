@@ -28,3 +28,5 @@ The iPhone/iPad drawing surface uses 44 CSS-pixel resize handles; document margi
 The production browser build derives `keyboard-release-pin.json` from the reviewed `keyboard-lock.json`, validates the published lexicon bytes, and precaches the exact pin for offline keyboard initialization. The API's source notices are included under `web/vendor/hieroglyphic/`.
 
 Deleting a document also removes its per-document prediction preferences. CI runs storage-recovery, facing, and layout-detail guard tests in addition to the browser suite.
+
+The headless API v2 caps one prediction result window at 80 entries. The editor labels expanded results accordingly; it does not claim that 80 predictions exhaust the 41,330-record corpus.
