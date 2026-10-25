@@ -175,11 +175,11 @@ async function renderPapyrusWindow(){
  // same query handles RTL and LTR; coordinates themselves come from Python.
  let lo,hi;
  if(doc.direction==='rtl'){
-  lo=(summary.width-18-right)/w;
-  hi=(summary.width-18-left)/w;
+  lo=(summary.width-(layoutCache.margins_mm?.right??18)-right)/w;
+  hi=(summary.width-(layoutCache.margins_mm?.right??18)-left)/w;
  }else{
-  lo=(left-18)/w;
-  hi=(right-18)/w;
+  lo=(left-(layoutCache.margins_mm?.left??18))/w;
+  hi=(right-(layoutCache.margins_mm?.left??18))/w;
  }
  // A single image may occupy multiple physical column-width slots.
  // Page summaries carry spans only when necessary, so viewport indexing remains
@@ -944,13 +944,14 @@ function beginClipartDrag(e,placement,column,page,node){
   const dx=(lastX-startX)/unit,dy=(lastY-startY)/unit;
   const target=clipartDropIndex(page,lastX,lastY,placement.id);
   const newPage=target?.page??page;
-  const yRoom=Math.max(0,newPage.height-36-placement.height);
+  const margins=doc.margins_mm||{top:18,bottom:18,left:18,right:18};
+  const yRoom=Math.max(0,newPage.height-margins.top-margins.bottom-placement.height);
   const initialTop=node.getBoundingClientRect().top;
   // Node preview has been cleared; preserve the original pointer grab offset.
   const grabY=(startY-initialTop)/(unit);
   const destinationRect=target?.paper.getBoundingClientRect();
   const proposedTop=destinationRect?(lastY-destinationRect.top)/unit-grabY:placement.y+dy;
-  const yAlign=yRoom?Math.max(0,Math.min(1,(proposedTop-18)/yRoom)):0.5;
+  const yAlign=yRoom?Math.max(0,Math.min(1,(proposedTop-margins.top)/yRoom)):0.5;
   // A float's horizontal position is a millimetre offset *forward in
   // reading order* from its document anchor, not an absolute page pixel.
   // Python reserves the crossed slots, then flows words through every safe
@@ -960,7 +961,7 @@ function beginClipartDrag(e,placement,column,page,node){
     ?column.x+column.width-desiredX-placement.width_mm
     :desiredX-column.x;
   const maximalOffset=newPage===page
-    ?(doc.surface==='papyrus'?2000:Math.max(0,page.width-36-placement.width_mm))
+    ?(doc.surface==='papyrus'?2000:Math.max(0,page.width-margins.left-margins.right-placement.width_mm))
     :0;
   // Negative values move the art back over preceding text columns; Python
   // alone reflows those columns, preserving logical object order.
@@ -1071,6 +1072,7 @@ function showLibraryError(message=''){
  const el=$('library-error');el.hidden=!message;el.textContent=message;
 }
 function showLibrary(){
+ persistedRevision=null;
  ++layoutVersion;queuedLayout=null;resetLayoutSynchronization();repairedDetailRevisions.clear();libraryScreen.hidden=false;editorScreen.hidden=true;
  selectedId=null;selectionAnchorId=null;selectionFocusId=null;selectedTableCell=null;editingId=null;buffer=[];doc=null;caretIndex=0;layoutCache=null;canUndo=false;canRedo=false;updateHistoryState();
  clearPageVirtualization();$('pages').replaceChildren();closePanels();showLibraryError();
@@ -1205,7 +1207,7 @@ async function openDocument(id){
   if(entry?.items?.some(item=>item.type==='clipart'))await ensureArtworkCatalog();
   if(!entry)throw new Error('Document not found. It may have been deleted.');
   await rpc('session_open',{document:entry});
-  resetLayoutSynchronization();repairedDetailRevisions.clear();doc=entry;selectedTableCell=null;selectedId=null;selectionAnchorId=null;selectionFocusId=null;editingId=null;buffer=[];canUndo=false;canRedo=false;layoutCache=null;
+  persistedRevision=entry.revision;resetLayoutSynchronization();repairedDetailRevisions.clear();doc=entry;selectedTableCell=null;selectedId=null;selectionAnchorId=null;selectionFocusId=null;editingId=null;buffer=[];canUndo=false;canRedo=false;layoutCache=null;
   caretIndex=doc.items.length;
   showEditor();refreshZoomOptions();setUiFromDoc();drawKeys();renderComposer();
   await reflow();
@@ -1293,6 +1295,7 @@ function receiveSessionResult(answer){
 // Coalesce rapid edits into one persisted document write. The last completed
 // save is awaited when leaving the editor; these are NOT independent versions.
 let autosaveTimer=null,autosaveWanted=null,autosaveQueue=Promise.resolve();
+let persistedRevision=null;
 function scheduleAutosave(){
  autosaveWanted=doc;
  if(autosaveTimer)clearTimeout(autosaveTimer);
@@ -1303,7 +1306,14 @@ async function flushAutosave(){
  const snapshot=autosaveWanted;
  autosaveWanted=null;
  if(snapshot){
-  const job=autosaveQueue.catch(()=>{}).then(()=>save(snapshot));
+  const job=autosaveQueue.catch(()=>{}).then(async()=>{
+    if(persistedRevision===null||doc?.id!==snapshot.id)
+      throw new Error('Document changed while saving');
+    await save(snapshot,persistedRevision);
+    persistedRevision=snapshot.revision;
+    if(doc?.id===snapshot.id&&doc.revision===persistedRevision)
+      status('Revision '+persistedRevision+' · Saved on this device');
+   });
   autosaveQueue=job;
  }
  try{await autosaveQueue;}catch(error){
@@ -1392,7 +1402,7 @@ async function pumpLayoutQueue(){
        snapshot.revision!==doc.revision||editorScreen.hidden)continue;
     layoutCache=outcome.layout;paint(outcome.layout);
     status(outcome.layout.warnings.length?'Layout warning: '+outcome.layout.warnings[0]:
-           'Revision '+doc.revision+' · Local autosave',outcome.layout.warnings.length>0);
+           'Revision '+doc.revision+(persistedRevision===doc.revision?' · Saved':' · Saving…'),outcome.layout.warnings.length>0);
    }catch(e){
     if(version===layoutVersion)status('Layout: '+e.message,true);
    }
@@ -2000,7 +2010,14 @@ $('bold').onclick=()=>{
 $('delete').onclick=()=>{hideEditMenu();deleteSelection();};
 $('library').onclick=()=>{closePanels();backToLibrary();};
 $('create-document').onclick=createDocument;
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&doc)flushAutosave().catch(()=>{});});
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden&&doc)txQueue.then(()=>flushAutosave()).catch(e=>status('Save failed: '+e.message,true));
+});
+window.addEventListener('beforeunload',event=>{
+ if(doc&&(autosaveWanted||autosaveTimer||persistedRevision!==doc.revision)){
+  event.preventDefault();event.returnValue='';
+ }
+});
 
 // All modal completion paths settle the promise; cancel/outside/Escape never mutate the DB.
 function modal({title,description='',action='Continue',initialValue=null,destructive=false}){
@@ -2045,7 +2062,7 @@ async function renameDocument(id){
   const latest=await load(id);
   if(!latest)throw new Error('Document no longer exists');
   const result=await rpc('transact',{document:latest,action:{op:'set_document',name:decision.value,base_revision:latest.revision}});
-  await save(result.document);
+  await save(result.document,latest.revision);
   await renderDocList();
  }catch(e){showLibraryError('Could not rename document: '+e.message);}
  finally{setLibraryBusy(false);}

@@ -75,7 +75,7 @@ async function operation(mode,fn,store=STORE){
 }
 // A document, its library metadata, and any recovery snapshot commit together.
 // A failed transaction never leaves a snapshot pointing at an unsaved document.
-async function mutateDocument(id,doc){
+async function mutateDocument(id,doc,expectedRevision=undefined){
  const db=await database();
  return new Promise((resolve,reject)=>{
   const tx=db.transaction([STORE,INDEX,SNAPSHOTS,SNAPSHOT_META],'readwrite');
@@ -93,6 +93,13 @@ async function mutateDocument(id,doc){
     let previous,oldIndex,loaded=0;
     const ready=()=>{
      if(++loaded!==2)return;
+     // Detect and reject overwrites from another tab, including equal revision
+     // numbers with different content. Failed saves preserve recovery data.
+     if(expectedRevision!==undefined &&
+        (previous?.revision??null)!==expectedRevision){
+       fail(new Error('Document changed in another tab; current edit was not saved'));
+       return;
+     }
      const now=Date.now();
      const due=!oldIndex?.last_snapshot_at || now-oldIndex.last_snapshot_at>=SNAPSHOT_INTERVAL_MS;
      const previousDocument=previous||doc;
@@ -127,7 +134,7 @@ async function mutateDocument(id,doc){
   tx.onabort=()=>{if(!failed)reject(tx.error||new Error('Save aborted'));};
  });
 }
-export async function save(doc){return mutateDocument(doc.id,doc);}
+export async function save(doc,expectedRevision=undefined){return mutateDocument(doc.id,doc,expectedRevision);}
 
 export async function listSnapshots(id){
  const db=await database();
