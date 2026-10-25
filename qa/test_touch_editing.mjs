@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
 import {chromium,webkit} from 'playwright';
 
 const base=process.env.MDWNFR_QA_URL||'http://127.0.0.1:8123/';
@@ -8,7 +9,7 @@ for(const engineName of engines){
  const browser=await ({chromium,webkit}[engineName]).launch({headless:true});
  try{
   for(const viewport of [{width:390,height:844},{width:1024,height:768}]){
-   const context=await browser.newContext({viewport,isMobile:true,hasTouch:true,serviceWorkers:'block'});
+   const context=await browser.newContext({viewport,isMobile:true,hasTouch:true,serviceWorkers:'block',acceptDownloads:true});
    // Exercise the Safari-style denied-system-clipboard path deliberately.
    // Native clipboard events are tested separately below, without mocking Python.
    await context.addInitScript(()=>Object.defineProperty(navigator,'clipboard',{configurable:true,value:{
@@ -145,6 +146,24 @@ for(const engineName of engines){
       assert.ok(Math.abs(thumbnails[i].left-thumbnails[0].left)<1,'Exactly one page per row');
       assert.ok(thumbnails[i].top>=thumbnails[i-1].bottom,'Page thumbnails cannot share a row');
     }
+    // Export is a real external backup; import must validate and create a
+    // separate document without overwriting the source or losing its words.
+    await page.locator('#library').click();
+    await page.locator('#library-screen').waitFor({state:'visible'});
+    const [download]=await Promise.all([
+      page.waitForEvent('download'),
+      page.locator('.document-action[aria-label^="Export "]').first().click()
+    ]);
+    const bytes=await readFile(await download.path());
+    const backup=JSON.parse(bytes.toString('utf8'));
+    assert.equal(backup.format,'mdwnfr-document-backup-v1');
+    assert.equal(backup.document.items.length,46);
+    await page.locator('#backup-file').setInputFiles({
+      name:'mdwnfr-backup.json',mimeType:'application/json',buffer:bytes
+    });
+    await page.waitForFunction(()=>document.querySelectorAll('.document-card').length===2);
+    const entries=await page.locator('.document-open').allTextContents();
+    assert.equal(entries.length,2,'a backup must not overwrite the source document');
     assert.deepEqual(errors,[]);
     console.log('PASS:',engineName,viewport.width+'x'+viewport.height,'touch menu, clipboard, colors, delete/undo, reopen');
     results.push({engine:engineName,viewport,commands:'cut/copy/paste/select-all/delete',persistence:true,targets:'44px minimum'});
