@@ -373,3 +373,8 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .page-overview-item{height:132px}
 .pages-overview.virtual-pages{display:block;position:relative}
 .virtual-pages .page-overview-item{position:absolute;left:0;width:100%}
+
+/* Portable JSON document backups: a library action, not editor state. */
+.backup-import{min-height:44px;padding:8px 16px;border-radius:12px;border:1px solid #bfcfdb;background:#fafcff;color:#173d65;font-weight:600;white-space:nowrap}
+.backup-import:disabled{opacity:.45}
+.library-toolbar{gap:10px;flex-wrap:wrap}

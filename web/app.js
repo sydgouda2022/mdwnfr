@@ -1084,6 +1084,7 @@ function showEditor(){
 }
 function setLibraryBusy(value){
  libraryBusy=value;$('create-document').disabled=value||!ready;
+ $('import-backup').disabled=value||!ready;
  for(const btn of document.querySelectorAll('.document-grid button')){
   const needsEngine=btn.classList.contains('document-open')||btn.classList.contains('rename-action');
   btn.disabled=value||(needsEngine&&!ready);
@@ -2051,6 +2052,44 @@ function modal({title,description='',action='Continue',initialValue=null,destruc
   if(initialValue!==null)input.select();
  });
 }
+// Portable JSON backups remain readable after browser storage is cleared.
+async function exportDocument(id){
+ if(libraryBusy)return;
+ try{
+  const entry=await load(id);if(!entry)throw Error('Document not found');
+  const json=JSON.stringify({format:'mdwnfr-document-backup-v1',
+    exported_at:new Date().toISOString(),document:entry});
+  const url=URL.createObjectURL(new Blob([json],{type:'application/json'}));
+  try{
+   const a=document.createElement('a');a.href=url;
+   a.download='MdwNfr-'+entry.name.replace(/[^\p{L}\p{N} _-]/gu,'').trim().slice(0,60)+'.json';
+   document.body.append(a);a.click();a.remove();
+  }finally{setTimeout(()=>URL.revokeObjectURL(url),1000);}
+  status('Exported '+entry.name+' · Store the backup outside this device');
+ }catch(error){showLibraryError('Could not export document: '+error.message);}
+}
+$('import-backup').onclick=()=>{if(ready&&!libraryBusy)$('backup-file').click();};
+$('backup-file').addEventListener('change',async event=>{
+ const file=event.target.files?.[0];event.target.value='';
+ if(!file||!ready||libraryBusy)return;
+ setLibraryBusy(true);showLibraryError();
+ try{
+  if(file.size>128*1024*1024)throw Error('Backup exceeds the 128 MiB import limit');
+  const payload=JSON.parse(await file.text());
+  if(payload?.format!=='mdwnfr-document-backup-v1'||!payload.document)
+   throw Error('Not a supported MdwNfr document backup');
+  const candidate=structuredClone(payload.document);
+  // Import as an independent document. Preserve object identities within it
+  // while preventing overwrite of an existing saved document.
+  candidate.id=crypto.randomUUID().replaceAll('-','');
+  candidate.revision=0;
+  await rpc('validate',{document:candidate});
+  await save(candidate,null);
+  await renderDocList();
+  status('Backup imported as a new document');
+ }catch(error){showLibraryError('Could not import backup: '+error.message);}
+ finally{setLibraryBusy(false);}
+});
 async function renameDocument(id){
  if(libraryBusy||!ready)return;
  const entry=await load(id);if(!entry){await renderDocList();return;}
@@ -2146,10 +2185,13 @@ async function renderDocList(){
   const del=document.createElement('button');del.type='button';del.className='document-action delete-action';del.textContent='Delete';
   del.setAttribute('aria-label','Delete '+(entry.name||'Untitled'));
   del.onclick=()=>deleteDocument(entry.id);
-  const history=document.createElement('button');history.type='button';history.className='document-action';
+  const exportButton=document.createElement('button');exportButton.type='button';exportButton.className='document-action';
+   exportButton.textContent='Export';exportButton.setAttribute('aria-label','Export '+(entry.name||'Untitled'));
+   exportButton.onclick=()=>exportDocument(entry.id);
+   const history=document.createElement('button');history.type='button';history.className='document-action';
   history.textContent='History';history.setAttribute('aria-label','History '+(entry.name||'Untitled'));
   history.onclick=()=>restoreDocumentHistory(entry.id);
-  actions.append(history,rename,del);card.append(open,actions);root.append(card);
+  actions.append(exportButton,history,rename,del);card.append(open,actions);root.append(card);
  }
  setLibraryBusy(libraryBusy);
 }
