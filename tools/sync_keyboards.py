@@ -23,6 +23,9 @@ PREFIX = "https://raw.githubusercontent.com/{repo}/{sha}/{path}"
 def digest(b):
     return hashlib.sha256(b).hexdigest()
 
+def git_blob_sha(b):
+    return hashlib.sha1(b"blob "+str(len(b)).encode("ascii")+b"\\0"+b).hexdigest()
+
 def fetch(url):
     req = urllib.request.Request(url, headers=AGENT)
     with urllib.request.urlopen(req, timeout=90) as response:
@@ -57,7 +60,16 @@ def verify():
     if "coptic-keyboard" not in j["dependencies"]:
         if (ROOT / "core/mdwnfr/data/lexicon.json").read_bytes() != (ROOT / "web/lexicon/lexicon.json").read_bytes():
             raise ValueError("MdwNfr browser and Python catalog diverged")
-    print("Keyboard dependencies match exact locked hashes.")
+    api=next(iter(j["dependencies"].values()))
+    modules=api.get("api_git_blobs")
+    expected={"keyboard_api.mjs","keyboard_search.mjs","keyboard_catalog.js","lexicon_install.mjs","THIRD_PARTY_NOTICES.md"}
+    if not isinstance(modules,dict) or set(modules)!=expected:
+        raise ValueError("Missing complete pinned headless API module inventory")
+    for name,expected_sha in modules.items():
+        content=(ROOT/"web/vendor/hieroglyphic"/name).read_bytes()
+        if git_blob_sha(content)!=expected_sha:
+            raise ValueError("Vendored keyboard API drift: "+name)
+    print("Keyboard dependency data and headless API match exact locked hashes.")
 
 def stage(name, sha):
     repo = f"sydgouda2022/{name}"
@@ -101,6 +113,7 @@ def stage(name, sha):
         files["web/keyboard_catalog.js"] = get("src/keyboard_catalog.js")
         for module in ("keyboard_api.mjs","keyboard_search.mjs","keyboard_catalog.js","lexicon_install.mjs"):
             files[f"web/vendor/hieroglyphic/{module}"] = get(f"src/{module}")
+        files["web/vendor/hieroglyphic/THIRD_PARTY_NOTICES.md"] = get("docs/THIRD_PARTY_NOTICES.md")
         files["core/mdwnfr/data/lexicon.json"] = catalog
         files["data/lexicon.sqlite3"] = get("release/lexicon.sqlite3")
     return manifest, raw_manifest, catalog, files
@@ -123,7 +136,9 @@ def update():
             "source_commit": sha,
             "version": manifest["release"],
             "manifest_sha256": digest(raw_manifest),
-            "lexicon_sha256": digest(catalog)
+            "lexicon_sha256": digest(catalog),
+            "api_git_blobs": {path.rsplit("/",1)[-1]:git_blob_sha(payload)
+                for path,payload in files.items() if path.startswith("web/vendor/hieroglyphic/")}
         })
         changed.append(name)
     if changed:
