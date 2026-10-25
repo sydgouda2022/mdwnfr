@@ -1,5 +1,5 @@
 import {save,load,list,remove,loadProfile,saveProfile,listSnapshots,restoreSnapshot} from './storage.js';
-import {SIGN_CATALOG} from './keyboard_catalog.js';
+import {createKeyboardFromData,createHieroglyphicKeyboard} from './vendor/hieroglyphic/keyboard_api.mjs';
 import {NO_MIRROR_HIEROGLYPHS,mirrorSign,reverseVisualQuadrat} from './hieroglyph_facing.mjs';
 import {fitQuadrat} from './quadrat_preview.mjs';
 import {buildEgyptianPalette,normalizeColour} from './editor_controls.mjs';
@@ -8,7 +8,9 @@ import {buildEgyptianPalette,normalizeColour} from './editor_controls.mjs';
    JavaScript owns only interaction state, local persistence, and DOM drawing. */
 const $=id=>document.getElementById(id);
 const pxmm=96/25.4;
-const glyphGroups={unilaterals:SIGN_CATALOG.single,bilaterals:SIGN_CATALOG.dual,trilaterals:SIGN_CATALOG.triple};
+// Headless keyboard API supplies signs and lexical predictions.
+let keyboard=createKeyboardFromData();
+const glyphGroups={unilaterals:keyboard.getSigns('uni'),bilaterals:keyboard.getSigns('bi'),trilaterals:keyboard.getSigns('tri')};
 const numerals=[...('𓏺𓏻𓏼𓏽𓏾𓏿𓐀𓐁𓐂')].map((sign,i)=>({sign,value:String(i+1)})).concat([
  {sign:'𓎆',value:'10'},{sign:'𓍢',value:'100'},{sign:'𓆼',value:'1,000'},
  {sign:'𓂭',value:'10,000'},{sign:'𓆐',value:'100,000'},{sign:'𓁨',value:'1,000,000'}]);
@@ -1181,10 +1183,13 @@ async function initialize(){
  try {
   writingProfile={...emptyProfile(),...(await loadProfile()||{})};
   if(!Array.isArray(writingProfile.personal_entries)) writingProfile.personal_entries=[];
-  const info=await rpc('lexicon_info');
-  lexiconMeta=info.lexicon;
-  // This verified JSON is the same source the Python worker indexes.
-  // The master SQLite lives in CI; it is NOT a missing PWA requirement.
+  // A dictionary failure never prevents sign entry or document editing.
+  try{
+    keyboard=await createHieroglyphicKeyboard({
+      manifestUrl:'/lexicon/manifest.json',lexiconUrl:'/lexicon/lexicon.json',
+      storageNamespace:'mdwnfr-editor-v1',timeoutMs:6000});
+  }catch(error){status('Sign keyboard ready; dictionary unavailable: '+error.message,true);}
+  lexiconMeta=keyboard.info;
   const notice=$('lexicon-notice');
   notice.hidden=true;
   notice.textContent='';
@@ -1814,11 +1819,30 @@ function drawKeys(){
 
 function typeSign(sign){if(commitPending)return;buffer.push(sign);renderComposer();}
 let predVersion=0,previewTimer=null,commitPending=false;
-function predictionRequest(offset=0,limit=8){
- return {prefix:buffer,offset,limit,
-   personal_entries:writingProfile.personal_entries,
-   global_choices:writingProfile.global_choices,
-   document_choices:docChoices()};
+function keyboardLearned(){
+  const learned={};
+  const merge=source=>{for(const [spelling,weight] of Object.entries(source||{})){
+    const n=Number(weight);
+    if(Number.isFinite(n)&&n>0)learned['egy:'+spelling]=(learned['egy:'+spelling]||0)+n;
+  }};
+  merge(writingProfile.global_choices);merge(docChoices());
+  for(const entry of writingProfile.personal_entries||[]){
+    if(typeof entry?.signs==='string'&&entry.signs)
+      learned['egy:'+entry.signs]=Math.max(1,learned['egy:'+entry.signs]||0);
+  }
+  return learned;
+}
+function keyboardSuggestions(limit=80){
+  if(!buffer.length)return [];
+  return keyboard.predict(buffer.join(''),{limit,learned:keyboardLearned()}).map(candidate=>({
+    signs:Array.from(candidate.text),
+    source:candidate.raw?'user':candidate.personal?'personal':'lexicon',
+    source_tier:candidate.source==='RAMSES-CORPUS'?'ramses_corpus':
+      candidate.personal?'personal':'lemma_linked',
+    lexicon_ref:candidate.lexicon_ref||null,
+    lexical_identity_verified:candidate.lexicalIdentityVerified===true,
+    attested:candidate.attested===true
+  }));
 }
 function renderComposer(){
  const table=selectedTable();
@@ -1856,16 +1880,18 @@ function renderComposer(){
    }).catch(error=>{if(current===predVersion)status('Word preview: '+error.message,true);});
   },90);
  }
- rpc('suggest',predictionRequest(0,8)).then(answer=>{
-  if(current!==predVersion)return;
-  showSuggestions(answer.suggestions);
-  $('expand-predictions').textContent='All suggestions ('+answer.total+')';
- }).catch(e=>{if(current===predVersion)status('Prediction: '+e.message,true);});
+ try{
+    const choices=keyboardSuggestions(80);
+    if(current!==predVersion)return;
+    showSuggestions(choices.slice(0,8));
+    $('expand-predictions').textContent='More suggestions (up to 80)';
+  }catch(error){status('Prediction: '+error.message,true);}
 }
 function suggestionButton(candidate){
  const button=document.createElement('button');button.append(facingSequenceNode(candidate.signs));
  if(candidate.source==='user')button.classList.add('user-choice');
  if(candidate.source==='personal')button.classList.add('personal-choice');
+ if(candidate.source_tier==='ramses_corpus')button.classList.add('ramses-choice');
  const rtc=candidate.source_tier==='ramses_corpus';
  
  button.setAttribute('aria-label',(candidate.source==='user'?'Use own spelling ':candidate.source==='personal'?'Use personal spelling ':rtc?'Use Ramses corpus spelling ':'Choose lemma-linked spelling ')+candidate.signs.join(''));
@@ -1877,24 +1903,18 @@ function showSuggestions(candidates){
  if(!candidates.length)return;
  for(const c of candidates)wrap.append(suggestionButton(c));
 }
-async function loadExpanded(reset){
- if(!buffer.length||!expanded||expandedLoading)return;
- const current=predVersion,epoch=expandedGeneration;
- const offset=reset?0:expandedOffset;
- expandedLoading=true;$('more-predictions').disabled=true;
- try{
-  const answer=await rpc('suggest',predictionRequest(offset,40));
-  if(current!==predVersion||epoch!==expandedGeneration||!expanded)return;
-  const wrap=$('expanded-results');if(reset)wrap.replaceChildren();
-  for(const candidate of answer.suggestions)wrap.append(suggestionButton(candidate));
-  expandedOffset=offset+answer.suggestions.length;
-  $('more-predictions').hidden=!answer.has_more;
- }catch(e){
-  if(current===predVersion&&epoch===expandedGeneration)status('Expanded predictions: '+e.message,true);
- }finally{
-  if(epoch===expandedGeneration){expandedLoading=false;$('more-predictions').disabled=false;}
- }
+function loadExpanded(reset){
+  if(!buffer.length||!expanded)return;
+  try{
+    const choices=keyboardSuggestions(80);
+    if(reset){expandedOffset=0;$('expanded-results').replaceChildren();}
+    const batch=choices.slice(expandedOffset,expandedOffset+40);
+    for(const candidate of batch)$('expanded-results').append(suggestionButton(candidate));
+    expandedOffset+=batch.length;
+    $('more-predictions').hidden=expandedOffset>=choices.length;
+  }catch(error){status('Expanded predictions: '+error.message,true);}
 }
+
 $('expand-predictions').onclick=()=>{
  if(!buffer.length)return;
  expanded=!expanded;expandedGeneration++;expandedLoading=false;
