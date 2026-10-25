@@ -508,6 +508,11 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         overlay = None
         fragments = measure(item)
         for fragment_index,(iw,ih,profile,geometry) in enumerate(fragments):
+            if fragment_index:
+                # A continued table owns a NEW page; previous silhouettes,
+                # word ink and cursor positions must never bleed across it.
+                overlay = None
+                clear_page()
             wanted_y = top + (usable_height-ih)*(item.get('y_align',0.5) if len(fragments)==1 else 0)
             requested = float(item.get('x_offset_mm',0.0)) if len(fragments)==1 else 0.0
             if requested > 0 and capacity is not None:

@@ -115,6 +115,23 @@ class ObjectSequenceLayout(unittest.TestCase):
             if pl['type']=='word' for g in pl['quadrat']['signs']]
         self.assertEqual(atoms(first),atoms(second))
 
+    def test_paginated_table_continuations_get_fresh_obstacle_fields(self):
+        from mdwnfr.tables import table
+        doc=new_document('Tall table',font_size_pt=16)
+        frame=table(rows=24,columns=1)
+        for row in frame['rows']:
+            row[0]['items']=[word(['𓅓']) for _ in range(3)]
+        doc['items']=[frame,word(['𓈖']) for _ in range(24)]
+        result=layout_document(doc)
+        fragments=[(page['index'],pl['id']) for page in result['pages']
+            for col in page['columns'] if col['kind']=='table'
+            for pl in col['placements']]
+        self.assertGreater(len(fragments),1)
+        self.assertTrue(all(ident==frame['id'] for _,ident in fragments))
+        self.assertEqual(len(set(page for page,_ in fragments)),len(fragments))
+        self.assertEqual(words_in_layout(result),
+            [o['id'] for o in doc['items'] if o['type']=='word'])
+
     def test_dense_short_words_use_image_columns_below_visible_ink(self):
         from mdwnfr.layout import object_clearance_mm
         for direction in ('ltr','rtl'):
