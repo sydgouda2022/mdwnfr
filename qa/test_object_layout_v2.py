@@ -132,6 +132,35 @@ class ObjectSequenceLayout(unittest.TestCase):
         self.assertEqual(words_in_layout(result),
             [o['id'] for o in doc['items'] if o['type']=='word'])
 
+    def test_object_does_not_force_blank_preceding_column(self):
+        """After word 776, object 777 may float beside the same text column.
+
+        Later words must use its legally available lower space rather than
+        starting a new column just because an object was inserted.
+        """
+        for direction in ('ltr','rtl'):
+            for surface in ('A3','A4'):
+                with self.subTest(direction=direction,surface=surface):
+                    doc=new_document('No reserved image channel',
+                        direction=direction,surface=surface,font_size_pt=10)
+                    before=[word(['𓏺']) for _ in range(6)]
+                    bird=clipart('horus-falcon-raster',60,'normal')
+                    bird['y_align']=.25
+                    following=[word(['𓏺']) for _ in range(180)]
+                    doc['items']=[*before,bird,*following]
+                    result=layout_document(doc)
+                    byid={pl['id']:pl for pg in result['pages']
+                        for col in pg['columns'] for pl in col['placements']}
+                    final_before=byid[before[-1]['id']]
+                    first_after=byid[following[0]['id']]
+                    self.assertAlmostEqual(first_after['x'],final_before['x'],
+                        places=4,msg='Image may not close its preceding text lane')
+                    self.assertGreater(first_after['y'],final_before['y'],
+                        'Following text must resume after earlier words')
+                    self.assertEqual(words_in_layout(result),
+                        [item['id'] for item in doc['items'] if item['type']=='word'])
+                    self.assertEqual(ids_in_layout(result).count(bird['id']),1)
+
     def test_dense_short_words_use_image_columns_below_visible_ink(self):
         from mdwnfr.layout import object_clearance_mm
         for direction in ('ltr','rtl'):

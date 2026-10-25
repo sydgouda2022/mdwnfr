@@ -502,12 +502,20 @@ def _layout(doc: dict, glyph_metrics: dict | None,
 
     def place_object(item):
         nonlocal slot, overlay, lane_cursor, lane_start
+        # Objects interrupt the LOGICAL sequence, not the physical text lane.
+        # Record the unfinished column's next word origin before committing
+        # the prefix. Text following the object may use the rest of that same
+        # physical column if the artwork is placed on this page beside it.
+        # Moving the text to a fresh column here creates an unjustified empty
+        # vertical channel alongside every inserted illustration.
+        continuation_y = lane_cursor if pending and overlay is None else None
         finish_lane()
-        # A new nontext object has a logical anchor at the next reading slot.
-        # The prior object's unoccupied sectors do not become permanent slots.
+        # An object's geometry is an obstacle, not a permanent column owner.
         overlay = None
         fragments = measure(item)
         for fragment_index,(iw,ih,profile,geometry) in enumerate(fragments):
+            preceding_slot = slot-1 if continuation_y is not None and fragment_index==0 else None
+            initial_slot = slot
             if fragment_index:
                 # A continued table owns a NEW page; previous silhouettes,
                 # word ink and cursor positions must never bleed across it.
@@ -608,11 +616,18 @@ def _layout(doc: dict, glyph_metrics: dict | None,
             obstacles.append(test_obstacle)
             base = slot
             slot += span
-            # Space within the object's columns remains usable: the next
-            # quadrat checks individual glyphs against the actual silhouette.
-            overlay = [base,span,0]
-            lane_start = top
-            lane_cursor = top
+            # Revisit an incomplete preceding word lane BEFORE the silhouette
+            # lanes. Its next origin is after the preceding quadrat, never at
+            # page top, so reading order and word IDs stay unchanged. This is
+            # legal only when the object occupies the immediately following
+            # slots on the same page. A skipped slot/page is a real boundary.
+            resume = (preceding_slot is not None and initial_slot == base
+                      and preceding_slot >= 0 and continuation_y < bottom)
+            overlay = ([preceding_slot,span+1,0] if resume
+                       else [base,span,0])
+            lane_start = continuation_y if resume else top
+            lane_cursor = continuation_y if resume else top
+            continuation_y = None
 
     for item in doc['items']:
         if item['type']=='word':
