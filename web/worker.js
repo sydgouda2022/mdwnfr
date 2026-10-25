@@ -20,7 +20,7 @@ async function boot() {
     if (!pythonVersion.startsWith('3.12.')) {
       throw new Error('Wrong browser Python runtime: expected 3.12, found '+pythonVersion);
     }
-    const names=['__init__.py','document.py','quadrat.py','silhouette.py','tables.py','cartouches.py','typography.py','layout.py','lexicon.py','history.py','session.py','layout_sync.py','api.py'];
+    const names=['__init__.py','document.py','quadrat.py','silhouette.py','tables.py','cartouches.py','typography.py','layout.py','history.py','session.py','layout_sync.py','api.py'];
     pyodide.FS.mkdirTree('/home/pyodide/mdwnfr');
     for (const filename of names) {
       const response=await fetch('/core/mdwnfr/'+filename,{cache:'force-cache'});

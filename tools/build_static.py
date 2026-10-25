@@ -61,19 +61,17 @@ for artwork in artwork_catalog['artworks']:
     if len(bits)!=8192 or not any(bits):
         raise ValueError('Invalid silhouette bitmap: '+artwork['id'])
 copy2(ROOT/'core/mdwnfr/data/artwork_catalog.json', DEST/'artwork/catalog.json')
-# Every installed PWA verifies the exact lexicon bytes before launching Python.
-# Metadata status and counts come from the verified source package, never guesses.
-catalog=DEST/'core/mdwnfr/data/lexicon.json'
+# The standalone keyboard owns its verified lexicon; Python owns layout only.
+catalog=DEST/'lexicon/lexicon.json'
 raw=catalog.read_bytes()
-from catalog_integrity import validate_release_catalog
-data=validate_release_catalog(raw)
-manifest={'format':'mdwnfr-catalog-integrity-v1',
-          'sha256':hashlib.sha256(raw).hexdigest(),
-          'bytes':len(raw),'spelling_records':len(data['entries']),
-          'complete':data['metadata'].get('complete') is True,
-          'published_dataset_sha256':data['metadata'].get('published_dataset_sha256','')}
-(catalog.parent/'catalog_integrity.json').write_text(
-    json.dumps(manifest,sort_keys=True,separators=(',',':')),encoding='utf-8')
+manifest=json.loads((DEST/'lexicon/manifest.json').read_text(encoding='utf-8'))
+if hashlib.sha256(raw).hexdigest()!=manifest.get('sha256') or len(raw)!=manifest.get('bytes'):
+    raise ValueError('Independent Hieroglyphic Keyboard release checksum mismatch')
+data=json.loads(raw)
+if data.get('format')!='mdwnfr-predict-v1' or not isinstance(data.get('entries'),list):
+    raise ValueError('Invalid independent keyboard lexicon payload')
+if len(data['entries'])!=manifest.get('spelling_records'):
+    raise ValueError('Independent keyboard record count mismatch')
 print('Built:',DEST)
 runtime=inspect()
 (DEST/'runtime-status.json').write_text(json.dumps(runtime,sort_keys=True,separators=(',',':')),encoding='utf-8')
