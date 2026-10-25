@@ -1,0 +1,61 @@
+name: MdwNfr iPhone iPad and offline browser acceptance
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'core/**'
+      - 'web/**'
+      - 'tools/**'
+      - 'qa/**'
+      - 'keyboard-lock.json'
+      - '.github/workflows/mdwnfr-browser.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  webkit-chromium:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v5
+        with: {node-version: '24'}
+      - name: Build exact glyph geometry and self-contained offline runtime
+        run: |
+          set -euo pipefail
+          python tools/sync_keyboards.py --verify
+          python -m pip install --disable-pip-version-check 'fonttools[woff]' brotli Pillow
+          mkdir -p web/assets/fonts
+          curl -fLsS --retry 3 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansegyptianhieroglyphs/NotoSansEgyptianHieroglyphs-Regular.ttf' -o /tmp/mdwnfr-font.ttf
+          echo 'b792accc6207ca9caa59fc67f53926b6985a99d255dd432d7c68b68a6dfd62f8  /tmp/mdwnfr-font.ttf' | sha256sum -c -
+          python tools/generate_glyph_ink.py /tmp/mdwnfr-font.ttf core/mdwnfr/data/glyph_geometry.json
+          python - <<'PY'
+          from fontTools.ttLib import TTFont
+          f=TTFont('/tmp/mdwnfr-font.ttf');f.flavor='woff2'
+          f.save('web/assets/fonts/hieroglyphs.woff2')
+          PY
+          python tools/vendor_runtime.py
+          python tools/build_static.py
+      - name: Install headless Chromium and Safari-compatible WebKit
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Serve the actual packaged editor
+        run: |
+          nohup python -m http.server 8123 --bind 127.0.0.1 --directory dist > /tmp/mdwnfr-browser-http.log 2>&1 &
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8123/runtime-status.json >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Exercise Unicode keyboard, font metrics, touch and recovery in both engines
+        run: |
+          set -euo pipefail
+          node qa/test_browser_keyboard.mjs
+          node qa/test_font_bounds_browser.mjs
+          node qa/test_touch_editing.mjs
+          node qa/test_release_update.mjs
