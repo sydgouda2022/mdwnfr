@@ -7,10 +7,9 @@ NOT an assertion that every sign in every font has an identical measured stem.
 Divider strokes are precisely six times this nominal reference weight
 (double the earlier three-stem design thickness).
 
-A tiny optical compensation (0.9% of the actual displayed glyph em) is painted
-outside the existing font outline by the view, with the original fill painted
-on top. It is intentionally much smaller than the nominal stem and does not
-alter sign positions, silhouette calculations, or quadrat measurements.
+The renderer currently uses a separate 1.2% glyph-em stroke for bold signs;
+the 0.9% optical_stroke_mm helper below is a dormant reference metric, not
+part of the normal rendering path. Neither stroke affects quadrat measurements.
 """
 from __future__ import annotations
 

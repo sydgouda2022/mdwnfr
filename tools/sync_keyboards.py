@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-way, SHA-256-checked importer of the two independent keyboard libraries.
+"""One-way, SHA-256-checked importer of the independent keyboard dependency.
 
 Run locally or hourly from Actions. Does not update saved user documents,
 appointments, learning, or service-worker databases. Every dependency is

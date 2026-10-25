@@ -61,6 +61,9 @@ jobs:
           node --check web/vendor/hieroglyphic/keyboard_api.mjs
           python -m compileall -q core/mdwnfr
           node qa/test_quadrat_preview.mjs
+          node qa/test_hieroglyph_facing.mjs
+          node tools/test_layout_detail_guard.mjs
+          node tools/test_recovery_storage.mjs
       - name: Verify reproducible offline browser assets
         run: |
           set -euo pipefail

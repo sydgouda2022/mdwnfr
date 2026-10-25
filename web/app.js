@@ -2119,7 +2119,15 @@ async function deleteDocument(id){
  const decision=await modal({title:'Delete document?',description:'“'+entry.name+'” will be permanently deleted from this device. This action cannot be undone.',action:'Delete',destructive:true});
  if(!decision.confirmed)return;
  setLibraryBusy(true);showLibraryError();
- try{await remove(id);await renderDocList();}
+ try{
+   await remove(id);
+   // Do not retain per-document spelling preferences for deleted documents.
+   if(writingProfile.document_choices?.[id]){
+    delete writingProfile.document_choices[id];
+    await queueProfileSave();
+   }
+   await renderDocList();
+  }
  catch(e){showLibraryError('Could not delete document: '+e.message);}
  finally{setLibraryBusy(false);}
 }

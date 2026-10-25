@@ -26,3 +26,5 @@ Keyboard dependency upgrades require a reviewed change; CI verifies the pinned r
 The iPhone/iPad drawing surface uses 44 CSS-pixel resize handles; document margins now govern papyrus viewport lookup and image drag geometry. All imported/pasted document glyphs must be supported by the bundled rendering font.
 
 The production browser build derives `keyboard-release-pin.json` from the reviewed `keyboard-lock.json`, validates the published lexicon bytes, and precaches the exact pin for offline keyboard initialization. The API's source notices are included under `web/vendor/hieroglyphic/`.
+
+Deleting a document also removes its per-document prediction preferences. CI runs storage-recovery, facing, and layout-detail guard tests in addition to the browser suite.
