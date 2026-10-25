@@ -57,14 +57,12 @@ for artwork in artwork_catalog['artworks']:
     if len(bits)!=8192 or not any(bits):
         raise ValueError('Invalid silhouette bitmap: '+artwork['id'])
 copy2(ROOT/'core/mdwnfr/data/artwork_catalog.json', DEST/'artwork/catalog.json')
-# Every installed PWA verifies the exact lexicon bytes before launching Python.
-# Metadata status and counts come from the verified source package, never guesses.
-catalog=DEST/'core/mdwnfr/data/lexicon.json'
+# The pinned headless keyboard owns the sole browser prediction corpus.
+# Validate the published JSON structure and lock checksum before packaging.
+catalog=DEST/'lexicon/lexicon.json'
 raw=catalog.read_bytes()
 from catalog_integrity import validate_release_catalog
 validate_release_catalog(raw)
-(catalog.parent/'catalog_integrity.json').write_text(
-    json.dumps(manifest,sort_keys=True,separators=(',',':')),encoding='utf-8')
 lock=json.loads((ROOT/'keyboard-lock.json').read_text(encoding='utf-8'))
 keyboard_sha=lock['dependencies']['hieroglyphic-keyboard']['lexicon_sha256']
 if not isinstance(keyboard_sha,str) or len(keyboard_sha)!=64 or any(c not in '0123456789abcdef' for c in keyboard_sha):
@@ -72,10 +70,6 @@ if not isinstance(keyboard_sha,str) or len(keyboard_sha)!=64 or any(c not in '01
 if keyboard_sha != hashlib.sha256((DEST/'lexicon/lexicon.json').read_bytes()).hexdigest():
     raise ValueError('Keyboard lock does not match published browser dictionary')
 (DEST/'keyboard-release-pin.json').write_text(json.dumps({'sha256':keyboard_sha},sort_keys=True)+'\n',encoding='utf-8')
-# The browser's headless keyboard API owns prediction; the Python corpus
-# remains in the source checkout for native tests, not the published PWA.
-for redundant in ('core/mdwnfr/data/lexicon.json','keyboard_catalog.js','lexicon-install.mjs'):
-    (DEST/redundant).unlink(missing_ok=True)
 print('Built:',DEST)
 runtime=inspect()
 (DEST/'runtime-status.json').write_text(json.dumps(runtime,sort_keys=True,separators=(',',':')),encoding='utf-8')
