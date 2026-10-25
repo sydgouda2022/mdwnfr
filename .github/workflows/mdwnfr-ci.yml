@@ -34,10 +34,10 @@ jobs:
           EVENT: ${{ github.event_name }}
         run: |
           set -euo pipefail
-          if [ "$EVENT" = schedule ] || [ "$EVENT" = workflow_dispatch ]; then
-            python tools/sync_keyboards.py
-          else
+          if [ "$EVENT" = pull_request ]; then
             python tools/sync_keyboards.py --verify
+          else
+            python tools/sync_keyboards.py
           fi
       - name: Install matching licensed Egyptian glyph font
         run: |
@@ -71,7 +71,7 @@ jobs:
           node qa/test_service_worker_cache.mjs
           node qa/test_pages_overview.mjs
       - name: Commit only verified upstream keyboard update
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         run: |
           set -euo pipefail
           git add keyboard-lock.json web/lexicon/ web/keyboard_catalog.js web/lexicon-install.mjs core/mdwnfr/data/lexicon.json data/lexicon.sqlite3
