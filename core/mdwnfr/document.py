@@ -244,6 +244,15 @@ def validate_cartouche_word(item: dict) -> None:
     validate_word_record(item)
 
 
+def replace_nested_word(existing: dict | None, signs: list[str]) -> dict:
+    """Keep stable IDs and visual styles, never stale lexical identity."""
+    glyphs=validate_signs(signs)
+    if existing is None:
+        return word(glyphs)
+    return {**existing, 'signs':glyphs,
+            'lexicon_ref':existing.get('lexicon_ref') if existing['signs']==glyphs else None}
+
+
 def validate_word_record(obj: dict) -> None:
     """Validate imported word styles as rigorously as native Unicode."""
     validate_signs(obj.get('signs'))
@@ -423,9 +432,7 @@ def transaction(document: dict, action: dict) -> dict:
             if not isinstance(requested,list) or len(requested)>MAX_CARTOUCHE_WORDS:
                 raise DocumentError('Invalid cartouche word list')
             previous=obj['items']
-            obj['items']=[{**(previous[j] if j<len(previous) else word(validate_signs(signs))),
-                'id': previous[j]['id'] if j<len(previous) else fresh_id(),
-                'signs':validate_signs(signs)}
+            obj['items']=[replace_nested_word(previous[j] if j<len(previous) else None,signs)
                 for j,signs in enumerate(requested)]
         validate_cartouche(obj,validate_cartouche_word)
         items[idx]=obj
@@ -451,12 +458,9 @@ def transaction(document: dict, action: dict) -> dict:
                     raise DocumentError('Invalid table cell words')
                 prepared=[]
                 for i,entry in enumerate(signs):
-                    glyphs=validate_signs(entry)
-                    # Keep an existing word ID when replacing the same cell slot.
+                    # Keep the visual style and ID, not a mismatched lexicon ref.
                     before=previous.get('items',[])
-                    ident=before[i]['id'] if i<len(before) else fresh_id()
-                    prepared.append({**(before[i] if i<len(before) else word(glyphs)),
-                                     'id':ident,'signs':glyphs})
+                    prepared.append(replace_nested_word(before[i] if i<len(before) else None,entry))
                 rows[r][c]={'id':previous['id'],'mode':'text','items':prepared}
             elif mode=='formula':
                 rows[r][c]={'id':previous['id'],'mode':'formula','formula':action.get('formula')}

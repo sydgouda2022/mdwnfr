@@ -62,11 +62,13 @@ class QuadratWorkflowTests(unittest.TestCase):
         original=transaction(new_document(),{'op':'insert_cartouche','words':[['𓅓']]})
         owner=deepcopy(original['items'][0]);owner['items'][0]['bold']=True
         owner['items'][0]['color']='#ac2533'
+        owner['items'][0]['lexicon_ref']='tla:old'
         decorated=transaction(original,{'op':'replace_cartouche','id':owner['id'],'object':owner})
         changed=transaction(decorated,{'op':'set_cartouche_words','id':owner['id'],
                                       'words':[['𓈖']]})
         self.assertTrue(changed['items'][0]['items'][0]['bold'])
         self.assertEqual(changed['items'][0]['items'][0]['color'],'#ac2533')
+        self.assertIsNone(changed['items'][0]['items'][0]['lexicon_ref'])
 
         original=transaction(new_document(),{'op':'insert_table','rows':2,'columns':2})
         owner=original['items'][0]
@@ -75,6 +77,7 @@ class QuadratWorkflowTests(unittest.TestCase):
         replacement=deepcopy(filled['items'][0])
         replacement['rows'][0][0]['items'][0]['bold']=True
         replacement['rows'][0][0]['items'][0]['color']='#ac2533'
+        replacement['rows'][0][0]['items'][0]['lexicon_ref']='tla:old'
         decorated=transaction(filled,{'op':'replace_table','id':owner['id'],
                                       'object':replacement})
         changed=transaction(decorated,{'op':'set_table_cell','id':owner['id'],
@@ -82,6 +85,7 @@ class QuadratWorkflowTests(unittest.TestCase):
         nested=changed['items'][0]['rows'][0][0]['items'][0]
         self.assertTrue(nested['bold'])
         self.assertEqual(nested['color'],'#ac2533')
+        self.assertIsNone(nested['lexicon_ref'])
 
     def test_word_replacement_preserves_one_object_identity(self):
         doc=new_document('Keyboard flow test')
