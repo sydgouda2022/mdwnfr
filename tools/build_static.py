@@ -20,7 +20,7 @@ index=DEST/'index.html'
 index.write_text(index.read_text(encoding='utf-8').replace(
     'name="mdwnfr-build" content="development"',
     f'name="mdwnfr-build" content="{release}"'),encoding='utf-8')
-# The runtime is always self-hosted. A release without the licensed font is invalid.
+# The runtime is self-hosted. A release without the licensed font is invalid.
 font=ROOT/'web/assets/fonts/hieroglyphs.woff2'
 if not font.is_file() or font.stat().st_size<1000 or font.read_bytes()[:4]!=b'wOF2':
     raise ValueError('Missing verified local hieroglyphic font')
@@ -62,12 +62,7 @@ copy2(ROOT/'core/mdwnfr/data/artwork_catalog.json', DEST/'artwork/catalog.json')
 catalog=DEST/'core/mdwnfr/data/lexicon.json'
 raw=catalog.read_bytes()
 from catalog_integrity import validate_release_catalog
-data=validate_release_catalog(raw)
-manifest={'format':'mdwnfr-catalog-integrity-v1',
-          'sha256':hashlib.sha256(raw).hexdigest(),
-          'bytes':len(raw),'spelling_records':len(data['entries']),
-          'complete':data['metadata'].get('complete') is True,
-          'published_dataset_sha256':data['metadata'].get('published_dataset_sha256','')}
+validate_release_catalog(raw)
 (catalog.parent/'catalog_integrity.json').write_text(
     json.dumps(manifest,sort_keys=True,separators=(',',':')),encoding='utf-8')
 lock=json.loads((ROOT/'keyboard-lock.json').read_text(encoding='utf-8'))

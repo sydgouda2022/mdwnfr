@@ -38,85 +38,67 @@ def current_lock():
     if j.get("format") != "keyboard-dependencies-v1":
         raise ValueError("Unsupported dependency lock schema")
     names = set(j["dependencies"])
-    if names not in ({"coptic-keyboard", "hieroglyphic-keyboard"}, {"hieroglyphic-keyboard"}):
-        raise ValueError("Unexpected dependency graph")
+    if names != {"hieroglyphic-keyboard"}:
+        raise ValueError("MdwNfr uses only the independent hieroglyphic keyboard API")
     return j
 
 def verify():
-    j = current_lock()
-    for name, locked in j["dependencies"].items():
-        sub = "coptic-lexicon" if name == "coptic-keyboard" else "lexicon"
-        p = ROOT / "web" / sub
-        manifest = (p / "manifest.json").read_bytes()
-        catalog = (p / "lexicon.json").read_bytes()
-        m = json.loads(manifest)
-        expected = "cop" if name == "coptic-keyboard" else "egy"
-        if m["language"] != expected or m["sha256"] != digest(catalog):
-            raise ValueError(f"Invalid {name} release data")
-        if m["bytes"] != len(catalog) or m["spelling_records"] != len(json.loads(catalog)["rows" if expected == "cop" else "entries"]):
-            raise ValueError(f"Corrupted {name} counts")
-        if locked["manifest_sha256"] != digest(manifest) or locked["lexicon_sha256"] != digest(catalog):
-            raise ValueError(f"Untracked {name} release modification")
-    if "coptic-keyboard" not in j["dependencies"]:
-        if (ROOT / "core/mdwnfr/data/lexicon.json").read_bytes() != (ROOT / "web/lexicon/lexicon.json").read_bytes():
-            raise ValueError("MdwNfr browser and Python catalog diverged")
-    api=next(iter(j["dependencies"].values()))
-    modules=api.get("api_git_blobs")
-    expected={"keyboard_api.mjs","keyboard_search.mjs","keyboard_catalog.js","lexicon_install.mjs","THIRD_PARTY_NOTICES.md"}
-    if not isinstance(modules,dict) or set(modules)!=expected:
-        raise ValueError("Missing complete pinned headless API module inventory")
-    for name,expected_sha in modules.items():
-        content=(ROOT/"web/vendor/hieroglyphic"/name).read_bytes()
-        if git_blob_sha(content)!=expected_sha:
-            raise ValueError("Vendored keyboard API drift: "+name)
-    print("Keyboard dependency data and headless API match exact locked hashes.")
+    lock = current_lock()["dependencies"]["hieroglyphic-keyboard"]
+    directory = ROOT / "web/lexicon"
+    manifest_bytes = (directory / "manifest.json").read_bytes()
+    catalog_bytes = (directory / "lexicon.json").read_bytes()
+    manifest = json.loads(manifest_bytes)
+    catalog = json.loads(catalog_bytes)
+    if manifest.get("language") != "egy":
+        raise ValueError("Pinned keyboard is not Egyptian")
+    if manifest.get("sha256") != digest(catalog_bytes):
+        raise ValueError("Keyboard lexicon checksum mismatch")
+    if manifest.get("bytes") != len(catalog_bytes) or (
+            manifest.get("spelling_records") != len(catalog["entries"])):
+        raise ValueError("Keyboard lexicon count mismatch")
+    if (lock["manifest_sha256"] != digest(manifest_bytes) or
+            lock["lexicon_sha256"] != digest(catalog_bytes)):
+        raise ValueError("Unreviewed keyboard release modification")
+    module_shas = lock.get("api_git_blobs")
+    required = {"keyboard_api.mjs", "keyboard_search.mjs", "keyboard_catalog.js",
+                "lexicon_install.mjs", "THIRD_PARTY_NOTICES.md"}
+    if not isinstance(module_shas, dict) or set(module_shas) != required:
+        raise ValueError("Incomplete pinned headless keyboard API")
+    for filename, expected in module_shas.items():
+        actual = git_blob_sha((ROOT / "web/vendor/hieroglyphic" / filename).read_bytes())
+        if actual != expected:
+            raise ValueError("Vendored API differs from locked source: " + filename)
+    print("Verified pinned hieroglyphic keyboard data and headless API.")
+
 
 def stage(name, sha):
-    repo = f"sydgouda2022/{name}"
+    if name != "hieroglyphic-keyboard":
+        raise ValueError("MdwNfr accepts no other keyboard dependencies")
+    repo = "sydgouda2022/hieroglyphic-keyboard"
     def get(path):
         return fetch(PREFIX.format(repo=repo, sha=sha, path=path))
-    raw_manifest = get("release/manifest.json")
-    manifest = json.loads(raw_manifest)
-    language = "cop" if name == "coptic-keyboard" else "egy"
-    if manifest["language"] != language:
-        raise ValueError(f"Wrong keyboard language: {name}")
+    manifest_bytes = get("release/manifest.json")
+    manifest = json.loads(manifest_bytes)
+    if manifest.get("language") != "egy":
+        raise ValueError("Wrong keyboard language")
     catalog = get("release/lexicon.json")
-    if digest(catalog) != manifest["sha256"] or len(catalog) != manifest["bytes"]:
-        raise ValueError(f"Upstream {name} release SHA-256 mismatch")
-    rows = json.loads(catalog)["rows" if language == "cop" else "entries"]
-    minimum = 20000 if language == "cop" else 40000
-    if len(rows) != manifest["spelling_records"] or len(rows) < minimum:
-        raise ValueError(f"Upstream {name} release records regression")
-    dest = "web/coptic-lexicon" if language == "cop" else "web/lexicon"
+    if digest(catalog) != manifest.get("sha256") or len(catalog) != manifest.get("bytes"):
+        raise ValueError("Upstream keyboard release fingerprint mismatch")
+    records = json.loads(catalog)["entries"]
+    if len(records) != manifest.get("spelling_records") or len(records) < 40000:
+        raise ValueError("Upstream spelling count regression")
     files = {
-        f"{dest}/lexicon.json": catalog,
-        f"{dest}/manifest.json": raw_manifest,
-        f"{dest}/coverage.json": get("release/coverage.json")
+        "web/lexicon/lexicon.json": catalog,
+        "web/lexicon/manifest.json": manifest_bytes,
+        "web/lexicon/coverage.json": get("release/coverage.json")
     }
-    if language == "cop":
-        files["web/coptic-install.mjs"] = get("src/coptic_install.mjs")
-    else:
-        files["web/lexicon-install.mjs"] = get("src/lexicon_install.mjs")
-    if "coptic-keyboard" in current_lock()["dependencies"]:
-        files[f"web/keyboards/{language}/keyboard_search.mjs"] = get("src/keyboard_search.mjs")
-        try:
-            files[f"web/keyboards/{language}/_generic_search.mjs"] = get("src/_generic_search.mjs")
-        except Exception:
-            # Earlier publisher versions exposed the generic kernel directly.
-            # Never suppress failure for the required public module.
-            pass
-        if language == "egy":
-            files["web/assets/dictionaries/signs.json"] = get("release/signs.json")
-    else:
-        if language != "egy":
-            raise ValueError("Coptic is not a MdwNfr dependency")
-        files["web/keyboard_catalog.js"] = get("src/keyboard_catalog.js")
-        for module in ("keyboard_api.mjs","keyboard_search.mjs","keyboard_catalog.js","lexicon_install.mjs"):
-            files[f"web/vendor/hieroglyphic/{module}"] = get(f"src/{module}")
-        files["web/vendor/hieroglyphic/THIRD_PARTY_NOTICES.md"] = get("docs/THIRD_PARTY_NOTICES.md")
-        files["core/mdwnfr/data/lexicon.json"] = catalog
-        files["data/lexicon.sqlite3"] = get("release/lexicon.sqlite3")
-    return manifest, raw_manifest, catalog, files
+    for module in ("keyboard_api.mjs", "keyboard_search.mjs",
+                   "keyboard_catalog.js", "lexicon_install.mjs"):
+        files["web/vendor/hieroglyphic/" + module] = get("src/" + module)
+    files["web/vendor/hieroglyphic/THIRD_PARTY_NOTICES.md"] = get(
+        "docs/THIRD_PARTY_NOTICES.md")
+    return manifest, manifest_bytes, catalog, files
+
 
 def update():
     lock = current_lock()

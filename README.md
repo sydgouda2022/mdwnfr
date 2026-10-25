@@ -13,9 +13,7 @@ repository until an explicit migration cutover.
 
 ## Headless keyboard API
 
-The public Hieroglyphic Keyboard API v2 is pinned in `web/vendor/hieroglyphic/` and supplies sign lookup. The existing Python prediction bridge remains until the consumer migration is tested. MdwNfr still owns editing, documents and layout. The lexicon is incomplete. Local recovery snapshots are not external backups.
-
-The browser predictor now runs in `web/keyboard-prediction-worker.mjs`, using the independent verified headless v2 API. Python remains the document and quadrat authority; its older prediction RPC is retained for native test compatibility only.
+The pinned headless Hieroglyphic Keyboard API v2 lives under `web/vendor/hieroglyphic/` and owns sign lookup, native Unicode predictions and dictionary integrity. It runs in `web/keyboard-prediction-worker.mjs`. Python owns document validation, transactions and quadrat layout only; no duplicate prediction implementation is bundled. The historical corpus remains incomplete, and local recovery history is not an external backup.
 
 ## Portable backups
 
@@ -35,4 +33,4 @@ Document library order reflects successful IndexedDB save times. Keyboard Enter/
 
 ## Packaged browser assets
 
-The PWA ships just the verified headless keyboard API and its browser dictionary. Legacy Python dictionary JSON, old browser lexicon installer, and the duplicate sign catalog remain available in source for native regression/compatibility checks, but are omitted from the published bundle.
+The PWA and source now contain a single pinned prediction implementation: the independent headless keyboard API with one browser lexicon. Redundant Python predictor, duplicate database, standalone legacy sign catalog, and legacy lexicon installer have been removed from MdwNfr. Independent keyboard development and dataset compilation belong in `sydgouda2022/hieroglyphic-keyboard`. The verified editor still runs entirely offline after its complete runtime installs. See `docs/RECOVERY_AND_CLIPBOARD.md` for data-safety limits.

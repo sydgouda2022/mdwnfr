@@ -56,7 +56,6 @@ jobs:
           PYTHONPATH=core python -m unittest discover -s qa -p 'test_*.py' -v
           node --check web/app.js
           node --check web/worker.js
-          node --check web/lexicon-install.mjs
           node --check web/keyboard-prediction-worker.mjs
           node --check web/vendor/hieroglyphic/keyboard_api.mjs
           python -m compileall -q core/mdwnfr

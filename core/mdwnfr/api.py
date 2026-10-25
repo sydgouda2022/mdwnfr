@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from .document import new_document, transaction, assert_document
 from .layout import LayoutSession
-from .lexicon import suggest, bundled_lexicon
 from .quadrat import compose
 from .history import recorded_transaction
 from .session import DocumentSession
@@ -44,17 +43,6 @@ def handle(request: dict) -> dict:
     if name=="layout":
         layout, stats = _layout_session.calculate(request["document"], request.get("metrics"))
         return {"layout": layout, "layout_stats": stats}
-    if name=="lexicon_info":
-        return {"lexicon":bundled_lexicon().metadata}
-    if name=="suggest":
-        if "entries" in request:
-            return {"suggestions":suggest(request["prefix"],request["entries"],
-                                           request.get("global_choices"),request.get("document_choices"))}
-        return bundled_lexicon().candidates(request["prefix"],
-            personal_entries=request.get("personal_entries"),
-            global_choices=request.get("global_choices"),
-            document_choices=request.get("document_choices"),
-            offset=request.get("offset",0),limit=request.get("limit",20))
     if name=="compose":
         return {"quadrat":compose(request["signs"],request["width"],request.get("metrics")).payload()}
     if name=="validate":

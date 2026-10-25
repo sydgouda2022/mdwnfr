@@ -1,7 +1,7 @@
-"""Validate the one published Late Egyptian Python/browser prediction catalogue.
+"""Validate structural metadata in the pinned headless keyboard's browser corpus.
 
-Source authenticity and the 41,330-row SQLite authority are checked independently
-by GitHub Actions. The browser checks the manifest hash at installation.
+This check is intentionally separate from the SHA-256 pin verified by
+sync_keyboards.py. Neither check alone establishes historical authenticity.
 """
 from __future__ import annotations
 import json
