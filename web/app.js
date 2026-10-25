@@ -2161,7 +2161,9 @@ $('import-file').addEventListener('change',async event=>{
  const file=event.target.files?.[0];event.target.value='';if(!file||libraryBusy||!ready)return;
  setLibraryBusy(true);showLibraryError();
  try{
-  if(file.size>60*1024*1024)throw new Error('Backup exceeds 60 MiB');
+  // 160 MiB admits recovery exports from the 120 MiB large-checkpoint range.
+  // Keep a hard browser-memory bound on untrusted imported JSON.
+  if(file.size>160*1024*1024)throw new Error('Backup exceeds 160 MiB');
   const entry=JSON.parse(await file.text());
   if(!entry||typeof entry!=='object'||Array.isArray(entry))throw new Error('Invalid backup');
   await rpc('validate',{document:entry});
