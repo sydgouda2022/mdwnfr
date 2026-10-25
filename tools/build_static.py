@@ -70,6 +70,13 @@ manifest={'format':'mdwnfr-catalog-integrity-v1',
           'published_dataset_sha256':data['metadata'].get('published_dataset_sha256','')}
 (catalog.parent/'catalog_integrity.json').write_text(
     json.dumps(manifest,sort_keys=True,separators=(',',':')),encoding='utf-8')
+lock=json.loads((ROOT/'keyboard-lock.json').read_text(encoding='utf-8'))
+keyboard_sha=lock['dependencies']['hieroglyphic-keyboard']['lexicon_sha256']
+if not isinstance(keyboard_sha,str) or len(keyboard_sha)!=64 or any(c not in '0123456789abcdef' for c in keyboard_sha):
+    raise ValueError('Invalid pinned keyboard checksum')
+if keyboard_sha != hashlib.sha256((DEST/'lexicon/lexicon.json').read_bytes()).hexdigest():
+    raise ValueError('Keyboard lock does not match published browser dictionary')
+(DEST/'keyboard-release-pin.json').write_text(json.dumps({'sha256':keyboard_sha},sort_keys=True)+'\n',encoding='utf-8')
 print('Built:',DEST)
 runtime=inspect()
 (DEST/'runtime-status.json').write_text(json.dumps(runtime,sort_keys=True,separators=(',',':')),encoding='utf-8')

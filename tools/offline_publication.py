@@ -11,7 +11,7 @@ from pathlib import Path
 # Always-cached shell includes every Python module imported by the browser RPC core.
 SHELL = (
     'index.html', 'style.css', 'boot.mjs', 'app.js', 'editor_controls.mjs', 'hieroglyph_facing.mjs', 'quadrat_preview.mjs', 'keyboard_catalog.js', 'worker.js', 'storage.js',
-    'manifest.webmanifest', 'runtime-status.json','keyboard-prediction-worker.mjs',
+    'manifest.webmanifest', 'runtime-status.json','keyboard-prediction-worker.mjs','keyboard-release-pin.json',
     'core/mdwnfr/__init__.py', 'core/mdwnfr/document.py',
     'core/mdwnfr/quadrat.py', 'core/mdwnfr/silhouette.py', 'core/mdwnfr/tables.py',
     'core/mdwnfr/cartouches.py',
@@ -24,6 +24,7 @@ SHELL = (
     'lexicon-install.mjs', 'lexicon/lexicon.json', 'lexicon/manifest.json',
     'vendor/hieroglyphic/keyboard_api.mjs','vendor/hieroglyphic/keyboard_search.mjs',
     'vendor/hieroglyphic/keyboard_catalog.js','vendor/hieroglyphic/lexicon_install.mjs',
+    'vendor/hieroglyphic/THIRD_PARTY_NOTICES.md',
     'core/mdwnfr/data/catalog_integrity.json',
     'core/mdwnfr/data/artwork_catalog.json',
     'core/mdwnfr/data/artwork_silhouettes.json','artwork/catalog.json',

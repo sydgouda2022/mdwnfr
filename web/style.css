@@ -187,7 +187,8 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .clipart-object{position:absolute;cursor:grab;border-radius:3px;touch-action:none}.clipart-object.drag-preview{cursor:grabbing;outline:2px dashed #b68b40;z-index:8;opacity:.85}
 .clipart-object.selected{outline:2px solid #3188c4;background:#add9f222}
 .clipart-image{width:100%;height:100%;display:block;object-fit:contain;user-select:none;pointer-events:none}
-.art-resize{display:none;position:absolute;width:44px;height:44px;z-index:5;background:#fff;border:2px solid #276a9c;border-radius:3px;touch-action:none}
+.art-resize{display:none;position:absolute;width:44px;height:44px;z-index:5;background:transparent;border:0;touch-action:none}
+.art-resize::before{content:'';position:absolute;left:17px;top:17px;width:10px;height:10px;background:#fff;border:2px solid #276a9c;border-radius:3px}
 .clipart-object.selected .art-resize{display:block}
 .art-resize.top-left{left:-22px;top:-22px;cursor:nwse-resize}
 .art-resize.top{left:calc(50% - 22px);top:-22px;cursor:ns-resize}

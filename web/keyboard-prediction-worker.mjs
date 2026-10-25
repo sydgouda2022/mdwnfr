@@ -3,11 +3,17 @@ import {createHieroglyphicKeyboard} from './vendor/hieroglyphic/keyboard_api.mjs
 let instance=null,opening=null;
 async function ready(){
  if(instance)return instance;
- if(!opening)opening=createHieroglyphicKeyboard({
+ if(!opening)opening=(async()=>{
+ const pin=await fetch('/keyboard-release-pin.json',{cache:'force-cache'});
+ if(!pin.ok)throw new Error('Missing reviewed keyboard release pin');
+ const {sha256}=await pin.json();
+ if(!/^[a-f0-9]{64}$/.test(sha256))throw new Error('Invalid keyboard release pin');
+ return createHieroglyphicKeyboard({
   manifestUrl:'/lexicon/manifest.json',lexiconUrl:'/lexicon/lexicon.json',
-  expectedSha256:'48f7769c20b1560f76b0080e8ac5155b5e42c2b9fe2c1fe696f765e803dd5a39',
+  expectedSha256:sha256,
   storageNamespace:'mdwnfr-v2',timeoutMs:30000
- }).then(value=>(instance=value)).catch(error=>{opening=null;throw error;});
+ });
+ })().then(value=>(instance=value)).catch(error=>{opening=null;throw error;});
  return opening;
 }
 self.onmessage=async ({data})=>{
