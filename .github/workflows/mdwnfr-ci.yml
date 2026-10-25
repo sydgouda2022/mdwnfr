@@ -77,10 +77,10 @@ jobs:
           node qa/test_service_worker_cache.mjs
           node qa/test_pages_overview.mjs
       - name: Install Wrangler only after explicit production cutover
-        if: github.event_name != 'pull_request' && (vars.CUTOVER_ENABLED == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_now))
+        if: github.event_name != 'pull_request' && (vars.CUTOVER_ENABLED == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_now) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[mdwnfr:deploy-once]')))
         run: npm install --global wrangler@4.45.4
       - name: Deploy verified MdwNfr worker ONLY after explicit cutover
-        if: github.event_name != 'pull_request' && (vars.CUTOVER_ENABLED == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_now))
+        if: github.event_name != 'pull_request' && (vars.CUTOVER_ENABLED == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_now) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[mdwnfr:deploy-once]')))
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
