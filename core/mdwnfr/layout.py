@@ -120,9 +120,9 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
                 page_height: float, page_capacity: int | None,
                 compact: bool = False, nested_masks: dict | None = None) -> list[dict]:
     margins = validated_margins(doc)
-    # Column slots are the same width as a text column. A clip-art object
-    # reserves an integral number of slots so it cannot overlap text; it
-    # remains one logical item and one selectable object in the document.
+    # Text columns alone consume writing slots. Floating objects are
+    # zero-span overlays with independent silhouettes and clearance. Their
+    # anchors may extend across several slots without reserving any of them.
     page_chunks: list[list[dict]] = []
     if page_capacity is None:
         page_chunks = [columns]

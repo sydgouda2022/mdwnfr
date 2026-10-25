@@ -473,7 +473,7 @@ class ArtworkWordFlow(unittest.TestCase):
             art=next((p for c in page['columns'] if c['kind']=='clipart'
                       for p in c['placements']),None)
             if art is None:continue
-            sectors=[c for c in page['columns'] if c.get('span')==0 and c['placements']]
+            sectors=[c for c in page['columns'] if c['kind']=='words' and c['placements']]
             for left in sectors:
                 for right in sectors:
                     if not math.isclose(left['x']+width,right['x'],abs_tol=1e-5):continue
