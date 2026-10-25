@@ -358,13 +358,27 @@ def _layout(doc: dict, glyph_metrics: dict | None,
             old_columns = _flatten_columns(previous_layout)
             stats['mode'] = 'incremental'
 
-    # Until boundary-level dependency tracking can reconstruct a reused
-    # silhouette group, never reuse partial clip-art sectors. Correctness
-    # wins over unsafe incremental reuse for mixed documents.
-    if any(o['type'] in ('clipart','image','table','cartouche') for o in doc['items']) or (previous_doc and any(
-            o['type'] in ('clipart','image','table','cartouche') for o in previous_doc['items'])):
-        old_columns=[]
-        stats['mode']='full_silhouette'
+    # An artwork may float across many columns on its own page. Reusing
+    # arbitrary columns around it is unsound. But completed, FULL, word-only
+    # pages strictly before the changed object are immutable and safe to seed.
+    complex_types=('clipart','image','table','cartouche')
+    if (any(o['type'] in complex_types for o in doc['items']) or
+            (previous_doc and any(o['type'] in complex_types for o in previous_doc['items']))):
+        safe_columns=[]
+        if old_columns and previous_layout and page_capacity is not None:
+            end_index=0
+            for page in previous_layout['pages']:
+                cols=page['columns']
+                end_index+=sum(len(col['placements']) for col in cols)
+                full=sum(col.get('span',1) for col in cols)==page_capacity
+                words_only=all(col.get('kind','words')=='words' and
+                    all((p['type'] if isinstance(p,dict) else 'word')=='word'
+                        for p in col['placements']) for col in cols)
+                if not full or not words_only or end_index>=first_changed:
+                    break
+                safe_columns.extend(cols)
+        old_columns=safe_columns
+        stats['mode']='incremental_safe_pages' if safe_columns else 'full_silhouette'
     columns: list[dict] = []
     start_index = 0
     # Prefix columns end *before* the first modified item. Last unfinished
