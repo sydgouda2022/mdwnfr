@@ -4,7 +4,7 @@
   "dependencies": {
     "hieroglyphic-keyboard": {
       "upstream_repository": "sydgouda2022/hieroglyphic-keyboard",
-      "source_commit": "9f929bae7be77c06e60365f64fa764f50d71a536",
+      "source_commit": "cf6fea58322aaafa6e47011dfdca310910b2383b",
       "version": "late-egyptian-development-48f7769c20b1560f",
       "manifest_sha256": "c16fca798db1a61a79c122297e0bae1135b78a94c516631802abf4c84151eb01",
       "lexicon_sha256": "48f7769c20b1560f76b0080e8ac5155b5e42c2b9fe2c1fe696f765e803dd5a39"
