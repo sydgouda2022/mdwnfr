@@ -30,3 +30,5 @@ The production browser build derives `keyboard-release-pin.json` from the review
 Deleting a document also removes its per-document prediction preferences. CI runs storage-recovery, facing, and layout-detail guard tests in addition to the browser suite.
 
 The headless API v2 caps one prediction result window at 80 entries. The editor labels expanded results accordingly; it does not claim that 80 predictions exhaust the 41,330-record corpus.
+
+Document library order reflects successful IndexedDB save times. Keyboard Enter/Space works on cartouches and table cells, and the layout worker can be restarted after fatal initialization errors without a permanently pending layout request.

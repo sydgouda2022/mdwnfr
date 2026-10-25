@@ -102,7 +102,7 @@ async function mutateDocument(id,doc){
      // Only snapshot a real prior revision, or the original new document.
      const canCapture=due&&previousDocument&&
        (!previous||previous.revision!==doc.revision)&&snapshotBytes(previousDocument)<=MAX_SNAPSHOT_BYTES;
-     const updatedIndex={...summary(doc),last_snapshot_at:oldIndex?.last_snapshot_at||0};
+     const updatedIndex={...summary(doc),created_at:oldIndex?.created_at||doc.created_at||new Date(now).toISOString(),updated_at:new Date(now).toISOString(),last_snapshot_at:oldIndex?.last_snapshot_at||0};
      docs.put(doc);
      if(canCapture){
       const key=snapshotKey(id,now),bytes=snapshotBytes(previousDocument);

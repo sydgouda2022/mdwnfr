@@ -16,7 +16,7 @@ const numerals=[...('𓏺𓏻𓏼𓏽𓏾𓏿𓐀𓐁𓐂')].map((sign,i)=>({sig
 const worker=new Worker('/worker.js',{type:'module'});
 // Separate Python layout worker: lengthy reflow never blocks document edits.
 // Created lazily by the browser on first layout job; it loads no lexicon.
-let layoutWorker=null;
+let layoutWorker=null,layoutRestarts=0;
 function getLayoutWorker(){
  if(!layoutWorker){
   layoutWorker=new Worker('/worker.js?role=layout',{type:'module'});
@@ -320,7 +320,7 @@ function paintPageContent(slot,p,shell){
      const choose=()=>selectTableCell(item.id,cell.row,cell.column);
      box.addEventListener('click',e=>{e.stopPropagation();choose();});
      box.addEventListener('dblclick',e=>{e.stopPropagation();choose();if(activePanel!=='format')switchPanel('format');});
-     box.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();choose();if(activePanel!=='format')switchPanel('format');}});
+     box.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();if(activePanel!=='format')switchPanel('format');}});
      if(selectedTableCell?.tableId===item.id&&selectedTableCell.row===cell.row&&selectedTableCell.column===cell.column)box.classList.add('active');
      for(const w of cell.words){
       const wordNode=document.createElement('div');wordNode.className='table-cell-word';
@@ -343,6 +343,7 @@ function paintPageContent(slot,p,shell){
     node.setAttribute('role','button');node.tabIndex=0;node.setAttribute('aria-label','Hieroglyphic cartouche');
     node.addEventListener('click',e=>{e.stopPropagation();selectWord(item.id,e.shiftKey);});
     node.addEventListener('dblclick',e=>{e.stopPropagation();selectWord(item.id);if(activePanel!=='format')switchPanel('format');});
+    node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectWord(item.id);if(activePanel!=='format')switchPanel('format');}});
     node.addEventListener('pointerdown',e=>beginNestedDrag(e,item,c,p,node));
     const geometry=item.cartouche;
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -1120,6 +1121,7 @@ worker.onerror=e=>{ready=false;setLibraryBusy(true);showLibraryError('Python run
 function handleLayoutMessage(ev){
  const m=ev.data;
  if(m.type==='ready')return;
+ if(m.type==='fatal'){handleLayoutError({message:m.error});return;}
  if(m.id!==undefined&&layoutPending.has(m.id)){
   const {resolve,reject}=layoutPending.get(m.id);layoutPending.delete(m.id);
   if(m.ok)resolve(m);
@@ -1130,6 +1132,8 @@ function handleLayoutError(e){
  status('Layout worker error: '+e.message,true);
  for(const {reject} of layoutPending.values())reject(new Error(e.message));
  layoutPending.clear();
+ layoutWorker?.terminate();layoutWorker=null;resetLayoutSynchronization();
+ if(doc&&!editorScreen.hidden&&++layoutRestarts<=2)void reflow();
 }
 function layoutRpc(method,payload){
  return new Promise((resolve,reject)=>{
@@ -1412,7 +1416,7 @@ async function pumpLayoutQueue(){
     const outcome=await sendLayoutRequest(snapshot);
     if(version!==layoutVersion||!doc||snapshot.id!==doc.id||
        snapshot.revision!==doc.revision||editorScreen.hidden)continue;
-    layoutCache=outcome.layout;paint(outcome.layout);
+    layoutCache=outcome.layout;paint(outcome.layout);layoutRestarts=0;
     status(outcome.layout.warnings.length?'Layout warning: '+outcome.layout.warnings[0]:
            'Revision '+doc.revision+' · Saving locally…',outcome.layout.warnings.length>0);
    }catch(e){
