@@ -421,9 +421,14 @@ def _layout(doc: dict, glyph_metrics: dict | None,
     def word_origins(shape, item):
         # One source of truth for ALL obstacles: image, clipart, table,
         # cartouche. No before/after-object or reserved-height branches.
-        return free_word_starts(shape,column_left=lane_slot()*width,
-            top=top,bottom=bottom,clearance=object_clearance_mm(width),
-            obstacles=obstacles,
+        lane_x=lane_slot()*width
+        clearance=object_clearance_mm(width)
+        nearby=[ob for ob in obstacles
+                if ob[5]-clearance < lane_x+width and
+                   ob[5]+ob[3]+clearance > lane_x]
+        return free_word_starts(shape,column_left=lane_x,
+            top=top,bottom=bottom,clearance=clearance,
+            obstacles=nearby,
             ink_expansion=max((g.font_size for g in shape.signs),default=0)*.006
                           if item.get('bold',False) else 0)
 
@@ -503,11 +508,14 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         overlay = None
         fragments = measure(item)
         for fragment_index,(iw,ih,profile,geometry) in enumerate(fragments):
-            span = max(1,ceil((iw+max(0.0,item.get('x_offset_mm',0.0))-1e-8)/width))
-            if capacity is not None and span > capacity:
-                raise DocumentError('Object exceeds the selected writing width')
             wanted_y = top + (usable_height-ih)*(item.get('y_align',0.5) if len(fragments)==1 else 0)
             requested = float(item.get('x_offset_mm',0.0)) if len(fragments)==1 else 0.0
+            if requested > 0 and capacity is not None:
+                # A3 preferences never make the same object impossible on A4.
+                requested=min(requested,max(0.0,capacity*width-iw))
+            span=max(1,ceil((iw+max(0.0,requested)-1e-8)/width))
+            if capacity is not None and span > capacity:
+                raise DocumentError('Object exceeds the selected writing width')
             # Candidate slots are checked against previously placed ink and
             # silhouettes. Negative offsets may move into a previous slot,
             # but never through glyphs that have already been composed.

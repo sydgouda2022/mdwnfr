@@ -43,6 +43,21 @@ class ObjectSequenceLayout(unittest.TestCase):
                 self.assertEqual(ids_in_layout(a4).count(ident),1)
                 self.assertNotEqual(a3['column_width_mm'],a4['column_width_mm'])
 
+    def test_object_offset_is_reclamped_when_paper_shrinks(self):
+        for direction in ('rtl','ltr'):
+            doc,image_id=self.make_doc(direction)
+            image=next(item for item in doc['items'] if item['id']==image_id)
+            image['x_offset_mm']=280.0
+            a3=layout_document(doc)
+            small=deepcopy(doc)
+            small['surface']='A4'
+            small['revision']+=1
+            a4=layout_document(small)
+            self.assertEqual(ids_in_layout(a3).count(image_id),1)
+            self.assertEqual(ids_in_layout(a4).count(image_id),1)
+            self.assertEqual(words_in_layout(a4),
+                [item['id'] for item in small['items'] if item['type']=='word'])
+
     def test_geometry_is_rederived_from_sequence_not_saved_coordinates(self):
         doc,ident=self.make_doc()
         first=layout_document(doc)
