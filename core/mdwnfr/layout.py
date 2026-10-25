@@ -458,7 +458,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                           if item.get('bold',False) else 0)
 
     def insert_word(item):
-        nonlocal lane_cursor
+        nonlocal lane_cursor, slot
         shape = quadrat_for(tuple(item['signs']))
         if shape.height > usable_height + 1e-8:
             raise DocumentError('Quadrat exceeds writing height; reduce font size')
