@@ -8,6 +8,7 @@ const SNAPSHOTS='document-snapshots';
 const SNAPSHOT_META='snapshot-metadata';
 const SNAPSHOT_INTERVAL_MS=5*60*1000;
 const MAX_SNAPSHOT_BYTES=40*1024*1024;
+const MAX_LARGE_SNAPSHOT_BYTES=120*1024*1024;
 const MAX_SNAPSHOT_COUNT=48;
 const SNAPSHOT_RETENTION_MS=365*24*60*60*1000;
 const snapshotKey=(id,when)=>`${id}:${String(when).padStart(13,'0')}:${crypto.randomUUID()}`;
@@ -27,8 +28,10 @@ function pruneSnapshotMetadata(records,now,protectedKey=null){
  // reversible. Retain no more than one oversized pre-restore safety point.
  const ordered=[...records].sort((a,b)=>b.captured_at-a.captured_at);
  const latestRestore=ordered.find(entry=>entry.reason==='before-restore');
+ const latestLarge=ordered.find(entry=>entry.reason==='autosave-large');
  const retained=new Set(ordered.filter(entry=>
-  entry.key===protectedKey||entry.key===latestRestore?.key).map(entry=>entry.key));
+  entry.key===protectedKey||entry.key===latestRestore?.key||
+  entry.key===latestLarge?.key).map(entry=>entry.key));
  const buckets=new Set();let total=0;
  for(const entry of ordered){
   if(retained.has(entry.key))continue;
@@ -82,13 +85,45 @@ async function operation(mode,fn,store=STORE){
 }
 // A document, its library metadata, and any recovery snapshot commit together.
 // A failed transaction never leaves a snapshot pointing at an unsaved document.
+// Large recovery is best-effort in a SEPARATE transaction. A quota error in
+// backup storage must never roll back an otherwise valid document save.
+async function captureLargeSnapshot(id,previous,capturedAt,bytes){
+ const db=await database();
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction([INDEX,SNAPSHOTS,SNAPSHOT_META],'readwrite');
+  const index=tx.objectStore(INDEX),snapshots=tx.objectStore(SNAPSHOTS);
+  const metas=tx.objectStore(SNAPSHOT_META);
+  const indexReq=index.get(id);
+  const existingReq=metas.index('by_document').getAll(IDBKeyRange.only(id));
+  let loaded=0,meta;
+  const ready=()=>{
+   if(++loaded!==2)return;
+   const old=indexReq.result;
+   if(!old || old.last_snapshot_at>=capturedAt)return;
+   const key=snapshotKey(id,capturedAt);
+   meta={key,document_id:id,captured_at:capturedAt,revision:previous.revision,
+    name:previous.name||'Untitled',bytes,reason:'autosave-large'};
+   snapshots.put({key,document_id:id,document:structuredClone(previous)});
+   metas.put(meta);
+   index.put({...old,last_snapshot_at:capturedAt});
+   for(const drop of pruneSnapshotMetadata([...existingReq.result,meta],capturedAt,key)){
+    snapshots.delete(drop.key);metas.delete(drop.key);
+   }
+  };
+  indexReq.onsuccess=ready;existingReq.onsuccess=ready;
+  tx.oncomplete=()=>resolve(Boolean(meta));
+  tx.onerror=()=>reject(tx.error||Error('Large recovery snapshot could not be saved'));
+  tx.onabort=()=>reject(tx.error||Error('Large recovery snapshot aborted'));
+ });
+}
+
 async function mutateDocument(id,doc,expectedRevision=undefined){
  const db=await database();
  return new Promise((resolve,reject)=>{
   const tx=db.transaction([STORE,INDEX,SNAPSHOTS,SNAPSHOT_META],'readwrite');
   const docs=tx.objectStore(STORE),index=tx.objectStore(INDEX);
   const snapshots=tx.objectStore(SNAPSHOTS),metas=tx.objectStore(SNAPSHOT_META);
-  let failed=false;
+  let failed=false,largeCandidate=null;
   const fail=error=>{failed=true;try{tx.abort();}catch(_){};reject(error);};
   try{
    if(!doc){
@@ -117,9 +152,11 @@ async function mutateDocument(id,doc,expectedRevision=undefined){
      }
       const due=!oldIndex?.last_snapshot_at || now-oldIndex.last_snapshot_at>=SNAPSHOT_INTERVAL_MS;
      const previousDocument=previous||doc;
-     // Only snapshot a real prior revision, or the original new document.
-     const canCapture=due&&previousDocument&&
-       (!previous||previous.revision!==doc.revision)&&snapshotBytes(previousDocument)<=MAX_SNAPSHOT_BYTES;
+     const eligible=due&&previousDocument&&(!previous||previous.revision!==doc.revision);
+     const bytes=eligible?snapshotBytes(previousDocument):0;
+     const canCapture=eligible&&bytes<=MAX_SNAPSHOT_BYTES;
+     if(eligible&&bytes>MAX_SNAPSHOT_BYTES&&bytes<=MAX_LARGE_SNAPSHOT_BYTES)
+      largeCandidate={document:previousDocument,at:now,bytes};
      const updatedIndex={...summary(doc),created_at:oldIndex?.created_at||doc.created_at||new Date(now).toISOString(),updated_at:new Date(now).toISOString(),last_snapshot_at:oldIndex?.last_snapshot_at||0};
      docs.put(doc);
      if(canCapture){
@@ -143,7 +180,12 @@ async function mutateDocument(id,doc,expectedRevision=undefined){
     summaryReq.onsuccess=()=>{oldIndex=summaryReq.result;ready();};
    }
   }catch(e){fail(e);return;}
-  tx.oncomplete=()=>resolve();
+  tx.oncomplete=()=>{
+   if(!largeCandidate){resolve();return;}
+   // Never surface optional backup-quota failures as document-save failures.
+   captureLargeSnapshot(id,largeCandidate.document,largeCandidate.at,largeCandidate.bytes)
+    .then(()=>resolve(),()=>resolve());
+  };
   tx.onerror=()=>{if(!failed)reject(tx.error||new Error('Save failed'));};
   tx.onabort=()=>{if(!failed)reject(tx.error||new Error('Save aborted'));};
  });

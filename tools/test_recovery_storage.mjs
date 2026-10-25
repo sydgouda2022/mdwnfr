@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 
 let now=1_780_000_000_000;
-let failNextDocumentWrite=false;
+let failNextDocumentWrite=false,failNextSnapshotWrite=false;
 const tables=new Map();
 const schema=new Map();
 const db={
@@ -37,7 +37,7 @@ const db={
         return {
           get(k){return request(()=>structuredClone(map.get(k)));},
           getAll(){return request(()=>[...map.values()].map(x=>structuredClone(x)));},
-          put(o){return request(()=>{if(name==='documents'&&failNextDocumentWrite){failNextDocumentWrite=false;throw Error('Simulated quota/IO failure');}map.set(o.key??o.id,structuredClone(o));return o.key??o.id;});},
+          put(o){return request(()=>{if(name==='documents'&&failNextDocumentWrite){failNextDocumentWrite=false;throw Error('Simulated quota/IO failure');}if(name==='document-snapshots'&&failNextSnapshotWrite){failNextSnapshotWrite=false;throw Error('Simulated snapshot quota failure');}map.set(o.key??o.id,structuredClone(o));return o.key??o.id;});},
           delete(k){return request(()=>{map.delete(k);});},
           index(indexName){return {getAll(query){return request(()=>[...map.values()].filter(item=>item[schema.get(name)[indexName]]===query.value).map(item=>structuredClone(item)));}};},
         };
@@ -162,6 +162,17 @@ await updateProfile({op:'forget-document',document_id:'d1'});
 profile=await loadProfile();
 assert.equal(profile.personal_entries.length,0);
 assert.equal(profile.document_choices['d1'],undefined);
+// Oversized automatic history is best effort: normal saves must succeed
+// even if the optional snapshot would exceed IndexedDB quota.
+await save({...doc(0),id:'d4',embedded_image:'z'.repeat(8192)});
+assert((await listSnapshots('d4')).some(x=>x.reason==='autosave-large'),
+ 'Initial oversized document must have a real automatic recovery point');
+now+=6*60*1000;
+failNextSnapshotWrite=true;
+await save({...doc(1),id:'d4',embedded_image:'y'.repeat(8192)},0);
+assert.equal((await load('d4')).revision,1,
+ 'Automatic recovery quota failure cannot discard a committed edit');
+await remove('d4',1);
 await remove('d3',4);
 await remove('d2');
 await remove('d1',6);
