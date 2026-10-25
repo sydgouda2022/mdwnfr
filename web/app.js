@@ -1885,7 +1885,7 @@ function renderComposer(){
  keyboardSuggest(0,8).then(answer=>{
   if(current!==predVersion)return;
   showSuggestions(answer.suggestions);
-  $('expand-predictions').textContent='Top suggestions ('+answer.total+' max)'';
+  $('expand-predictions').textContent='Top suggestions ('+answer.total+' max)';
  }).catch(e=>{if(current===predVersion)status('Prediction: '+e.message,true);});
 }
 function suggestionButton(candidate){
