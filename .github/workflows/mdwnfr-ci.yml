@@ -60,7 +60,7 @@ jobs:
           PYTHONPATH=core python -m unittest discover -s qa -p 'test_*.py' -v
           node --check web/app.js
           node --check web/worker.js
-          node --check web/lexicon-install.mjs
+          node --check web/vendor/hieroglyphic/lexicon_install.mjs
           python -m compileall -q core/mdwnfr
           node qa/test_quadrat_preview.mjs
           node qa/test_keyboard_api.mjs
