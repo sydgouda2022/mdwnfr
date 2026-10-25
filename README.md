@@ -41,7 +41,20 @@ The PWA and source now contain a single pinned prediction implementation: the in
 - Autosave uses persisted-revision checks. Failed saves expose a recovery export and uncommitted changes warn on tab close.
 - My Words can be added, browsed, edited, and deleted. Profile updates are serialized by IndexedDB across tabs.
 - Table-cell and cartouche formatting is undoable through Python-validated replace operations; replacing nested text retains existing word styles.
-- Pages show bounded miniatures derived from actual Python layout coordinates. Fully completed, word-only pages ahead of illustrated edits can be reused safely; artwork-influenced pages still recompute.
+- Pages show bounded miniatures derived from actual Python layout coordinates. The v2 unified compositor recomposes changed streams from persistent IDs; identical inputs reuse geometry. No separate wrap-before/after-object algorithms remain.
 - The isolated Pyodide layout worker is started on demand and released after 45 seconds idle. Returning to Documents releases it immediately. Detail requests restore authoritative layout when needed.
 - The inspector exposes page margins, while its sole bundled font is displayed as a label rather than a nonfunctional menu.
 - CI verifies native formatting, recovery transactions, pinned keyboard source, Chromium/WebKit touch workflows and offline startup. Production cutover remains explicitly gated.
+
+
+## Layout Engine 2 — one stream, one compositor
+
+The document is an ordered sequence of uniquely identified objects; paper, columns and x/y positions are only layout results. Words are quadrats containing ordered glyph atoms, each with a persistent symbol ID. Tables and cartouches contain their own nested quadrats. Images and clip art expose measured silhouettes and quarter-column clearance through the same geometry contract.
+
+- Changing A3 to A4, removing earlier/later words or resizing artwork never reassigns object IDs or changes logical sequence.
+- The Python compositor derives columns and page placement from currently available writing space. The UI mirrors Python-projected glyph geometry rather than constructing a second flow.
+- Existing documents without symbol atom IDs remain compatible; symbols get deterministic IDs based on their word IDs until edited.
+- The old special-case text-before/after-artwork, table-wrap and cartouche-wrap paths have been replaced by one object/obstacle placement flow.
+- Editing currently recomposes the changed stream using cached quadrats, instead of the previous completed-column incremental cache. The compact browser layout still supports lazy viewport pages.
+
+Read [Layout Engine 2 contract](docs/LAYOUT_ENGINE_V2.md) for the object identity, text order and silhouette rules.
