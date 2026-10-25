@@ -16,7 +16,21 @@ const numerals=[...('𓏺𓏻𓏼𓏽𓏾𓏿𓐀𓐁𓐂')].map((sign,i)=>({sig
 const worker=new Worker('/worker.js',{type:'module'});
 // Separate Python layout worker: lengthy reflow never blocks document edits.
 // Created lazily by the browser on first layout job; it loads no lexicon.
-let layoutWorker=null,layoutRestarts=0;
+let layoutWorker=null,layoutRestarts=0,layoutIdleTimer=null;
+function releaseLayoutWorker(){
+ if(layoutIdleTimer!==null){clearTimeout(layoutIdleTimer);layoutIdleTimer=null;}
+ layoutWorker?.terminate();layoutWorker=null;
+ resetLayoutSynchronization();
+}
+function scheduleLayoutIdle(){
+ if(layoutIdleTimer!==null)clearTimeout(layoutIdleTimer);
+ layoutIdleTimer=setTimeout(()=>{
+  layoutIdleTimer=null;
+  // Free the second Pyodide runtime when all geometry jobs are idle.
+  if(!layoutPending.size&&!layoutInFlight&&!queuedLayout)releaseLayoutWorker();
+  else scheduleLayoutIdle();
+ },45000);
+}
 function getLayoutWorker(){
  if(!layoutWorker){
   layoutWorker=new Worker('/worker.js?role=layout',{type:'module'});
@@ -608,8 +622,16 @@ function renderPagesOverview(){
    button.setAttribute('aria-label','Go to page '+(idx+1));
    if(virtual)button.style.top=(15+idx*pitch)+'px';
    const shape=document.createElement('span');shape.className='page-miniature';
-   const thumbnail=document.createElement('span');thumbnail.className='page-mini-lines';
-   shape.append(thumbnail);
+   // Bounded miniature uses positioned Python layout, not fake striped lines.
+   for(const column of pageSlots[idx].summary?.preview_columns||[]){
+    const mark=document.createElement('span');
+    mark.className='page-mini-stroke '+(column.kind==='words'?'words':'object');
+    mark.style.left=Math.round(column.x*100)+'%';
+    mark.style.top=Math.round(column.y*100)+'%';
+    mark.style.width=Math.max(1,Math.round(Math.min(column.w,1-column.x)*100))+'%';
+    mark.style.height=Math.max(2,Math.round(column.h*100))+'%';
+    shape.append(mark);
+   }
    const label=document.createElement('span');label.textContent='Page '+(idx+1);
    button.append(shape,label);
    button.onclick=()=>{closePanels();shell.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'});};
@@ -1112,7 +1134,10 @@ function showLibraryError(message=''){
  const el=$('library-error');el.hidden=!message;el.textContent=message;
 }
 function showLibrary(){
- ++layoutVersion;queuedLayout=null;resetLayoutSynchronization();repairedDetailRevisions.clear();libraryScreen.hidden=false;editorScreen.hidden=true;
+ ++layoutVersion;queuedLayout=null;repairedDetailRevisions.clear();libraryScreen.hidden=false;editorScreen.hidden=true;
+ releaseLayoutWorker();
+ for(const job of layoutPending.values())job.reject(new Error('Editor closed'));
+ layoutPending.clear();
  $('export-unsaved').hidden=true;
  selectedId=null;selectionAnchorId=null;selectionFocusId=null;selectedTableCell=null;editingId=null;buffer=[];doc=null;caretIndex=0;layoutCache=null;canUndo=false;canRedo=false;updateHistoryState();
  clearPageVirtualization();$('pages').replaceChildren();closePanels();showLibraryError();
@@ -1145,16 +1170,18 @@ function handleLayoutMessage(ev){
   const {resolve,reject}=layoutPending.get(m.id);layoutPending.delete(m.id);
   if(m.ok)resolve(m);
   else{const err=new Error(m.error);err.code=m.type;reject(err);}
+  scheduleLayoutIdle();
  }
 };
 function handleLayoutError(e){
  status('Layout worker error: '+e.message,true);
  for(const {reject} of layoutPending.values())reject(new Error(e.message));
  layoutPending.clear();
- layoutWorker?.terminate();layoutWorker=null;resetLayoutSynchronization();
+ releaseLayoutWorker();
  if(doc&&!editorScreen.hidden&&++layoutRestarts<=2)void reflow();
 }
 function layoutRpc(method,payload){
+ if(layoutIdleTimer!==null){clearTimeout(layoutIdleTimer);layoutIdleTimer=null;}
  return new Promise((resolve,reject)=>{
   const id=++nextLayoutReq;layoutPending.set(id,{resolve,reject});
   getLayoutWorker().postMessage({id,method,payload});

@@ -86,8 +86,9 @@
 .pages-overview{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding-top:15px}
 .page-overview-item{border:1px solid transparent;border-radius:11px;padding:10px 5px;background:#f5f8fb;display:flex;flex-direction:column;align-items:center;gap:8px;color:#44617d;font-size:11px}
 .page-overview-item:hover,.page-overview-item:focus-visible{background:#eaf2f9;border-color:#a8c1d5}
-.page-miniature{background:#fffdf8;border:1px solid #d2d7d7;width:64px;height:88px;border-radius:2px;display:grid;place-items:center;box-shadow:0 3px 7px #2e3b4418}
-.page-mini-lines{height:56px;width:42px;background:repeating-linear-gradient(to right,#d3b9a0 0 1px,transparent 1px 10px);opacity:.7}
+.page-miniature{position:relative;overflow:hidden;background:#fffdf8;border:1px solid #d2d7d7;width:64px;height:88px;border-radius:2px;box-shadow:0 3px 7px #2e3b4418}
+.page-mini-stroke{position:absolute;background:#b6a18a;opacity:.7;border-radius:1px}
+.page-mini-stroke.object{background:#3f6583;opacity:.6}
 .format-section{padding:15px 0;border-bottom:1px solid #ebeff2}.format-section:last-child{border:0}
 .format-section-title{font-size:11px;font-weight:760;text-transform:uppercase;letter-spacing:.08em;color:#73879b;margin:0 0 12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
 .font-name{letter-spacing:0;text-transform:none;font-weight:550;color:#446680;background:#edf2f7;border-radius:9px;padding:3px 8px}

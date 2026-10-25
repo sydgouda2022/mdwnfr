@@ -26,6 +26,15 @@ def summarize_layout(snapshot: dict) -> dict:
                    "height": page["height"], "column_count": len(page["columns"]),
                    "word_count": word_count, "object_count": count-word_count,
                    "start_index": next_index, "end_index": next_index + count}
+        # Bounded navigation preview from the canonical positioned columns.
+        step=max(1,(len(page['columns'])+63)//64)
+        summary['preview_columns']=[
+            {'x':round(max(0,min(1,col['x']/page['width'])),4),
+             'y':round(max(0,min(1,col['text_top']/page['height'])),4),
+             'w':round(max(.008,min(1,col['width']/page['width'])),4),
+             'h':round(max(.008,min(1,(col['text_bottom']-col['text_top'])/page['height'])),4),
+             'kind':col.get('kind','words')}
+            for col in page['columns'][::step][:64]]
         if snapshot['surface'] == 'papyrus':
             spans = [column.get('span', 1) for column in page['columns']]
             if any(span != 1 for span in spans):

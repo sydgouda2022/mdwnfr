@@ -9,6 +9,8 @@ sys.path.insert(0,str(ROOT/'core'))
 from mdwnfr.api import handle_json
 from mdwnfr.document import new_document, transaction
 from mdwnfr.quadrat import compose
+from mdwnfr.layout import layout_document
+from mdwnfr.layout_sync import summarize_layout
 
 class QuadratWorkflowTests(unittest.TestCase):
     def test_native_geometry_matches_rpc_without_reordering(self):
@@ -28,6 +30,20 @@ class QuadratWorkflowTests(unittest.TestCase):
                 self.assertGreaterEqual(glyph['y'],0)
                 self.assertLessEqual(glyph['x']+glyph['width'],20.00001)
                 self.assertLessEqual(glyph['y']+glyph['height'],shape['height']+0.00001)
+
+    def test_navigation_preview_is_bounded_and_grounded_in_layout(self):
+        doc=new_document('Geometry-driven pages')
+        for idx in range(10):
+            doc=transaction(doc,{'op':'insert_word','index':idx,
+                'signs':['𓅓','𓏏']})
+        full=layout_document(doc)
+        summary=summarize_layout(full)
+        self.assertEqual(len(summary['pages']),len(full['pages']))
+        for page in summary['pages']:
+            self.assertLessEqual(len(page['preview_columns']),64)
+            self.assertTrue(all(0<=bar['x']<=1 and 0<=bar['y']<=1
+                and 0<bar['w']<=1 and 0<bar['h']<=1
+                for bar in page['preview_columns']))
 
     def test_word_replacement_preserves_one_object_identity(self):
         doc=new_document('Keyboard flow test')
