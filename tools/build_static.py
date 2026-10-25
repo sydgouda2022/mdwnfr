@@ -14,8 +14,12 @@ copytree(ROOT/'web',DEST,ignore=ignore_patterns('__pycache__','*.pyc','.DS_Store
 copytree(ROOT/'core',DEST/'core',ignore=ignore_patterns('__pycache__','*.pyc','.DS_Store'))
 # Startup can detect when a newly activated worker owns a different HTML schema.
 # Hash source bytes before inserting the marker, avoiding a circular fingerprint.
-release_files=('index.html','boot.mjs','app.js','style.css','editor_controls.mjs','core/mdwnfr/document.py')
-release=hashlib.sha256(b'\0'.join((DEST/name).read_bytes() for name in release_files)).hexdigest()[:16]
+# Include every shipped source module and keyboard API, not just editor.js.
+release_files=sorted(p for p in DEST.rglob('*') if p.is_file() and
+                     p.relative_to(DEST).as_posix() not in ('sw.js','index.html','offline-assets.json'))
+release=hashlib.sha256(b'\0'.join(
+    p.relative_to(DEST).as_posix().encode()+b'\0'+p.read_bytes()
+    for p in release_files)).hexdigest()[:16]
 index=DEST/'index.html'
 index.write_text(index.read_text(encoding='utf-8').replace(
     'name="mdwnfr-build" content="development"',
@@ -57,19 +61,17 @@ for artwork in artwork_catalog['artworks']:
     if len(bits)!=8192 or not any(bits):
         raise ValueError('Invalid silhouette bitmap: '+artwork['id'])
 copy2(ROOT/'core/mdwnfr/data/artwork_catalog.json', DEST/'artwork/catalog.json')
-# Every installed PWA verifies the exact lexicon bytes before launching Python.
-# Metadata status and counts come from the verified source package, never guesses.
-catalog=DEST/'core/mdwnfr/data/lexicon.json'
+# The standalone keyboard owns its verified lexicon; Python owns layout only.
+catalog=DEST/'lexicon/lexicon.json'
 raw=catalog.read_bytes()
-from catalog_integrity import validate_release_catalog
-data=validate_release_catalog(raw)
-manifest={'format':'mdwnfr-catalog-integrity-v1',
-          'sha256':hashlib.sha256(raw).hexdigest(),
-          'bytes':len(raw),'spelling_records':len(data['entries']),
-          'complete':data['metadata'].get('complete') is True,
-          'published_dataset_sha256':data['metadata'].get('published_dataset_sha256','')}
-(catalog.parent/'catalog_integrity.json').write_text(
-    json.dumps(manifest,sort_keys=True,separators=(',',':')),encoding='utf-8')
+manifest=json.loads((DEST/'lexicon/manifest.json').read_text(encoding='utf-8'))
+if hashlib.sha256(raw).hexdigest()!=manifest.get('sha256') or len(raw)!=manifest.get('bytes'):
+    raise ValueError('Independent Hieroglyphic Keyboard release checksum mismatch')
+data=json.loads(raw)
+if data.get('format')!='mdwnfr-predict-v1' or not isinstance(data.get('entries'),list):
+    raise ValueError('Invalid independent keyboard lexicon payload')
+if len(data['entries'])!=manifest.get('spelling_records'):
+    raise ValueError('Independent keyboard record count mismatch')
 print('Built:',DEST)
 runtime=inspect()
 (DEST/'runtime-status.json').write_text(json.dumps(runtime,sort_keys=True,separators=(',',':')),encoding='utf-8')
@@ -83,7 +85,11 @@ print('Offline publication:', 'COMPLETE' if publication['complete'] else 'SHELL 
 
 # Content-addressed service-worker cache for repeatable IDE rebuilds.
 import re
-cache_fingerprint=hashlib.sha256((DEST/'offline-assets.json').read_bytes()).hexdigest()[:16]
+# Service-worker-only upgrades need an independent cache name, so a failed
+# install can never delete the preceding working release.
+cache_fingerprint=hashlib.sha256(
+    (DEST/'offline-assets.json').read_bytes()+b'\0'+(DEST/'sw.js').read_bytes()
+).hexdigest()[:16]
 sw=DEST/'sw.js'
 sw_source=sw.read_text(encoding='utf-8')
 sw_source=re.sub(r"const CACHE = 'mdwnfr-offline-[^']+';",

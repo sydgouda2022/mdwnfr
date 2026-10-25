@@ -1,4 +1,3 @@
-import {ensureLexicon} from '/lexicon-install.mjs';
 /* Dedicated browser adapter. ALL content/geometry decisions remain Python. */
 const LAYOUT_ONLY = new URL(self.location.href).searchParams.get('role') === 'layout';
 const LOCAL = '/vendor/pyodide/';
@@ -21,7 +20,7 @@ async function boot() {
     if (!pythonVersion.startsWith('3.12.')) {
       throw new Error('Wrong browser Python runtime: expected 3.12, found '+pythonVersion);
     }
-    const names=['__init__.py','document.py','quadrat.py','silhouette.py','tables.py','cartouches.py','typography.py','layout.py','lexicon.py','history.py','session.py','layout_sync.py','api.py'];
+    const names=['__init__.py','document.py','quadrat.py','silhouette.py','tables.py','cartouches.py','typography.py','layout.py','history.py','session.py','layout_sync.py','api.py'];
     pyodide.FS.mkdirTree('/home/pyodide/mdwnfr');
     for (const filename of names) {
       const response=await fetch('/core/mdwnfr/'+filename,{cache:'force-cache'});
@@ -38,13 +37,8 @@ async function boot() {
     const contour=await fetch('/core/mdwnfr/data/artwork_silhouettes.json',{cache:'force-cache'});
     if(!contour.ok)throw new Error('Installed artwork silhouettes not available');
     pyodide.FS.writeFile('/home/pyodide/mdwnfr/data/artwork_silhouettes.json',await contour.text());
-    // Layout worker does not load the lexicon or personal vocabulary.
-    if (!LAYOUT_ONLY) {
-    // First-run verified installation: local IndexedDB -> integrity check -> atomic repair.
-    // No source corpora at runtime. Never touch document/user profile stores.
-    const installed=await ensureLexicon();
-    pyodide.FS.writeFile('/home/pyodide/mdwnfr/data/lexicon.json',new Uint8Array(installed.bytes));
-    }
+    // The independent browser keyboard owns lexical data; Python retains
+    // only editing transactions, glyph composition, and page layout.
     pyodide.runPython("import sys;sys.path.insert(0, '/home/pyodide')");
     handler=pyodide.runPython('from mdwnfr.api import handle_json; handle_json');
     initialized=true;

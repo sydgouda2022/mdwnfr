@@ -38,7 +38,7 @@ def summarize_layout(snapshot: dict) -> dict:
             "revision": snapshot["revision"], "surface": snapshot["surface"],
             "direction": snapshot["direction"],
             "column_width_mm": snapshot["column_width_mm"],
-            "warnings": snapshot["warnings"], "pages": pages}
+            "warnings": snapshot["warnings"], "margins_mm":snapshot["margins_mm"], "pages": pages}
 
 
 PROPERTY_KEYS = frozenset(('name', 'direction', 'surface', 'font_size_pt', 'papyrus_height_mm', 'margins_mm'))

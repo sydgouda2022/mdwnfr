@@ -1,5 +1,5 @@
 import {save,load,list,remove,loadProfile,saveProfile,listSnapshots,restoreSnapshot} from './storage.js';
-import {SIGN_CATALOG} from './keyboard_catalog.js';
+import {createKeyboardFromData,createHieroglyphicKeyboard} from './vendor/hieroglyphic/keyboard_api.mjs';
 import {NO_MIRROR_HIEROGLYPHS,mirrorSign,reverseVisualQuadrat} from './hieroglyph_facing.mjs';
 import {fitQuadrat} from './quadrat_preview.mjs';
 import {buildEgyptianPalette,normalizeColour} from './editor_controls.mjs';
@@ -8,7 +8,9 @@ import {buildEgyptianPalette,normalizeColour} from './editor_controls.mjs';
    JavaScript owns only interaction state, local persistence, and DOM drawing. */
 const $=id=>document.getElementById(id);
 const pxmm=96/25.4;
-const glyphGroups={unilaterals:SIGN_CATALOG.single,bilaterals:SIGN_CATALOG.dual,trilaterals:SIGN_CATALOG.triple};
+// Headless keyboard API supplies signs and lexical predictions.
+let keyboard=createKeyboardFromData();
+const glyphGroups={unilaterals:keyboard.getSigns('uni'),bilaterals:keyboard.getSigns('bi'),trilaterals:keyboard.getSigns('tri')};
 const numerals=[...('𓏺𓏻𓏼𓏽𓏾𓏿𓐀𓐁𓐂')].map((sign,i)=>({sign,value:String(i+1)})).concat([
  {sign:'𓎆',value:'10'},{sign:'𓍢',value:'100'},{sign:'𓆼',value:'1,000'},
  {sign:'𓂭',value:'10,000'},{sign:'𓆐',value:'100,000'},{sign:'𓁨',value:'1,000,000'}]);
@@ -16,6 +18,7 @@ const worker=new Worker('/worker.js',{type:'module'});
 // Separate Python layout worker: lengthy reflow never blocks document edits.
 // Created lazily by the browser on first layout job; it loads no lexicon.
 let layoutWorker=null;
+let layoutRestarts=0;
 function getLayoutWorker(){
  if(!layoutWorker){
   layoutWorker=new Worker('/worker.js?role=layout',{type:'module'});
@@ -173,11 +176,11 @@ async function renderPapyrusWindow(){
  // same query handles RTL and LTR; coordinates themselves come from Python.
  let lo,hi;
  if(doc.direction==='rtl'){
-  lo=(summary.width-18-right)/w;
-  hi=(summary.width-18-left)/w;
+  lo=(summary.width-(layoutCache.margins_mm?.right??18)-right)/w;
+  hi=(summary.width-(layoutCache.margins_mm?.right??18)-left)/w;
  }else{
-  lo=(left-18)/w;
-  hi=(right-18)/w;
+  lo=(left-(layoutCache.margins_mm?.left??18))/w;
+  hi=(right-(layoutCache.margins_mm?.left??18))/w;
  }
  // A single image may occupy multiple physical column-width slots.
  // Page summaries carry spans only when necessary, so viewport indexing remains
@@ -942,13 +945,14 @@ function beginClipartDrag(e,placement,column,page,node){
   const dx=(lastX-startX)/unit,dy=(lastY-startY)/unit;
   const target=clipartDropIndex(page,lastX,lastY,placement.id);
   const newPage=target?.page??page;
-  const yRoom=Math.max(0,newPage.height-36-placement.height);
+  const margins=doc.margins_mm||{top:18,bottom:18,left:18,right:18};
+  const yRoom=Math.max(0,newPage.height-margins.top-margins.bottom-placement.height);
   const initialTop=node.getBoundingClientRect().top;
   // Node preview has been cleared; preserve the original pointer grab offset.
   const grabY=(startY-initialTop)/(unit);
   const destinationRect=target?.paper.getBoundingClientRect();
   const proposedTop=destinationRect?(lastY-destinationRect.top)/unit-grabY:placement.y+dy;
-  const yAlign=yRoom?Math.max(0,Math.min(1,(proposedTop-18)/yRoom)):0.5;
+  const yAlign=yRoom?Math.max(0,Math.min(1,(proposedTop-margins.top)/yRoom)):0.5;
   // A float's horizontal position is a millimetre offset *forward in
   // reading order* from its document anchor, not an absolute page pixel.
   // Python reserves the crossed slots, then flows words through every safe
@@ -958,7 +962,7 @@ function beginClipartDrag(e,placement,column,page,node){
     ?column.x+column.width-desiredX-placement.width_mm
     :desiredX-column.x;
   const maximalOffset=newPage===page
-    ?(doc.surface==='papyrus'?2000:Math.max(0,page.width-36-placement.width_mm))
+    ?(doc.surface==='papyrus'?2000:Math.max(0,page.width-margins.left-margins.right-placement.width_mm))
     :0;
   // Negative values move the art back over preceding text columns; Python
   // alone reflows those columns, preserving logical object order.
@@ -1069,6 +1073,7 @@ function showLibraryError(message=''){
  const el=$('library-error');el.hidden=!message;el.textContent=message;
 }
 function showLibrary(){
+ persistedRevision=null;
  ++layoutVersion;queuedLayout=null;resetLayoutSynchronization();repairedDetailRevisions.clear();libraryScreen.hidden=false;editorScreen.hidden=true;
  selectedId=null;selectionAnchorId=null;selectionFocusId=null;selectedTableCell=null;editingId=null;buffer=[];doc=null;caretIndex=0;layoutCache=null;canUndo=false;canRedo=false;updateHistoryState();
  clearPageVirtualization();$('pages').replaceChildren();closePanels();showLibraryError();
@@ -1080,6 +1085,7 @@ function showEditor(){
 }
 function setLibraryBusy(value){
  libraryBusy=value;$('create-document').disabled=value||!ready;
+ $('import-backup').disabled=value||!ready;
  for(const btn of document.querySelectorAll('.document-grid button')){
   const needsEngine=btn.classList.contains('document-open')||btn.classList.contains('rename-action');
   btn.disabled=value||(needsEngine&&!ready);
@@ -1106,6 +1112,13 @@ function handleLayoutError(e){
  status('Layout worker error: '+e.message,true);
  for(const {reject} of layoutPending.values())reject(new Error(e.message));
  layoutPending.clear();
+ layoutWorker?.terminate();
+ layoutWorker=null;
+ resetLayoutSynchronization();
+ if(layoutRestarts++<2&&doc&&!editorScreen.hidden){
+  // Restart from authoritative editor state, never a stale layout worker.
+  void reflow();
+ }
 }
 function layoutRpc(method,payload){
  return new Promise((resolve,reject)=>{
@@ -1181,10 +1194,13 @@ async function initialize(){
  try {
   writingProfile={...emptyProfile(),...(await loadProfile()||{})};
   if(!Array.isArray(writingProfile.personal_entries)) writingProfile.personal_entries=[];
-  const info=await rpc('lexicon_info');
-  lexiconMeta=info.lexicon;
-  // This verified JSON is the same source the Python worker indexes.
-  // The master SQLite lives in CI; it is NOT a missing PWA requirement.
+  // A dictionary failure never prevents sign entry or document editing.
+  try{
+    keyboard=await createHieroglyphicKeyboard({
+      manifestUrl:'/lexicon/manifest.json',lexiconUrl:'/lexicon/lexicon.json',
+      storageNamespace:'mdwnfr-editor-v1',timeoutMs:6000});
+  }catch(error){status('Sign keyboard ready; dictionary unavailable: '+error.message,true);}
+  lexiconMeta=keyboard.info;
   const notice=$('lexicon-notice');
   notice.hidden=true;
   notice.textContent='';
@@ -1200,7 +1216,8 @@ async function openDocument(id){
   if(entry?.items?.some(item=>item.type==='clipart'))await ensureArtworkCatalog();
   if(!entry)throw new Error('Document not found. It may have been deleted.');
   await rpc('session_open',{document:entry});
-  resetLayoutSynchronization();repairedDetailRevisions.clear();doc=entry;selectedTableCell=null;selectedId=null;selectionAnchorId=null;selectionFocusId=null;editingId=null;buffer=[];canUndo=false;canRedo=false;layoutCache=null;
+  layoutRestarts=0;
+  persistedRevision=entry.revision;resetLayoutSynchronization();repairedDetailRevisions.clear();doc=entry;selectedTableCell=null;selectedId=null;selectionAnchorId=null;selectionFocusId=null;editingId=null;buffer=[];canUndo=false;canRedo=false;layoutCache=null;
   caretIndex=doc.items.length;
   showEditor();refreshZoomOptions();setUiFromDoc();drawKeys();renderComposer();
   await reflow();
@@ -1288,6 +1305,7 @@ function receiveSessionResult(answer){
 // Coalesce rapid edits into one persisted document write. The last completed
 // save is awaited when leaving the editor; these are NOT independent versions.
 let autosaveTimer=null,autosaveWanted=null,autosaveQueue=Promise.resolve();
+let persistedRevision=null;
 function scheduleAutosave(){
  autosaveWanted=doc;
  if(autosaveTimer)clearTimeout(autosaveTimer);
@@ -1298,7 +1316,14 @@ async function flushAutosave(){
  const snapshot=autosaveWanted;
  autosaveWanted=null;
  if(snapshot){
-  const job=autosaveQueue.catch(()=>{}).then(()=>save(snapshot));
+  const job=autosaveQueue.catch(()=>{}).then(async()=>{
+    if(persistedRevision===null||doc?.id!==snapshot.id)
+      throw new Error('Document changed while saving');
+    await save(snapshot,persistedRevision);
+    persistedRevision=snapshot.revision;
+    if(doc?.id===snapshot.id&&doc.revision===persistedRevision)
+      status('Revision '+persistedRevision+' · Saved on this device');
+   });
   autosaveQueue=job;
  }
  try{await autosaveQueue;}catch(error){
@@ -1387,7 +1412,7 @@ async function pumpLayoutQueue(){
        snapshot.revision!==doc.revision||editorScreen.hidden)continue;
     layoutCache=outcome.layout;paint(outcome.layout);
     status(outcome.layout.warnings.length?'Layout warning: '+outcome.layout.warnings[0]:
-           'Revision '+doc.revision+' · Local autosave',outcome.layout.warnings.length>0);
+           'Revision '+doc.revision+(persistedRevision===doc.revision?' · Saved':' · Saving…'),outcome.layout.warnings.length>0);
    }catch(e){
     if(version===layoutVersion)status('Layout: '+e.message,true);
    }
@@ -1814,11 +1839,30 @@ function drawKeys(){
 
 function typeSign(sign){if(commitPending)return;buffer.push(sign);renderComposer();}
 let predVersion=0,previewTimer=null,commitPending=false;
-function predictionRequest(offset=0,limit=8){
- return {prefix:buffer,offset,limit,
-   personal_entries:writingProfile.personal_entries,
-   global_choices:writingProfile.global_choices,
-   document_choices:docChoices()};
+function keyboardLearned(){
+  const learned={};
+  const merge=source=>{for(const [spelling,weight] of Object.entries(source||{})){
+    const n=Number(weight);
+    if(Number.isFinite(n)&&n>0)learned['egy:'+spelling]=(learned['egy:'+spelling]||0)+n;
+  }};
+  merge(writingProfile.global_choices);merge(docChoices());
+  for(const entry of writingProfile.personal_entries||[]){
+    if(typeof entry?.signs==='string'&&entry.signs)
+      learned['egy:'+entry.signs]=Math.max(1,learned['egy:'+entry.signs]||0);
+  }
+  return learned;
+}
+function keyboardSuggestions(limit=80){
+  if(!buffer.length)return [];
+  return keyboard.predict(buffer.join(''),{limit,learned:keyboardLearned()}).map(candidate=>({
+    signs:Array.from(candidate.text),
+    source:candidate.raw?'user':candidate.personal?'personal':'lexicon',
+    source_tier:candidate.source==='RAMSES-CORPUS'?'ramses_corpus':
+      candidate.personal?'personal':'lemma_linked',
+    lexicon_ref:candidate.lexicon_ref||null,
+    lexical_identity_verified:candidate.lexicalIdentityVerified===true,
+    attested:candidate.attested===true
+  }));
 }
 function renderComposer(){
  const table=selectedTable();
@@ -1856,16 +1900,18 @@ function renderComposer(){
    }).catch(error=>{if(current===predVersion)status('Word preview: '+error.message,true);});
   },90);
  }
- rpc('suggest',predictionRequest(0,8)).then(answer=>{
-  if(current!==predVersion)return;
-  showSuggestions(answer.suggestions);
-  $('expand-predictions').textContent='All suggestions ('+answer.total+')';
- }).catch(e=>{if(current===predVersion)status('Prediction: '+e.message,true);});
+ try{
+    const choices=keyboardSuggestions(80);
+    if(current!==predVersion)return;
+    showSuggestions(choices.slice(0,8));
+    $('expand-predictions').textContent='More suggestions (up to 80)';
+  }catch(error){status('Prediction: '+error.message,true);}
 }
 function suggestionButton(candidate){
  const button=document.createElement('button');button.append(facingSequenceNode(candidate.signs));
  if(candidate.source==='user')button.classList.add('user-choice');
  if(candidate.source==='personal')button.classList.add('personal-choice');
+ if(candidate.source_tier==='ramses_corpus')button.classList.add('ramses-choice');
  const rtc=candidate.source_tier==='ramses_corpus';
  
  button.setAttribute('aria-label',(candidate.source==='user'?'Use own spelling ':candidate.source==='personal'?'Use personal spelling ':rtc?'Use Ramses corpus spelling ':'Choose lemma-linked spelling ')+candidate.signs.join(''));
@@ -1877,24 +1923,18 @@ function showSuggestions(candidates){
  if(!candidates.length)return;
  for(const c of candidates)wrap.append(suggestionButton(c));
 }
-async function loadExpanded(reset){
- if(!buffer.length||!expanded||expandedLoading)return;
- const current=predVersion,epoch=expandedGeneration;
- const offset=reset?0:expandedOffset;
- expandedLoading=true;$('more-predictions').disabled=true;
- try{
-  const answer=await rpc('suggest',predictionRequest(offset,40));
-  if(current!==predVersion||epoch!==expandedGeneration||!expanded)return;
-  const wrap=$('expanded-results');if(reset)wrap.replaceChildren();
-  for(const candidate of answer.suggestions)wrap.append(suggestionButton(candidate));
-  expandedOffset=offset+answer.suggestions.length;
-  $('more-predictions').hidden=!answer.has_more;
- }catch(e){
-  if(current===predVersion&&epoch===expandedGeneration)status('Expanded predictions: '+e.message,true);
- }finally{
-  if(epoch===expandedGeneration){expandedLoading=false;$('more-predictions').disabled=false;}
- }
+function loadExpanded(reset){
+  if(!buffer.length||!expanded)return;
+  try{
+    const choices=keyboardSuggestions(80);
+    if(reset){expandedOffset=0;$('expanded-results').replaceChildren();}
+    const batch=choices.slice(expandedOffset,expandedOffset+40);
+    for(const candidate of batch)$('expanded-results').append(suggestionButton(candidate));
+    expandedOffset+=batch.length;
+    $('more-predictions').hidden=expandedOffset>=choices.length;
+  }catch(error){status('Expanded predictions: '+error.message,true);}
 }
+
 $('expand-predictions').onclick=()=>{
  if(!buffer.length)return;
  expanded=!expanded;expandedGeneration++;expandedLoading=false;
@@ -1980,7 +2020,14 @@ $('bold').onclick=()=>{
 $('delete').onclick=()=>{hideEditMenu();deleteSelection();};
 $('library').onclick=()=>{closePanels();backToLibrary();};
 $('create-document').onclick=createDocument;
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&doc)flushAutosave().catch(()=>{});});
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden&&doc)txQueue.then(()=>flushAutosave()).catch(e=>status('Save failed: '+e.message,true));
+});
+window.addEventListener('beforeunload',event=>{
+ if(doc&&(autosaveWanted||autosaveTimer||persistedRevision!==doc.revision)){
+  event.preventDefault();event.returnValue='';
+ }
+});
 
 // All modal completion paths settle the promise; cancel/outside/Escape never mutate the DB.
 function modal({title,description='',action='Continue',initialValue=null,destructive=false}){
@@ -2014,6 +2061,44 @@ function modal({title,description='',action='Continue',initialValue=null,destruc
   if(initialValue!==null)input.select();
  });
 }
+// Portable JSON backups remain readable after browser storage is cleared.
+async function exportDocument(id){
+ if(libraryBusy)return;
+ try{
+  const entry=await load(id);if(!entry)throw Error('Document not found');
+  const json=JSON.stringify({format:'mdwnfr-document-backup-v1',
+    exported_at:new Date().toISOString(),document:entry});
+  const url=URL.createObjectURL(new Blob([json],{type:'application/json'}));
+  try{
+   const a=document.createElement('a');a.href=url;
+   a.download='MdwNfr-'+entry.name.replace(/[^\p{L}\p{N} _-]/gu,'').trim().slice(0,60)+'.json';
+   document.body.append(a);a.click();a.remove();
+  }finally{setTimeout(()=>URL.revokeObjectURL(url),1000);}
+  status('Exported '+entry.name+' · Store the backup outside this device');
+ }catch(error){showLibraryError('Could not export document: '+error.message);}
+}
+$('import-backup').onclick=()=>{if(ready&&!libraryBusy)$('backup-file').click();};
+$('backup-file').addEventListener('change',async event=>{
+ const file=event.target.files?.[0];event.target.value='';
+ if(!file||!ready||libraryBusy)return;
+ setLibraryBusy(true);showLibraryError();
+ try{
+  if(file.size>128*1024*1024)throw Error('Backup exceeds the 128 MiB import limit');
+  const payload=JSON.parse(await file.text());
+  if(payload?.format!=='mdwnfr-document-backup-v1'||!payload.document)
+   throw Error('Not a supported MdwNfr document backup');
+  const candidate=structuredClone(payload.document);
+  // Import as an independent document. Preserve object identities within it
+  // while preventing overwrite of an existing saved document.
+  candidate.id=crypto.randomUUID().replaceAll('-','');
+  candidate.revision=0;
+  await rpc('validate',{document:candidate});
+  await save(candidate,null);
+  await renderDocList();
+  status('Backup imported as a new document');
+ }catch(error){showLibraryError('Could not import backup: '+error.message);}
+ finally{setLibraryBusy(false);}
+});
 async function renameDocument(id){
  if(libraryBusy||!ready)return;
  const entry=await load(id);if(!entry){await renderDocList();return;}
@@ -2025,7 +2110,7 @@ async function renameDocument(id){
   const latest=await load(id);
   if(!latest)throw new Error('Document no longer exists');
   const result=await rpc('transact',{document:latest,action:{op:'set_document',name:decision.value,base_revision:latest.revision}});
-  await save(result.document);
+  await save(result.document,latest.revision);
   await renderDocList();
  }catch(e){showLibraryError('Could not rename document: '+e.message);}
  finally{setLibraryBusy(false);}
@@ -2081,7 +2166,14 @@ async function deleteDocument(id){
  const decision=await modal({title:'Delete document?',description:'“'+entry.name+'” will be permanently deleted from this device. This action cannot be undone.',action:'Delete',destructive:true});
  if(!decision.confirmed)return;
  setLibraryBusy(true);showLibraryError();
- try{await remove(id);await renderDocList();}
+ try{
+   await remove(id);
+   if(writingProfile.document_choices?.[id]){
+    delete writingProfile.document_choices[id];
+    await queueProfileSave();
+   }
+   await renderDocList();
+  }
  catch(e){showLibraryError('Could not delete document: '+e.message);}
  finally{setLibraryBusy(false);}
 }
@@ -2109,10 +2201,13 @@ async function renderDocList(){
   const del=document.createElement('button');del.type='button';del.className='document-action delete-action';del.textContent='Delete';
   del.setAttribute('aria-label','Delete '+(entry.name||'Untitled'));
   del.onclick=()=>deleteDocument(entry.id);
-  const history=document.createElement('button');history.type='button';history.className='document-action';
+  const exportButton=document.createElement('button');exportButton.type='button';exportButton.className='document-action';
+   exportButton.textContent='Export';exportButton.setAttribute('aria-label','Export '+(entry.name||'Untitled'));
+   exportButton.onclick=()=>exportDocument(entry.id);
+   const history=document.createElement('button');history.type='button';history.className='document-action';
   history.textContent='History';history.setAttribute('aria-label','History '+(entry.name||'Untitled'));
   history.onclick=()=>restoreDocumentHistory(entry.id);
-  actions.append(history,rename,del);card.append(open,actions);root.append(card);
+  actions.append(exportButton,history,rename,del);card.append(open,actions);root.append(card);
  }
  setLibraryBusy(libraryBusy);
 }
@@ -2124,8 +2219,10 @@ async function showOfflineReadiness(){
   const response=await fetch('/runtime-status.json',{cache:'no-store'});
   if(!response.ok)throw new Error('runtime manifest not found');
   const state=await response.json();
-  notice.hidden=state.offline_ready===true;
-  if(!notice.hidden)notice.textContent='Offline editing is not installed: local Pyodide and/or the hieroglyph font are missing. Documents remain device-local, but starting the Python editor may require Internet access.';
+  notice.hidden=state.offline_ready===true && Boolean(navigator.serviceWorker?.controller);
+  if(!notice.hidden)notice.textContent=state.offline_ready===true
+    ?'Offline files are packaged, but this tab has not yet verified an installed offline service worker.'
+    :'Offline editing is not installed: local Pyodide and/or the hieroglyph font are missing. Documents remain device-local, but starting the Python editor may require Internet access.';
  }catch(_){
   notice.hidden=false;
   notice.textContent='Could not verify offline editor readiness. Keep a separate document backup before relying on offline use.';

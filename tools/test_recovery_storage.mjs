@@ -92,6 +92,12 @@ assert.equal(restored.items.length,3,'restore itself is reversible');
 assert.equal(restored.revision,4);
 await assert.rejects(restoreSnapshot('d1','missing'));
 assert.equal((await load('d1')).revision,4,'invalid restore must not change current doc');
+await assert.rejects(save(doc(5),3),/another tab/,
+  'a stale tab cannot overwrite the winning document revision');
+assert.equal((await load('d1')).revision,4,'stale save must never overwrite data');
+await assert.rejects(save({...doc(0),id:'d2'},4),/another tab/,
+  'new documents cannot claim a persisted revision they never loaded');
+
 // A write failure must not publish partial snapshots or index changes.
 const beforeFailure=(await listSnapshots('d1')).length;
 failNextDocumentWrite=true;

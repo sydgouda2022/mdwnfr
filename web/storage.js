@@ -37,10 +37,14 @@ function pruneSnapshotMetadata(records,now,protectedKey=null){
 }
 
 let connection=null;
+const wordCount=items=>(items||[]).reduce((n,item)=>n+
+  (item.type==='word'?1:item.type==='cartouche'?wordCount(item.items):
+    item.type==='table'?item.rows.reduce((sum,row)=>sum+row.reduce(
+      (sub,cell)=>sub+(cell.mode==='text'?wordCount(cell.items):0),0),0):0),0);
 const summary=doc=>({id:doc.id,name:doc.name,revision:doc.revision,
   surface:doc.surface,direction:doc.direction,
   item_count:Array.isArray(doc.items)?doc.items.length:0,
-  word_count:Array.isArray(doc.items)?doc.items.filter(item=>item.type==='word').length:0,
+  word_count:wordCount(doc.items),
   created_at:doc.created_at||'',updated_at:doc.updated_at||''});
 function database(){
  if(connection)return connection;
@@ -58,6 +62,7 @@ function database(){
   req.onsuccess=()=>{const db=req.result;
    db.onversionchange=()=>{db.close();connection=null;};resolve(db);};
   req.onerror=()=>{connection=null;reject(req.error);};
+   req.onblocked=()=>{connection=null;reject(new Error('Document database is blocked by another tab'));};
  });
  return connection;
 }
@@ -75,7 +80,7 @@ async function operation(mode,fn,store=STORE){
 }
 // A document, its library metadata, and any recovery snapshot commit together.
 // A failed transaction never leaves a snapshot pointing at an unsaved document.
-async function mutateDocument(id,doc){
+async function mutateDocument(id,doc,expectedRevision=undefined){
  const db=await database();
  return new Promise((resolve,reject)=>{
   const tx=db.transaction([STORE,INDEX,SNAPSHOTS,SNAPSHOT_META],'readwrite');
@@ -93,6 +98,13 @@ async function mutateDocument(id,doc){
     let previous,oldIndex,loaded=0;
     const ready=()=>{
      if(++loaded!==2)return;
+     // Detect and reject overwrites from another tab, including equal revision
+     // numbers with different content. Failed saves preserve recovery data.
+     if(expectedRevision!==undefined &&
+        (previous?.revision??null)!==expectedRevision){
+       fail(new Error('Document changed in another tab; current edit was not saved'));
+       return;
+     }
      const now=Date.now();
      const due=!oldIndex?.last_snapshot_at || now-oldIndex.last_snapshot_at>=SNAPSHOT_INTERVAL_MS;
      const previousDocument=previous||doc;
@@ -127,7 +139,7 @@ async function mutateDocument(id,doc){
   tx.onabort=()=>{if(!failed)reject(tx.error||new Error('Save aborted'));};
  });
 }
-export async function save(doc){return mutateDocument(doc.id,doc);}
+export async function save(doc,expectedRevision=undefined){return mutateDocument(doc.id,doc,expectedRevision);}
 
 export async function listSnapshots(id){
  const db=await database();

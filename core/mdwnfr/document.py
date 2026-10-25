@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any
 from copy import deepcopy
 from uuid import uuid4
+from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 import json, math, re, base64, hashlib
@@ -175,7 +176,7 @@ def validate_signs(signs: Any) -> list[str]:
         if not isinstance(sign, str) or len(sign) != 1:
             raise DocumentError("Every sign must be exactly one Unicode codepoint")
         cp = ord(sign)
-        if not (0x13000 <= cp <= 0x1342F or 0x13460 <= cp <= 0x143FF):
+        if not (0x13000 <= cp <= 0x1342F):
             raise DocumentError("Use Egyptian hieroglyph Unicode signs, not transliteration")
     return signs.copy()
 
@@ -193,12 +194,14 @@ def new_document(name: str = "Untitled", direction: str = "rtl",
                  surface: str = "A4", font_size_pt: float = 10.0) -> dict:
     if direction not in ("ltr", "rtl") or surface not in (*SURFACES, "papyrus"):
         raise DocumentError("Unsupported writing direction or writing surface")
-    if not 6 <= float(font_size_pt) <= 72:
+    if not math.isfinite(float(font_size_pt)) or not 6 <= float(font_size_pt) <= 72:
         raise DocumentError("Font size must be 6–72 pt")
     return {
         "schema": 1, "id": fresh_id(), "revision": 0, "name": valid_name(name),
         "direction": direction, "surface": surface, "font_size_pt": float(font_size_pt),
-        "papyrus_height_mm": 300.0, "margins_mm": DEFAULT_MARGINS_MM.copy(), "items": []
+        "papyrus_height_mm": 300.0, "margins_mm": DEFAULT_MARGINS_MM.copy(), "items": [],
+        "created_at":datetime.now(timezone.utc).isoformat(),
+        "updated_at":datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -245,9 +248,27 @@ def validate_cartouche_word(item: dict) -> None:
 
 
 def assert_document(doc: dict) -> None:
+    if not isinstance(doc,dict):
+        raise DocumentError("Document must be an object")
+    if (not isinstance(doc.get('id'),str) or not doc['id'] or
+            type(doc.get('revision')) is not int or doc['revision']<0):
+        raise DocumentError("Invalid document identity or revision")
+    if doc.get('surface') not in (*SURFACES,'papyrus'):
+        raise DocumentError("Invalid writing surface")
+    if (type(doc.get('font_size_pt')) not in (int,float)
+            or not math.isfinite(doc['font_size_pt'])
+            or not 6<=doc['font_size_pt']<=72):
+        raise DocumentError("Invalid document font size")
+    if (type(doc.get('papyrus_height_mm')) not in (int,float)
+            or not math.isfinite(doc['papyrus_height_mm'])
+            or not 80<=doc['papyrus_height_mm']<=2000):
+        raise DocumentError("Invalid papyrus height")
     if doc.get("schema") != 1 or doc.get("direction") not in ("rtl", "ltr"):
         raise DocumentError("Invalid document schema")
     valid_name(doc.get("name"))
+    for stamp in ('created_at','updated_at'):
+        if stamp in doc and (not isinstance(doc[stamp],str) or len(doc[stamp])>80):
+            raise DocumentError('Invalid document timestamp: '+stamp)
     validated_margins(doc)
     ids: set[str] = set()
     def check_stream(items: list) -> None:
@@ -257,11 +278,14 @@ def assert_document(doc: dict) -> None:
             if not isinstance(obj, dict) or obj.get("type") not in SUPPORTED:
                 raise DocumentError("Unknown document object")
             oid = obj.get("id")
-            if not isinstance(oid, str) or oid in ids:
+            if not isinstance(oid, str) or not oid or oid in ids:
                 raise DocumentError("Document objects need unique persistent IDs")
             ids.add(oid)
             if obj["type"] == "word":
                 validate_signs(obj.get("signs"))
+                color=obj.get('color','#192433')
+                if not isinstance(color,str) or not re.fullmatch(r'#[A-Fa-f0-9]{3}(?:[A-Fa-f0-9]{3})?',color):
+                    raise DocumentError('Invalid word color')
             elif obj["type"] == "clipart":
                 validate_clipart(obj)
             elif obj["type"] == "image":
@@ -343,7 +367,7 @@ def transaction(document: dict, action: dict) -> dict:
             updated = items[idx].copy()
             if "color" in change:
                 value = change["color"]
-                if not isinstance(value, str) or not (value.startswith("#") and len(value) in (4, 7)):
+                if not isinstance(value, str) or not re.fullmatch(r'#[A-Fa-f0-9]{3}(?:[A-Fa-f0-9]{3})?',value):
                     raise DocumentError("Invalid color")
                 updated["color"] = value
             if "bold" in change:
@@ -398,6 +422,9 @@ def transaction(document: dict, action: dict) -> dict:
                 raise DocumentError('Invalid cartouche word list')
             previous=obj['items']
             obj['items']=[{**word(validate_signs(signs)),
+                **({'color':previous[j].get('color','#192433'),
+                    'bold':previous[j].get('bold',False)}
+                   if j<len(previous) else {}),
                 'id': previous[j]['id'] if j<len(previous) else fresh_id()}
                 for j,signs in enumerate(requested)]
         validate_cartouche(obj,validate_cartouche_word)
@@ -428,7 +455,11 @@ def transaction(document: dict, action: dict) -> dict:
                     # Keep an existing word ID when replacing the same cell slot.
                     before=previous.get('items',[])
                     ident=before[i]['id'] if i<len(before) else fresh_id()
-                    prepared.append({**word(glyphs),'id':ident})
+                    prepared.append({**word(glyphs),
+                        **({'color':before[i].get('color','#192433'),
+                            'bold':before[i].get('bold',False)}
+                           if i<len(before) else {}),
+                        'id':ident})
                 rows[r][c]={'id':previous['id'],'mode':'text','items':prepared}
             elif mode=='formula':
                 rows[r][c]={'id':previous['id'],'mode':'formula','formula':action.get('formula')}
@@ -525,7 +556,7 @@ def transaction(document: dict, action: dict) -> dict:
                 raise DocumentError("Selected object is not a word")
             if "color" in action:
                 value = action["color"]
-                if not isinstance(value, str) or not (value.startswith("#") and len(value) in (4, 7)):
+                if not isinstance(value, str) or not re.fullmatch(r'#[A-Fa-f0-9]{3}(?:[A-Fa-f0-9]{3})?',value):
                     raise DocumentError("Invalid color")
                 items[idx]["color"] = value
             if "bold" in action:
@@ -548,7 +579,7 @@ def transaction(document: dict, action: dict) -> dict:
             raise DocumentError("Invalid direction")
         if result["surface"] not in (*SURFACES, "papyrus"):
             raise DocumentError("Invalid surface")
-        if not 6 <= float(result["font_size_pt"]) <= 72:
+        if not math.isfinite(float(result["font_size_pt"])) or not 6 <= float(result["font_size_pt"]) <= 72:
             raise DocumentError("Font size must be 6–72 pt")
         if not 80 <= float(result["papyrus_height_mm"]) <= 2000:
             raise DocumentError("Papyrus height outside allowed range")
@@ -560,5 +591,6 @@ def transaction(document: dict, action: dict) -> dict:
     else:
         raise DocumentError(f"Unknown command: {op}")
     result["revision"] += 1
+    result["updated_at"]=datetime.now(timezone.utc).isoformat()
     assert_document(result)
     return result
