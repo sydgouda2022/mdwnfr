@@ -138,6 +138,8 @@ def update():
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 os.replace(temp / path, dest)
     verify()
+    # The app owns its document and editing state; this importer mutates only
+    # files enumerated by the reviewed publisher contract and dependency lock.
     print("Updated:", ", ".join(changed) if changed else "none")
     return bool(changed)
 
