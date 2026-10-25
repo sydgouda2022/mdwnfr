@@ -7,7 +7,6 @@ renderer consumes only projected layout data and never decides text wrapping.
 from __future__ import annotations
 
 from copy import deepcopy
-from collections import deque
 from functools import lru_cache
 from math import ceil
 from .document import SURFACES, assert_document, DocumentError, artwork_catalog, validated_margins
@@ -115,41 +114,6 @@ def _cached_quadrat(spelling: tuple[str, ...], width: float,
     # Using normalized outline ratios in the key means a font metric change
     # cannot reuse stale sign geometry. Quadrat is an immutable dataclass.
     return compose(list(spelling), width, dict(zip(spelling, ratios)))
-
-
-def _item_signature(item: dict) -> dict:
-    # Full equality also tracks color/bold; these only impact the affected
-    # column's presentation, not its natural composition height.
-    return item
-
-
-def _flatten_columns(layout: dict) -> list[dict]:
-    return [col for page in layout['pages'] for col in page['columns']]
-
-
-def _placement_id(placement) -> str:
-    return placement['id'] if isinstance(placement, dict) else placement[0]
-
-
-def _seed_from_column(col: dict) -> dict:
-    # Share untouched nested sign geometry (read-only by contract). Create fresh
-    # placement dictionaries because x changes during page packing.
-    # A compact placement is an immutable 4-tuple, not a materialized sign tree.
-    # Only the outer list must be copied: no geometry within it can be mutated.
-    return {'placements': [({k: v for k, v in placement.items() if k != 'x'}
-                            if isinstance(placement, dict) else placement)
-                           for placement in col['placements']],
-            'text_top': col['text_top'], 'text_bottom': col['text_bottom'],
-            'span':col.get('span', 1), 'kind':col.get('kind', 'words'),
-            **({'text_runs':col['text_runs']} if 'text_runs' in col else {}),
-            **({'ink_bottom_aligned':True} if col.get('ink_bottom_aligned') else {}),
-            **({'terminal_gap_removed':True} if col.get('terminal_gap_removed') else {}),
-            **({'word_boundary_justify':True} if col.get('word_boundary_justify') else {}),
-            **({'table_fragment_index':col['table_fragment_index']} if 'table_fragment_index' in col else {}),
-            **({'break_before':True} if col.get('break_before') else {}),
-            **({'slot_offset':col['slot_offset'],'slot_width':col['slot_width']}
-               if 'slot_offset' in col else {}),
-            **({'float_offset':col['float_offset']} if 'float_offset' in col else {})}
 
 
 def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
@@ -343,7 +307,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
             stats['start_index'] = len(doc['items'])
             return result, stats
 
-    # The single sequence, one spatial cursor and one common obstacle registry.
+    # One object stream, one spatial cursor, one obstacle registry.
     columns = []
     nested_masks = {}
     obstacles = []
@@ -353,9 +317,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
     lane_start = top
     lane_cursor = top
     overlay = None            # [base_slot, object_span, current_slot_index]
-    page_number = 0
     warnings = []
-    object_by_id = {item['id']: item for item in doc['items']}
 
     @lru_cache(maxsize=8192)
     def quadrat_for(signs):
@@ -366,9 +328,8 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         return shape
 
     def clear_page():
-        nonlocal slot, page_number, obstacles, word_ink
+        nonlocal slot, obstacles, word_ink
         slot = 0
-        page_number += 1
         obstacles = []
         word_ink = []
 
@@ -655,12 +616,11 @@ def incremental_layout_document(doc: dict, previous_document: dict | None = None
                                 glyph_metrics: dict | None = None,
                                 previous_metrics: dict | None = None,
                                 compact: bool = False) -> tuple[dict, dict]:
-    """Reuse completed unaffected columns, then stop at a stable suffix.
+    """Recompose object positions from IDs and sequence, never page anchors.
 
-    Invalid/missing prior snapshots fall back to full layout. The immutable
-    Full-mode output matches layout_document. Compact mode deliberately returns
-    lightweight placement tuples which can be expanded for visible pages.
-    Statistics are returned separately.
+    The previous snapshot may be reused only when the geometry inputs are
+    identical. Compact mode projects tuple placements for visible-page
+    expansion, without a second compositor.
     """
     previous = ((previous_document, previous_layout, previous_metrics)
                 if previous_document is not None and previous_layout is not None else None)
@@ -668,7 +628,7 @@ def incremental_layout_document(doc: dict, previous_document: dict | None = None
 
 
 class LayoutSession:
-    """Bounded, per-worker incremental snapshot owner, not a second engine.
+    """Bounded, per-worker snapshot owner, not a second layout engine.
 
     The sole active document is retained in the layout worker; switching files
     invalidates it. Caller-supplied revision/ticket ensures stale views cannot
@@ -697,8 +657,8 @@ def expand_compact_page(page: dict, document_by_id: dict[str, dict],
                         margins_mm: dict | None = None, surface: str | None = None) -> dict:
     """Materialize an exact visible page from compact, read-only column records.
 
-    This is a projection, NOT a second typesetting algorithm: row grouping,
-    equalization, and positioning are decisions already made by _layout.
+    This is a projection, NOT a second typesetting algorithm: quadrat
+    positioning and obstacle clearance were already solved by _layout.
     Only visible page requests call this function. It never mutates the cache.
     """
     glyph_metrics = glyph_metrics or {}
