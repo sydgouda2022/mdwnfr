@@ -195,6 +195,55 @@ class ObjectSequenceLayout(unittest.TestCase):
                     self.assertEqual(words_in_layout(layout_document(doc)),
                                      [p['id'] for p in before+after])
 
+    def test_papyrus_artwork_without_words_still_extends_canvas(self):
+        doc=new_document('Only an image',surface='papyrus')
+        bird=clipart('horus-falcon-raster',60,'normal')
+        doc['items']=[bird]
+        result=layout_document(doc)
+        page=result['pages'][0]
+        art=next(p for col in page['columns'] if col['kind']=='clipart'
+                 for p in col['placements'])
+        self.assertGreater(page['width'],art['width_mm']+result['margins_mm']['left'])
+        self.assertLessEqual(art['x']+art['width_mm'],
+                             page['width']-result['margins_mm']['right']+.01)
+        self.assertEqual(len(page['columns']),1)
+        self.assertEqual(page['columns'][0]['span'],0)
+
+    def test_object_at_page_boundary_remains_with_continuation(self):
+        # The object must not be appended to the previous full page after
+        # a page change, just because an overlay consumes no flow columns.
+        doc=new_document('Float across page transition',surface='A4',font_size_pt=10)
+        first=[word(['𓅓','𓏏','𓈖']) for _ in range(400)]
+        bird=clipart('horus-falcon-raster',120,'normal')
+        last=[word(['𓏺']) for _ in range(100)]
+        doc['items']=[*first,bird,*last]
+        result=layout_document(doc)
+        location={p['id']:page['index'] for page in result['pages']
+                  for col in page['columns'] for p in col['placements']}
+        self.assertLessEqual(location[first[-1]['id']],location[bird['id']])
+        self.assertLessEqual(location[bird['id']],location[last[0]['id']])
+        for page in result['pages']:
+            for col in page['columns']:
+                if col['kind']!='clipart':continue
+                placement=col['placements'][0]
+                self.assertGreaterEqual(placement['x'],0)
+                self.assertLessEqual(placement['x']+placement['width_mm'],page['width']+.01)
+
+    def test_image_does_not_reserve_empty_text_columns(self):
+        doc=new_document('No slot reservation',direction='rtl',surface='A3')
+        bird=clipart('horus-falcon-raster',60,'normal')
+        bird['y_align']=.25
+        doc['items']=[word(['𓅓','𓏏']) for _ in range(6)]+[bird]+[
+            word(['𓅓','𓏏']) for _ in range(900)]
+        result=layout_document(doc)
+        page=next(page for page in result['pages']
+             if any(col['kind']=='clipart' for col in page['columns']))
+        self.assertFalse([col for col in page['columns']
+            if col['kind']=='words' and not col['placements']],
+            'A partial-height floating silhouette must not reserve blank columns')
+        art=next(col for col in page['columns'] if col['kind']=='clipart')
+        self.assertEqual(art['span'],0)
+
     def test_dense_short_words_use_image_columns_below_visible_ink(self):
         from mdwnfr.layout import object_clearance_mm
         for direction in ('ltr','rtl'):

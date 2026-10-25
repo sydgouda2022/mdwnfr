@@ -146,7 +146,16 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
     nested_masks=nested_masks or {}
     for chunk in page_chunks:
         occupied = sum(seed.get('span', 1) for seed in chunk)
-        page_w = margins['left'] + margins['right'] + occupied * width if page_capacity is None else page_width
+        # Nontext overlays have zero flow span, but can extend the papyrus
+        # writing surface even when the document contains no text columns.
+        cursor = 0
+        page_extent = occupied
+        for seed in chunk:
+            page_extent = max(page_extent,
+                cursor+seed.get('slot_offset',0)+seed.get('slot_width',seed.get('span',1)))
+            cursor += seed.get('span',1)
+        page_w = (margins['left']+margins['right']+page_extent*width
+                  if page_capacity is None else page_width)
         positioned: list[dict] = []
         slot = 0
         for ci, seed in enumerate(chunk):
@@ -489,6 +498,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         nonlocal slot,lane_cursor,lane_start
         fragments=measure(item)
         for fragment_index,(iw,ih,profile,geometry) in enumerate(fragments):
+            page_break=bool(fragment_index)
             if fragment_index:
                 # A table continuation starts on a genuinely new page.
                 finish_lane()
@@ -558,6 +568,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
 
             placement_plan=choose_anchor()
             if placement_plan is None and capacity is not None:
+                page_break=True
                 # The image cannot legally fit on this page. Only in this
                 # genuine overflow case is the remaining page terminated.
                 finish_lane()
@@ -593,9 +604,9 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                   'slot_offset':anchor-slot,'slot_width':span,
                   'kind':'clipart' if item['type'] in ('clipart','image') else item['type'],
                   'float_offset':requested}
+            if page_break:seed['break_before']=True
             if fragment_index:
                 seed['table_fragment_index']=fragment_index
-                seed['break_before']=True
             elif item['type']=='table':seed['table_fragment_index']=0
             columns.append(seed)
             stats['computed_columns']+=1
