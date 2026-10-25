@@ -13,7 +13,7 @@ def words_in_layout(layout):
             if col['kind']=='words' for pl in col['placements']]
 
 class ObjectSequenceLayout(unittest.TestCase):
-    def make_doc(self,direction='rtl',surface='a3'):
+    def make_doc(self,direction='rtl',surface='A3'):
         doc=new_document('Object sequence 776 → 777',direction=direction)
         doc['surface']=surface
         prefix=[word(['𓅓','𓏏']) for _ in range(70)]
@@ -33,7 +33,7 @@ class ObjectSequenceLayout(unittest.TestCase):
                 self.assertEqual(ids_in_layout(a3).count(ident),1)
                 edited=deepcopy(doc)
                 edited['items']=edited['items'][30:-40]
-                edited['surface']='a4'
+                edited['surface']='A4'
                 edited['revision']+=1
                 a4=layout_document(edited)
                 self.assertEqual([i['id'] for i in edited['items']],

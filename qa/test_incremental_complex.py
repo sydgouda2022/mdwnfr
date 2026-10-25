@@ -1,4 +1,4 @@
-"""Compare safe mixed-document reuse against the full-layout oracle."""
+"""Object-layout source order is stable, including illustrated reflow."""
 import unittest
 from copy import deepcopy
 from mdwnfr.document import new_document, word, clipart
@@ -17,9 +17,9 @@ class IllustratedIncrementalTests(unittest.TestCase):
         actual,stats=incremental_layout_document(after,before,old)
         expected=layout_document(after)
         self.assertEqual(actual,expected,'Incremental layout must match full geometry and word order')
-        self.assertIn(stats['mode'],('incremental_safe_pages','full_silhouette'))
-        if len(old['pages'])>2:
-            self.assertGreater(stats['reused_prefix_columns'],0)
+        self.assertEqual(stats['mode'],'object_stream')
+        self.assertEqual([i['id'] for i in after['items']], [i['id'] for i in before['items']]
+                         + [after['items'][-1]['id']])
 
 if __name__=='__main__':
     unittest.main()
