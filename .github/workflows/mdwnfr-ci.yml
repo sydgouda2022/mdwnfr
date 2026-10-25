@@ -1,0 +1,98 @@
+name: MdwNfr CI and automatic Hieroglyphic Keyboard updates
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'core/**'
+      - 'web/**'
+      - 'qa/**'
+      - 'tools/**'
+      - 'keyboard-lock.json'
+      - '.github/workflows/mdwnfr-ci.yml'
+  pull_request:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: mdwnfr-keyboards-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v5
+        with: {persist-credentials: true}
+      - uses: actions/setup-python@v6
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v5
+        with: {node-version: '24'}
+      - name: Check pinned Hieroglyphic release or stage new verified release
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = schedule ] || [ "$EVENT" = workflow_dispatch ]; then
+            python tools/sync_keyboards.py
+          else
+            python tools/sync_keyboards.py --verify
+          fi
+      - name: Install matching licensed Egyptian glyph font
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check 'fonttools[woff]' brotli Pillow
+          mkdir -p web/assets/fonts
+          curl -fLsS --retry 3 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansegyptianhieroglyphs/NotoSansEgyptianHieroglyphs-Regular.ttf' -o /tmp/mdwnfr-font.ttf
+          echo 'b792accc6207ca9caa59fc67f53926b6985a99d255dd432d7c68b68a6dfd62f8  /tmp/mdwnfr-font.ttf' | sha256sum -c -
+          python tools/generate_glyph_ink.py /tmp/mdwnfr-font.ttf core/mdwnfr/data/glyph_geometry.json
+          python - <<'PY'
+          from fontTools.ttLib import TTFont
+          f=TTFont('/tmp/mdwnfr-font.ttf')
+          f.flavor='woff2'
+          f.save('web/assets/fonts/hieroglyphs.woff2')
+          PY
+      - name: Verify source authority, layout and editor regression
+        run: |
+          set -euo pipefail
+          python tools/sync_keyboards.py --verify
+          PYTHONPATH=core python -m unittest discover -s qa -p 'test_*.py' -v
+          node --check web/app.js
+          node --check web/worker.js
+          node --check web/lexicon-install.mjs
+          python -m compileall -q core/mdwnfr
+          node qa/test_quadrat_preview.mjs
+      - name: Verify reproducible offline browser assets
+        run: |
+          set -euo pipefail
+          python tools/vendor_runtime.py
+          python tools/build_static.py
+          node qa/test_service_worker_cache.mjs
+          node qa/test_pages_overview.mjs
+      - name: Commit only verified upstream keyboard update
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          git add keyboard-lock.json web/lexicon/ web/keyboard_catalog.js web/lexicon-install.mjs core/mdwnfr/data/lexicon.json data/lexicon.sqlite3
+          if git diff --cached --quiet; then
+            echo 'Hieroglyphic Keyboard release unchanged'
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'Consume verified independent Hieroglyphic Keyboard release'
+            git push origin HEAD:main
+          fi
+      - name: Install Wrangler only after explicit production cutover
+        if: github.event_name != 'pull_request' && vars.CUTOVER_ENABLED == 'true'
+        run: npm install --global wrangler@4
+      - name: Deploy verified MdwNfr worker ONLY after explicit cutover
+        if: github.event_name != 'pull_request' && vars.CUTOVER_ENABLED == 'true'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          wrangler deploy --config wrangler.toml
+          curl --fail --silent --show-error --retry 5 https://mdwnfr.sydgouda.workers.dev/ > /tmp/mdwnfr-production-check.html
+          test -s /tmp/mdwnfr-production-check.html
