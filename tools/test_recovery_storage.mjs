@@ -99,6 +99,18 @@ await assert.rejects(save(doc(5)));
 assert.equal((await load('d1')).revision,4);
 assert.equal((await listSnapshots('d1')).length,beforeFailure);
 
+// A stale editor must never win by incrementing its private revision further.
+await assert.rejects(save(doc(6),3),/Another tab modified/);
+assert.equal((await load('d1')).revision,4);
+await assert.rejects(save(doc(4),4),/Another tab modified/);
+await save(doc(6),4); // Coalesced revisions are permitted with a valid token.
+assert.equal((await load('d1')).revision,6);
+await assert.rejects(save(doc(7),4),/Another tab modified/);
+await assert.rejects(remove('d1',4),/Deletion was canceled/);
+assert.equal((await load('d1')).revision,6);
+await assert.rejects(restoreSnapshot('d1',checkpoint.key,4));
+assert.equal((await load('d1')).revision,6);
+
 // Repeated edits across many hours must thin the history and remain bounded.
 await save({...doc(0),id:'d2'});
 for(let i=1;i<=100;i++){
@@ -109,7 +121,7 @@ const thinned=await listSnapshots('d2');
 assert(thinned.length<=48,'bounded checkpoint count');
 assert(thinned.length<100,'aging checkpoints are thinned');
 await remove('d2');
-await remove('d1');
+await remove('d1',6);
 assert.equal((await list()).length,0);
 assert.equal((await listSnapshots('d1')).length,0,'delete cleans recovery points');
 console.log('PASS: IndexedDB storage transactions, temporal snapshots, reversible restoration, rejected restore and deletion cleanup (simulated storage engine)');

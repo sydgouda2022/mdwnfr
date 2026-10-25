@@ -75,7 +75,7 @@ async function operation(mode,fn,store=STORE){
 }
 // A document, its library metadata, and any recovery snapshot commit together.
 // A failed transaction never leaves a snapshot pointing at an unsaved document.
-async function mutateDocument(id,doc){
+async function mutateDocument(id,doc,expectedRevision=undefined){
  const db=await database();
  return new Promise((resolve,reject)=>{
   const tx=db.transaction([STORE,INDEX,SNAPSHOTS,SNAPSHOT_META],'readwrite');
@@ -85,18 +85,29 @@ async function mutateDocument(id,doc){
   const fail=error=>{failed=true;try{tx.abort();}catch(_){};reject(error);};
   try{
    if(!doc){
-    docs.delete(id);index.delete(id);
-    const req=metas.index('by_document').getAll(IDBKeyRange.only(id));
-    req.onsuccess=()=>{for(const meta of req.result){snapshots.delete(meta.key);metas.delete(meta.key);}};
+    // Never delete newer content from a second tab.
+    const current=docs.get(id);
+    current.onsuccess=()=>{
+     if(expectedRevision!==undefined&&(current.result?.revision??null)!==expectedRevision){
+      fail(new Error('Another tab changed this document. Deletion was canceled.'));return;
+     }
+     docs.delete(id);index.delete(id);
+     const req=metas.index('by_document').getAll(IDBKeyRange.only(id));
+     req.onsuccess=()=>{for(const meta of req.result){snapshots.delete(meta.key);metas.delete(meta.key);}};
+    };
    }else{
     const oldReq=docs.get(id),summaryReq=index.get(id);
     let previous,oldIndex,loaded=0;
     const ready=()=>{
      if(++loaded!==2)return;
      const now=Date.now();
-     if(previous&&(previous.revision>doc.revision||(previous.revision===doc.revision&&JSON.stringify(previous)!==JSON.stringify(doc)))){
-       fail(new Error('Another tab modified this document. Reopen it before saving.'));return;
-      }
+     // Compare the exact stored revision, not just whether it is lower
+     // than the editor's revision. Several local edits may be coalesced.
+     const actual=previous?.revision??null;
+     const expected=expectedRevision===undefined?(previous?doc.revision-1:null):expectedRevision;
+     if(actual!==expected||(previous&&doc.revision<=previous.revision)){
+      fail(new Error('Another tab modified this document. Unsaved edits remain here; export a backup before reopening.'));return;
+     }
       const due=!oldIndex?.last_snapshot_at || now-oldIndex.last_snapshot_at>=SNAPSHOT_INTERVAL_MS;
      const previousDocument=previous||doc;
      // Only snapshot a real prior revision, or the original new document.
@@ -130,7 +141,7 @@ async function mutateDocument(id,doc){
   tx.onabort=()=>{if(!failed)reject(tx.error||new Error('Save aborted'));};
  });
 }
-export async function save(doc){return mutateDocument(doc.id,doc);}
+export async function save(doc,expectedRevision){return mutateDocument(doc.id,doc,expectedRevision);}
 
 export async function listSnapshots(id){
  const db=await database();
@@ -144,7 +155,7 @@ export async function listSnapshots(id){
 
 // Restoring always takes a fresh checkpoint of the current document first.
 // The restored revision is NEW, so future editing cannot replay an old revision.
-export async function restoreSnapshot(id,key){
+export async function restoreSnapshot(id,key,expectedRevision=undefined){
  const db=await database();
  return new Promise((resolve,reject)=>{
   const tx=db.transaction([STORE,INDEX,SNAPSHOTS,SNAPSHOT_META],'readwrite');
@@ -155,7 +166,8 @@ export async function restoreSnapshot(id,key){
   let current,source,count=0;
   const ready=()=>{
    if(++count!==2)return;
-   if(!current||!source||source.document_id!==id){tx.abort();return;}
+   if(!current||!source||source.document_id!==id||
+       (expectedRevision!==undefined&&current.revision!==expectedRevision)){tx.abort();return;}
    const now=Date.now(),checkpointBytes=snapshotBytes(current);
    // Never restore without a reversible pre-restore checkpoint.
    if(checkpointBytes>MAX_SNAPSHOT_BYTES){tx.abort();return;}
@@ -186,6 +198,6 @@ export async function restoreSnapshot(id,key){
 }
 export async function load(id){return operation('readonly',s=>s.get(id));}
 export async function list(){return operation('readonly',s=>s.getAll(),INDEX);}
-export async function remove(id){return mutateDocument(id,null);}
+export async function remove(id,expectedRevision){return mutateDocument(id,null,expectedRevision);}
 export async function loadProfile(){return (await operation('readonly',s=>s.get('profile'),PROFILE))||null;}
 export async function saveProfile(profile){return operation('readwrite',s=>s.put({...profile,id:'profile'}),PROFILE);}

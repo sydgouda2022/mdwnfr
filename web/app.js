@@ -1228,7 +1228,8 @@ async function openDocument(id){
   if(entry?.items?.some(item=>item.type==='clipart'))await ensureArtworkCatalog();
   if(!entry)throw new Error('Document not found. It may have been deleted.');
   await rpc('session_open',{document:entry});
-  resetLayoutSynchronization();repairedDetailRevisions.clear();doc=entry;selectedTableCell=null;selectedId=null;selectionAnchorId=null;selectionFocusId=null;editingId=null;buffer=[];canUndo=false;canRedo=false;layoutCache=null;
+  resetLayoutSynchronization();repairedDetailRevisions.clear();doc=entry;
+  persistedDocumentId=entry.id;persistedRevision=entry.revision;selectedTableCell=null;selectedId=null;selectionAnchorId=null;selectionFocusId=null;editingId=null;buffer=[];canUndo=false;canRedo=false;layoutCache=null;
   caretIndex=doc.items.length;
   showEditor();refreshZoomOptions();setUiFromDoc();drawKeys();renderComposer();
   await reflow();
@@ -1316,6 +1317,8 @@ function receiveSessionResult(answer){
 // Coalesce rapid edits into one persisted document write. The last completed
 // save is awaited when leaving the editor; these are NOT independent versions.
 let autosaveTimer=null,autosaveWanted=null,autosaveQueue=Promise.resolve();
+// Compare-and-swap token: advanced only after IndexedDB confirms a write.
+let persistedDocumentId=null,persistedRevision=null;
 function scheduleAutosave(){
  autosaveWanted=doc;
  if(autosaveTimer)clearTimeout(autosaveTimer);
@@ -1326,7 +1329,12 @@ async function flushAutosave(){
  const snapshot=autosaveWanted;
  autosaveWanted=null;
  if(snapshot){
-  const job=autosaveQueue.catch(()=>{}).then(()=>save(snapshot));
+  const job=autosaveQueue.catch(()=>{}).then(async()=>{
+   if(persistedDocumentId!==snapshot.id||persistedRevision===null)
+    throw new Error('Save target changed; reopen the document');
+   await save(snapshot,persistedRevision);
+   persistedRevision=snapshot.revision;
+  });
   autosaveQueue=job;
  }
  try{await autosaveQueue;
@@ -2084,7 +2092,7 @@ async function restoreDocumentHistory(id){
   action:'Restore'});
  if(!check.confirmed)return;
  setLibraryBusy(true);showLibraryError();
- try{await restoreSnapshot(id,selection);await renderDocList();}
+ try{await restoreSnapshot(id,selection,docEntry?.revision);await renderDocList();}
  catch(e){showLibraryError('Could not restore document: '+e.message);}
  finally{setLibraryBusy(false);}
 }
@@ -2124,7 +2132,7 @@ async function deleteDocument(id){
  if(!decision.confirmed)return;
  setLibraryBusy(true);showLibraryError();
  try{
-   await remove(id);
+   await remove(id,entry.revision);
    // Do not retain per-document spelling preferences for deleted documents.
    if(writingProfile.document_choices?.[id]){
     delete writingProfile.document_choices[id];
