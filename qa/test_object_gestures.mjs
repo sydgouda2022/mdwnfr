@@ -92,7 +92,41 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
     });
     assert.ok(updated.items.find(o=>o.id===obj.id),'Object ID must be stable');
     assert.equal(await page.locator('.object-resize-ghost').count(),0);
-    console.log('PASS:',name,width,kind,'resize persisted');
+    // A cancelled touch gesture must never become a committed edit, even if
+    // its intermediate movement has started an asynchronous Python preview.
+    // Dispatch touch PointerEvents explicitly: page.mouse only tests mouse
+    // pointer events, even when the context advertises a touch screen.
+    const beforeCancel=structuredClone(updated.items.find(o=>o.id===obj.id));
+    const revisionBeforeCancel=updated.revision;
+    await page.locator('[data-id="'+obj.id+'"] .art-resize.bottom-right')
+     .waitFor({state:'visible',timeout:90000});
+    const cancelGeometry=await page.evaluate(id=>{
+     const node=[...document.querySelectorAll('[data-id]')]
+      .find(el=>el.dataset.id===id&&el.querySelector('.art-resize.bottom-right'));
+     if(!node)throw Error('Missing real object to test cancellation');
+     const handle=node.querySelector('.art-resize.bottom-right');
+     const before=node.style.cssText;
+     const r=handle.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+     const pointerId=907;
+     const init=(clientX,clientY)=>({bubbles:true,cancelable:true,
+       pointerId,pointerType:'touch',isPrimary:true,button:0,
+       clientX,clientY});
+     handle.dispatchEvent(new PointerEvent('pointerdown',init(x,y)));
+     window.dispatchEvent(new PointerEvent('pointermove',init(x+35,y+13)));
+     window.dispatchEvent(new PointerEvent('pointercancel',init(x+35,y+13)));
+     return {before,after:node.style.cssText};
+    },obj.id);
+    assert.equal(cancelGeometry.after,cancelGeometry.before,
+     kind+' cancelled gesture must restore the original DOM geometry');
+    await page.waitForTimeout(500); // let stale debounced preview requests settle
+    const afterCancel=await saved();
+    assert.equal(afterCancel.revision,revisionBeforeCancel,
+     kind+' pointercancel must not commit a transaction');
+    assert.deepEqual(afterCancel.items.find(o=>o.id===obj.id),beforeCancel,
+     kind+' pointercancel must not change object geometry or identity');
+    assert.equal(await page.locator('.draft-page-layer').count(),0,
+     kind+' pointercancel must remove any transient preview');
+    console.log('PASS:',name,width,kind,'resize persisted and touch cancellation reverted');
    }
    assert.deepEqual(errors,[]);
   }catch(e){
