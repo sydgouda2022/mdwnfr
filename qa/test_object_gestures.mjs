@@ -48,7 +48,7 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
     // Format floats over the page; dismiss it before direct manipulation.
     if(await page.locator('#format-panel').isVisible())
      await page.locator('#format-toggle').click();
-    const handle=node.locator('.art-resize.right');
+    const handle=node.locator('.art-resize.bottom-right');
     await handle.waitFor({state:'visible'});
     const rect=await handle.boundingBox();
     assert.ok(rect?.width>=43.9&&rect?.height>=43.9,kind+' handle below 44px');
