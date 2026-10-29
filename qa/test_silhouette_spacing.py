@@ -538,7 +538,7 @@ class ArtworkWordFlow(unittest.TestCase):
                                     f'Missing ink-bounded divider at {right["x"]}')
         self.assertGreater(checked,0)
 
-    def test_dividers_terminate_at_both_adjacent_text_runs(self):
+    def test_dividers_terminate_within_both_adjacent_text_envelopes(self):
         from mdwnfr.layout import object_clearance_mm
         for direction in ('ltr','rtl'):
             layout=layout_document(self.document(direction=direction,offset=42))
@@ -551,7 +551,7 @@ class ArtworkWordFlow(unittest.TestCase):
                     if column['kind']!='words' or not column['placements']:
                         continue
                     slot=round((column['x']-margins['left'])/width)
-                    by_slot.setdefault(slot,[]).extend(column['text_runs'])
+                    by_slot.setdefault(slot,[]).append((column['text_top'], column['text_bottom']))
                 for divider in page['dividers']:
                     right=round((divider['x']-margins['left'])/width)
                     left_runs=by_slot.get(right-1,[])
@@ -564,6 +564,72 @@ class ArtworkWordFlow(unittest.TestCase):
                     tested+=1
             self.assertGreater(tested,0)
             self.assertAlmostEqual(object_clearance_mm(width),width/4)
+
+    def test_illustration_dividers_cover_shared_bottom_text_envelopes(self):
+        """Text beside/below a bird cannot lose a vertical separator just
+        because glyph runs in neighboring quadrats are staggered."""
+        from mdwnfr.document import new_document, word, clipart
+        from mdwnfr.layout import object_clearance_mm
+        from mdwnfr.silhouette import free_sectors
+        for direction in ('ltr','rtl'):
+            with self.subTest(direction=direction):
+                doc=new_document('Full column separators around falcon',
+                    direction=direction,surface='A3',font_size_pt=10)
+                bird=clipart('horus-falcon-raster',60,'normal')
+                bird['y_align']=.25
+                # Alternating glyph shapes deliberately have different ink
+                # starts/stops; divider geometry must not depend on their
+                # individual row overlap.
+                doc['items']=[word(['𓅓','𓏏']) for _ in range(32)]+[bird]+[
+                    word(['𓅓','𓈖'] if i%2 else ['𓇋','𓅓','𓏏'])
+                    for i in range(900)]
+                layout=layout_document(doc)
+                width=layout['column_width_mm']
+                thickness=divider_stroke_mm(layout['font_size_pt'])
+                margins=layout['margins_mm']
+                checked=0
+                for page in layout['pages']:
+                    by_slot={}
+                    for col in page['columns']:
+                        if col['kind']!='words' or not col['placements']:continue
+                        slot=round((col['x']-margins['left'])/width)
+                        by_slot.setdefault(slot,[]).append(
+                            (col['text_top'], col['text_bottom']))
+                    artwork=[p for col in page['columns']
+                             if col['kind']=='clipart' for p in col['placements']]
+                    for slot, left in by_slot.items():
+                        if slot+1 not in by_slot:continue
+                        x=margins['left']+(slot+1)*width
+                        for a,b in left:
+                            for c,d in by_slot[slot+1]:
+                                low,high=max(a,c),min(b,d)
+                                if high-low < width*.4:continue
+                                spans=[(low,high)]
+                                for art in artwork:
+                                    trimmed=[]
+                                    for top,bottom in spans:
+                                        trimmed.extend(free_sectors(art['artwork_id'],
+                                            image_width=art['width_mm'],
+                                            image_height=art['height'],
+                                            x_offset=art['x'],
+                                            slot_left=x-thickness/2,
+                                            slot_right=x+thickness/2,
+                                            top=top,bottom=bottom,
+                                            clearance=object_clearance_mm(width),
+                                            flip=art['resolved_flip'],
+                                            image_top=art['y']))
+                                    spans=trimmed
+                                for top,bottom in spans:
+                                    if bottom-top < width*.4:continue
+                                    checked+=1
+                                    self.assertTrue(any(
+                                        math.isclose(line['x'],x,abs_tol=1e-5)
+                                        and line['y1']<=top+1e-4
+                                        and line['y2']>=bottom-1e-4
+                                        for line in page['dividers']),
+                                        f'Missing separator from {top:.3f} to {bottom:.3f} '
+                                        f'at physical slot {slot} in {direction}')
+                self.assertGreater(checked,3)
 
     def test_contour_reclaims_below_bird_before_next_columns(self):
         from mdwnfr.document import new_document,word,clipart
