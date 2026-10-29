@@ -8,6 +8,7 @@ const context=await browser.newContext({
   hasTouch:true,locale:'en-US',serviceWorkers:'block'
 });
 const page=await context.newPage();
+ page.on('console',msg=>{if(msg.text().startsWith('TABLE_CONFIRM_'))console.log(msg.text());});
 const errors=[];
 page.on('pageerror',e=>errors.push(e.message));
 page.setDefaultTimeout(30000);
