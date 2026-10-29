@@ -1,5 +1,4 @@
 name: MdwNfr CI and pinned Hieroglyphic Keyboard verification
-# Production release of verified symbol-row spacing and contour wrapping.
 on:
   push:
     branches: [main]
