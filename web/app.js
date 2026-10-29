@@ -911,6 +911,10 @@ function scheduleInsertTableSpec(){
   border_width_mm:Number($('insert-table-line').value),
   cell_padding_mm:Number($('insert-table-padding').value)};
  const version=d.specRequested=(d.specRequested||0)+1;
+ // Invalidate any layout already in flight: otherwise its stale completion
+ // can re-enable Confirm before this newer table specification is validated.
+ ++insertPreviewVersion;
+ if(insertPreviewTimer!==null){clearTimeout(insertPreviewTimer);insertPreviewTimer=null;}
  d.valid=false;$('insert-sheet-confirm').disabled=true;
  if(!Number.isInteger(rows)||rows<1||rows>24||
     !Number.isInteger(cols)||cols<1||cols>12||
@@ -994,7 +998,7 @@ $('insert-sheet-confirm').onclick=async()=>{
  const d=insertDraft;
  if(!d?.object||!d.valid||d.busy)return;
  if(d.kind==='table' && (d.specApplied||0)!==(d.specRequested||0)){
-  $('insert-preview-status').textContent='Updating table settings before insertion…';
+  $('insert-preview-status').textContent='Updating table settings; confirm when the latest preview is ready…';
   return;
  }
  d.busy=true;$('insert-sheet-confirm').disabled=true;
