@@ -910,6 +910,12 @@ function scheduleInsertTableSpec(){
   border_color:$('insert-table-color').value,
   border_width_mm:Number($('insert-table-line').value),
   cell_padding_mm:Number($('insert-table-padding').value)};
+ const requestKey=JSON.stringify([rows,cols,style]);
+ // When Confirm receives a pointer press, the currently focused field blurs
+ // and fires change. Do not disable Confirm for that duplicate snapshot:
+ // doing so between pointerdown and click silently eats the user's click.
+ if(requestKey===d.lastRequestedSpec)return;
+ d.lastRequestedSpec=requestKey;
  const version=d.specRequested=(d.specRequested||0)+1;
  // Invalidate any layout already in flight: otherwise its stale completion
  // can re-enable Confirm before this newer table specification is validated.
@@ -946,8 +952,10 @@ for(const id of ['insert-table-rows','insert-table-columns',
                   'insert-table-line','insert-table-padding']){
  $(id).addEventListener('change',scheduleInsertTableSpec);
 }
-// Color and padding previews also respond to continuous user adjustments.
-for(const id of ['insert-table-color','insert-table-line','insert-table-padding'])
+// Apply typed values before blur so a Confirm press never initiates a new
+// specification as a side effect of losing focus.
+for(const id of ['insert-table-rows','insert-table-columns',
+                  'insert-table-color','insert-table-line','insert-table-padding'])
  $(id).addEventListener('input',scheduleInsertTableSpec);
 for(const input of $('insert-screen-cartouche').querySelectorAll('input[type=radio]'))
  input.addEventListener('change',()=>{
