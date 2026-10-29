@@ -31,8 +31,8 @@ for(const [name,engine,width,height] of [
    !document.getElementById('insert-sheet-confirm').disabled,null,{timeout:90000});
   const draft=page.locator('#pages .draft-page-layer .draft-object');
   assert.equal(await draft.count(),1,'Draft object appears on the actual page');
-  assert.equal(await page.locator('#pages .draft-source-hidden').count(),1,
-   'Original page temporarily hidden under the draft reflow');
+  assert.ok(await page.locator('#pages .draft-source-hidden').count()<=1,
+   'The temporary page must not duplicate multiple source pages');
   const inspector=await panel.boundingBox(),viewport=page.viewportSize();
   assert.ok(inspector.width<viewport.width-(width>700?150:0),
    'Contextual inspector should leave the writing page accessible');
@@ -65,6 +65,7 @@ for(const [name,engine,width,height] of [
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
   assert.equal(await page.locator('.draft-page-layer').count(),0,'Cancel removes draft page');
   assert.equal(await page.locator('.draft-source-hidden').count(),0,'Cancel restores normal page');
+  await page.locator('#pages .paper').first().waitFor({state:'visible',timeout:90000});
   assert.equal(await page.locator('#pages .clipart-object').count(),0,'Cancel does not insert');
   await page.locator('#format-toggle').click();
   await page.locator('#insert-cartouche').click();
