@@ -468,8 +468,10 @@ def _layout(doc: dict, glyph_metrics: dict | None,
             if capacity is not None and slot>=capacity:
                 clear_page()
             permitted=word_origins(shape,item)
+            # The final trailing row gap has no painted ink. It is removed
+            # when the lane finishes, so only the visible signs must fit.
             chosen=next((max(a,lane_cursor) for a,b in permitted
-                         if max(a,lane_cursor)<=min(b,bottom-shape.height)+1e-7),None)
+                         if max(a,lane_cursor)<=b+1e-7),None)
             if chosen is not None:
                 pending.append((item,shape,round(chosen,5)))
                 lane_cursor=round(chosen+shape.height,5)
