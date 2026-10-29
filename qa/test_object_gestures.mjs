@@ -6,6 +6,7 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
   const context=await browser.newContext({viewport:{width,height:width===390?844:768},isMobile:true,hasTouch:true,deviceScaleFactor:2,serviceWorkers:'block'});
   const page=await context.newPage();page.setDefaultTimeout(45000);
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  page.on('console',msg=>{if(msg.text().startsWith('RESIZE_COMMIT_DEBUG'))console.log(msg.text())});
   try{
    await page.goto('http://127.0.0.1:8123/',{waitUntil:'domcontentloaded'});
    await page.waitForFunction(()=>document.getElementById('create-document')?.disabled===false,null,{timeout:180000});
@@ -64,6 +65,7 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
     console.log('GESTURE_START',JSON.stringify({engine:name,width,kind,original:previous,hit}));
     await page.mouse.move(x,y);await page.mouse.down();
     await page.mouse.move(x+32,y,{steps:7});await page.mouse.up();
+    await page.waitForTimeout(350);
     console.log('GESTURE_END',JSON.stringify({
       status:await page.locator('#state').textContent().catch(()=>null),
       saved:await saved()
