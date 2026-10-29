@@ -258,7 +258,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .utility-panel .format-section-title{margin-bottom:9px}
 #format-panel .coming-soon{display:none}
 /* Mechanical positioning is intentionally not an author-facing control. Objects use direct manipulation. */
-#clipart-controls label:not(:has(#clipart-flip)),#nested-position-controls,#table-width{display:none!important}
+#clipart-controls label:not(:has(#clipart-flip)),#nested-position-controls{display:none!important}
 #format-panel #clipart-controls{border:0;background:transparent}
 .keyboard-panel{display:flex;flex-direction:column;left:clamp(10px,3vw,42px);right:clamp(10px,3vw,42px);bottom:80px;max-height:min(75dvh,625px);overflow:hidden;padding:12px 15px 12px;background:#fcfdfd;border:1px solid #cad7e2;border-radius:18px;box-shadow:0 20px 50px #12283b43}
 .keyboard-panel .composer{flex:0 0 auto;background:#fffaf1;border:1px solid #e4d5b7}
