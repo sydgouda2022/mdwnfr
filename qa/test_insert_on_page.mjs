@@ -34,8 +34,10 @@ for(const [name,engine,width,height] of [
   assert.ok(await page.locator('#pages .draft-source-hidden').count()<=1,
    'The temporary page must not duplicate multiple source pages');
   const inspector=await panel.boundingBox(),viewport=page.viewportSize();
-  assert.ok(inspector.width<viewport.width-(width>700?150:0),
-   'Contextual inspector should leave the writing page accessible');
+  assert.ok(width>700
+    ?inspector.width<viewport.width-150
+    :inspector.height<viewport.height*.45&&inspector.y>viewport.height*.5,
+   'iPad uses a side inspector; iPhone leaves the writing page visible above its sheet');
   const current=await draft.boundingBox();
   const startX=current.x+Math.min(24,current.width*.5);
   const startY=current.y+Math.min(24,current.height*.5);
