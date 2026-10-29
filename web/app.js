@@ -329,7 +329,7 @@ function paintPageContent(slot,p,shell){
     node.dataset.index=String(itemIndex);node.style.left=mm(item.x);node.style.top=mm(item.y);
     node.style.width=mm(item.width_mm);node.style.height=mm(item.height);
     node.setAttribute('role','group');node.setAttribute('aria-label','Hieroglyphic table');
-    node.addEventListener('pointerdown',e=>beginNestedDrag(e,item,c,p,node));
+    node.addEventListener('pointerdown',e=>beginObjectDrag(e,item,c,p,node));
     if(range&&itemIndex>=range.start&&itemIndex<range.end)node.classList.add('selected','in-range');
     const geometry=item.table;
     const borderStyle=geometry.border_style||'solid',borderColor=geometry.border_color||'#bba477';
@@ -358,6 +358,7 @@ function paintPageContent(slot,p,shell){
      if(cell.error){const err=document.createElement('span');err.className='table-cell-error';err.textContent='⚠';err.title=cell.error;box.append(err);}
      node.append(box);
     }
+    addObjectResizeHandles(node,item);
     paper.append(node);continue;
    }
    if(item.type==='cartouche'){
@@ -370,7 +371,7 @@ function paintPageContent(slot,p,shell){
     node.addEventListener('click',e=>{e.stopPropagation();selectWord(item.id,e.shiftKey);});
     node.addEventListener('dblclick',e=>{e.stopPropagation();void beginInsertSheet('cartouche',item.id);});
     node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectWord(item.id);if(activePanel!=='format')switchPanel('format');}});
-    node.addEventListener('pointerdown',e=>beginNestedDrag(e,item,c,p,node));
+    node.addEventListener('pointerdown',e=>beginObjectDrag(e,item,c,p,node));
     const geometry=item.cartouche;
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
     svg.setAttribute('class','cartouche-outline');svg.setAttribute('viewBox',geometry.view_box);
@@ -385,6 +386,7 @@ function paintPageContent(slot,p,shell){
      drawQuadratInk(wordNode,w.quadrat,w.color,w.bold);
      node.append(wordNode);
     }
+    addObjectResizeHandles(node,item);
     paper.append(node);continue;
    }
    const isArt=item.type==='clipart'||item.type==='image';
@@ -397,7 +399,7 @@ function paintPageContent(slot,p,shell){
    node.setAttribute('role','button');node.setAttribute('tabindex','0');
    node.setAttribute('aria-label',isArt?(item.type==='image'?'Image '+(objectById(item.id)?.name||'Imported image'):'Clip art '+(artworkById.get(item.artwork_id)?.name||item.artwork_id)):'Word '+item.signs.join(''));
    node.addEventListener('click',e=>{e.stopPropagation();if(!suppressWordClick)selectWord(item.id,e.shiftKey);});
-   if(isArt)node.addEventListener('pointerdown',e=>beginClipartDrag(e,item,c,p,node));
+   if(isArt)node.addEventListener('pointerdown',e=>beginObjectDrag(e,item,c,p,node));
    else node.addEventListener('pointerdown',e=>beginMouseRangeDrag(e,item.id));
    node.addEventListener('dblclick',e=>{e.stopPropagation();if(!suppressWordClick){if(isArt)void beginInsertSheet(item.type,item.id);else openWord(item.id);}});
    node.addEventListener('keydown',e=>{
@@ -415,12 +417,7 @@ function paintPageContent(slot,p,shell){
     const mirrored=(item.resolved_flip||item.flip)==='mirror';
     img.style.transform=mirrored?'scaleX(-1)':'';
     node.append(img);
-    for(const edge of ['top-left','top','top-right','right','bottom-right','bottom','bottom-left','left']){
-     const h=document.createElement('span');h.className='art-resize '+edge;h.dataset.handle=edge;
-     h.setAttribute('aria-label','Resize '+(asset?.name||'clip art')+' '+edge);
-     h.addEventListener('pointerdown',ev=>beginClipartResize(ev,item,node,edge));
-     node.append(h);
-    }
+    addObjectResizeHandles(node,item);
    }else{
     drawQuadratInk(node,item.quadrat,item.color,item.bold);
    }
