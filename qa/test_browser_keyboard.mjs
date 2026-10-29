@@ -266,19 +266,22 @@ try{
         const r=tx.objectStore('documents').getAll();
         r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
       });
-      const selected=entries.find(doc=>doc.name==='Untitled'&&doc.items.filter(item=>item.type==='table').length===2);
-      return selected?.items.filter(item=>item.type==='table').map(item=>({
-        rows:item.rows.length,cols:item.rows[0].length,style:item.style||{}
-      }))||[];
+      return entries.map(doc=>({
+        id:doc.id,name:doc.name,revision:doc.revision,
+        tables:doc.items.filter(item=>item.type==='table').map(item=>({
+          rows:item.rows.length,cols:item.rows[0].length,style:item.style||{}
+        }))
+      }));
     }finally{db.close();}
   });
-  console.log('TABLE_PERSISTED',JSON.stringify(snapshot));
-  assert.equal(snapshot.length,2,'Both existing and configured tables persist');
-  assert.equal(snapshot.at(-1).rows,3);
-  assert.equal(snapshot.at(-1).cols,4);
-  assert.equal(snapshot.at(-1).style.border_style,'dashed');
-  assert.equal(snapshot.at(-1).style.border_color,'#217acc');
-  assert.equal(snapshot.at(-1).style.border_width_mm,1);
+  console.log('TABLE_DB_DIAGNOSTICS',JSON.stringify(snapshot));
+  const tables=snapshot.find(doc=>doc.name==='Untitled'&&doc.tables.length===2)?.tables||[];
+  assert.equal(tables.length,2,'Both existing and configured tables persist');
+  assert.equal(tables.at(-1).rows,3);
+  assert.equal(tables.at(-1).cols,4);
+  assert.equal(tables.at(-1).style.border_style,'dashed');
+  assert.equal(tables.at(-1).style.border_color,'#217acc');
+  assert.equal(tables.at(-1).style.border_width_mm,1);
   assert.deepEqual(errors,[],'Browser page errors');
   console.log('PASS: mobile create → type → preview → insert → leave → reload → reopen');
 }catch(error){
