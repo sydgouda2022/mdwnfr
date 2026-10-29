@@ -313,7 +313,7 @@ class VisibleInkComposition(unittest.TestCase):
                      if c['kind']=='words' and c['placements']]
             self.assertEqual(len(columns),1)
             col=columns[0]
-            self.assertFalse(col.get('word_boundary_justify',False))
+            self.assertFalse(col.get('symbol_gap_justify',False))
             self.assertFalse(col.get('ink_bottom_aligned',False))
             self.assertTrue(col.get('terminal_gap_removed'))
             self.assertAlmostEqual(col['placements'][0]['y'],
@@ -336,42 +336,51 @@ class VisibleInkComposition(unittest.TestCase):
                 for a,b in zip(full['quadrat']['signs'],small['quadrat']['signs']):
                     near(self,a['y'],b['y'])
 
-    def test_adjustment_changes_only_spaces_between_complete_words(self):
+    def test_justification_stretches_symbol_rows_not_just_word_boxes(self):
         from mdwnfr.document import new_document,transaction
         from mdwnfr.layout import incremental_layout_document,expand_compact_layout
-        doc=new_document('Only overflow justifies')
+        doc=new_document('Symbol-row stretch regression')
         for i in range(37):
-            signs=['𓇋','𓇋','𓅓'] if i%3==0 else ['𓅓']
-            doc=transaction(doc,{'op':'insert_word','index':i,'signs':signs})
+            doc=transaction(doc,{'op':'insert_word','index':i,
+                'signs':['𓇋','𓇋','𓅓'] if i%3==0 else ['𓅓']})
         full=layout_document(doc)
-        justified=[col for page in full['pages'] for col in page['columns']
-                   if col.get('word_boundary_justify')]
+        justified=[col for p in full['pages'] for col in p['columns']
+                   if col.get('symbol_gap_justify')]
         self.assertTrue(justified)
+        moved=0
         for col in justified:
-            self.assertGreater(len(col['placements']),1)
-            for item in col['placements']:
+            units=[]
+            for index,item in enumerate(col['placements']):
                 natural=compose(item['signs'],full['column_width_mm'])
-                for sign,origin in zip(item['quadrat']['signs'],natural.signs):
-                    near(self,sign['x'],origin.x)
-                    near(self,sign['y'],origin.y)
-                    near(self,sign['height'],origin.height)
-            spacers=[p['height']-compose(p['signs'],full['column_width_mm']).height
-                     for p in col['placements'][:-1]]
-            self.assertTrue(all(v>0 for v in spacers))
-            self.assertLess(max(spacers)-min(spacers),0.00002)
+                final=index==len(col['placements'])-1
+                q=item['quadrat']
+                for a,b in zip(q['signs'],natural.signs):
+                    for key in ('x','width','height','font_size'):
+                        near(self,a[key],getattr(b,key))
+                    if abs(a['y']-b.y)>1e-6:moved+=1
+                eligible=len(item['signs'])-(len(natural.rows[-1]) if final else 0)
+                if eligible:
+                    unit=(item['height']-natural.height+
+                         (natural.flexible_gaps[-1] if final else 0))/eligible
+                    units.append(unit)
+                    for i,row in enumerate(natural.rows):
+                        expected=(0 if final and i==len(natural.rows)-1 else
+                                  natural.flexible_gaps[i]+unit*len(row))
+                        near(self,q['flexible_gaps'][i],expected)
+                if final:near(self,q['flexible_gaps'][-1],0)
+            self.assertTrue(units)
+            self.assertLess(max(units)-min(units),.00002)
+        self.assertGreater(moved,0,'Glyphs must move within their stretched boxes')
         compact,_=incremental_layout_document(doc,compact=True)
-        expanded=expand_compact_layout(compact,{i['id']:i for i in doc['items']})
-        full_cols=[c for page in full['pages'] for c in page['columns']
-                   if c.get('word_boundary_justify')]
-        copy_cols=[c for page in expanded['pages'] for c in page['columns']
-                   if c.get('word_boundary_justify')]
-        self.assertEqual(len(full_cols),len(copy_cols))
-        for old,new in zip(full_cols,copy_cols):
+        expanded=expand_compact_layout(compact,{o['id']:o for o in doc['items']})
+        a=[c for p in full['pages'] for c in p['columns'] if c.get('symbol_gap_justify')]
+        b=[c for p in expanded['pages'] for c in p['columns'] if c.get('symbol_gap_justify')]
+        self.assertEqual(len(a),len(b))
+        for old,new in zip(a,b):
             for first,second in zip(old['placements'],new['placements']):
                 self.assertAlmostEqual(first['y'],second['y'],places=5)
-                for a,b in zip(first['quadrat']['signs'],
-                               second['quadrat']['signs']):
-                    near(self,a['y'],b['y'])
+                for x,y in zip(first['quadrat']['signs'],second['quadrat']['signs']):
+                    near(self,x['y'],y['y'])
 
     def test_final_edge_redistribution_does_not_stretch_ink(self):
         q=compose(list('𓅓𓇋𓈖'),C)
@@ -423,9 +432,12 @@ class ArtworkWordFlow(unittest.TestCase):
                 for item in col['placements']:
                     natural=compose(item['signs'],layout['column_width_mm'])
                     for actual,expected in zip(item['quadrat']['signs'],natural.signs):
-                        for key in ('x','y','width','height','font_size','text_x','text_y'):
-                            self.assertAlmostEqual(actual[key],getattr(expected,key),places=7,
-                                msg=f"{col.get('slot_offset')} {item['id']} {key}")
+                        for key in ('x','width','height','font_size','text_x'):
+                            self.assertAlmostEqual(actual[key],getattr(expected,key),places=7)
+                        self.assertAlmostEqual(actual['text_y']-expected.text_y,
+                                               actual['y']-expected.y,places=7)
+                        if not col.get('symbol_gap_justify'):
+                            self.assertAlmostEqual(actual['y'],expected.y,places=7)
 
     def test_wrapping_keeps_complete_word_shapes_in_both_directions(self):
         for direction in ('ltr','rtl'):
@@ -452,7 +464,7 @@ class ArtworkWordFlow(unittest.TestCase):
             col=next(c for p in layout['pages'] for c in p['columns']
                      if c['kind']=='words' and c['placements'])
             self.assertAlmostEqual(col['placements'][0]['y'],18,places=5)
-            self.assertFalse(col.get('word_boundary_justify',False))
+            self.assertFalse(col.get('symbol_gap_justify',False))
             self.assert_natural_ink(layout)
 
     def test_compact_wrapped_layout_matches_full_geometry(self):
