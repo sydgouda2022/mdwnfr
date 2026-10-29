@@ -140,8 +140,15 @@ try{
   // one tap, without navigating to a separate spreadsheet-style screen.
   await page.locator('#format-toggle').click();
   await page.locator('#insert-table').click();
+  await page.locator('#insert-dialog-backdrop').waitFor({state:'visible'});
+  await page.locator('#insert-sheet-confirm').waitFor({state:'visible'});
+  await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm').disabled,
+    null,{timeout:90000});
+  await page.locator('#insert-sheet-confirm').click();
+  await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
   const table=page.locator('.table-object').first();
   await table.waitFor({state:'visible',timeout:90000});
+  await table.locator('.table-cell-view').first().click();
   await page.locator('#table-controls').waitFor({state:'visible'});
   assert.equal(await table.locator('.table-cell-view').count(),4);
   const actualWidth=await table.evaluate(el=>el.getBoundingClientRect().width);
