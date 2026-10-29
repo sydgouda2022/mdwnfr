@@ -253,6 +253,21 @@ try{
   // The newly inserted table may be on a virtualized page outside the
   // viewport. Verify that the real IndexedDB transaction persisted its full
   // structure/style; the visible-table interaction is covered earlier.
+  await page.waitForFunction(async()=>{
+    const db=await new Promise((resolve,reject)=>{
+      const r=indexedDB.open('mdwnfr-canonical-v1',1);
+      r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+    });
+    try{
+      const docs=await new Promise((resolve,reject)=>{
+        const tx=db.transaction('documents','readonly');
+        const r=tx.objectStore('documents').getAll();
+        r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+      });
+      return docs.some(d=>d.name==='Untitled'&&
+        d.items.filter(item=>item.type==='table').length===2);
+    }finally{db.close();}
+  },null,{timeout:30000});
   const snapshot=await page.evaluate(async()=>{
     const db=await new Promise((resolve,reject)=>{
       const r=indexedDB.open('mdwnfr-canonical-v1',1);
