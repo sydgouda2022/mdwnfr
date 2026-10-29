@@ -51,18 +51,24 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
      await page.locator('#format-toggle').click();
     const handle=node.locator('.art-resize.bottom-right');
     await handle.waitFor({state:'visible'});
-    const rect=await handle.boundingBox();
-    assert.ok(rect?.width>=43.9&&rect?.height>=43.9,kind+' handle below 44px');
+    await page.waitForTimeout(180);
     const previous=kind==='cartouche'?(obj.enclosure_padding_mm||0):(obj.width_mm||0);
-    const x=rect.x+rect.width/2,y=rect.y+rect.height/2;
-    const hit=await page.evaluate(({x,y})=>{
+    let rect,x,y,hit;
+    for(let attempt=0;attempt<4;attempt++){
+     rect=await handle.boundingBox();
+     assert.ok(rect?.width>=43.9&&rect?.height>=43.9,kind+' handle below 44px');
+     x=rect.x+rect.width/2;y=rect.y+rect.height/2;
+     await page.mouse.move(x,y);
+     hit=await page.evaluate(({x,y})=>{
       const el=document.elementFromPoint(x,y);
-      return {name:el?.className,id:el?.closest('[data-id]')?.dataset.id,
-        classNames:el?.getAttribute('class')};
-    },{x,y});
-    assert.ok((hit.classNames||'').includes('art-resize'),
-      kind+' resize handle is occluded by '+hit.classNames);
-    console.log('GESTURE_START',JSON.stringify({engine:name,width,kind,original:previous,hit}));
+      return {classNames:el?.getAttribute('class'),id:el?.closest('[data-id]')?.dataset.id};
+     },{x,y});
+     if((hit.classNames||'').includes('art-resize bottom-right')&&hit.id===obj.id)break;
+     await page.waitForTimeout(120);
+    }
+    assert.ok((hit.classNames||'').includes('art-resize bottom-right')&&hit.id===obj.id,
+      kind+' resize handle occluded or moved: '+JSON.stringify(hit));
+    console.log('GESTURE_START',JSON.stringify({engine:name,width,kind,original:previous,hit,rect}));
     await page.mouse.move(x,y);await page.mouse.down();
     await page.mouse.move(x+32,y,{steps:7});await page.mouse.up();
     await page.waitForTimeout(350);
