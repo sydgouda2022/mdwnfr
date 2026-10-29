@@ -675,6 +675,328 @@ function displayArtworkGrid(filter=''){
 $('insert-clipart').onclick=()=>beginInsertSheet('clipart');
 $('artwork-search').addEventListener('input',e=>displayArtworkGrid(e.target.value));
 
+// All four insert screens share ONE uncommitted Python document preview.
+// No CSS-only text approximation, duplicate compositor or interim save.
+let insertTicket=0,insertPreviewTimer=null,insertPreviewVersion=0;
+function closeInsertSheet(){
+ ++insertTicket;++insertPreviewVersion;
+ if(insertPreviewTimer!==null)clearTimeout(insertPreviewTimer);
+ insertPreviewTimer=null;insertDraft=null;
+ $('insert-dialog-backdrop').hidden=true;
+ $('insert-preview').replaceChildren();
+ $('insert-sheet-confirm').disabled=true;
+}
+function insertIndex(){
+ const range=selectedRange();
+ return range?range.end:caretIndex;
+}
+async function insertPrototype(action,index){
+ const response=await rpc('transact',{document:doc,action:{...action,index}});
+ return response.document.items[index];
+}
+async function beginInsertSheet(kind,existingId=null){
+ if(!doc||!ready)return;
+ const original=existingId?objectById(existingId):null;
+ if(original&&original.type!==kind)return;
+ closeInsertSheet();closePanels();
+ const token=insertTicket;
+ const index=original?logicalIndexById.get(original.id):insertIndex();
+ insertDraft={token,kind,index,existingId,object:original?structuredClone(original):null,
+              busy:false,valid:false};
+ $('insert-dialog-backdrop').hidden=false;
+ $('insert-sheet-title').textContent=(original?'Edit ':'Insert ')+
+  ({clipart:'Clip Art',image:'Image',table:'Table',cartouche:'Cartouche'}[kind]);
+ $('insert-sheet-confirm').textContent=original?'Apply':'Insert';
+ for(const name of ['clipart','image','table','cartouche'])
+  $('insert-screen-'+name).hidden=name!==kind;
+ $('insert-placement').hidden=true;
+ $('insert-preview-status').textContent='Preparing document preview…';
+ $('insert-preview').replaceChildren();
+ $('insert-sheet-confirm').disabled=true;
+ try{
+  if(kind==='clipart'){
+   await ensureArtworkCatalog();
+   if(insertDraft?.token!==token)return;
+   displayArtworkGrid($('artwork-search').value);
+  }else if(kind==='image'){
+   if(original){$('insert-image-name').textContent=original.name||'Image';
+    $('insert-image-thumbnail').src=original.data_url;
+    $('insert-image-thumbnail').hidden=false;}
+   else{$('insert-image-name').textContent='No picture selected';
+    $('insert-image-thumbnail').hidden=true;}
+  }else{
+   if(!original){
+    insertDraft.object=await insertPrototype(
+     kind==='table'?{op:'insert_table',rows:2,columns:2}:
+                   {op:'insert_cartouche',orientation:'vertical'},index);
+   }
+   if(insertDraft?.token!==token)return;
+   if(kind==='table'){
+    const table=insertDraft.object;
+    $('insert-table-rows').value=table.rows.length;
+    $('insert-table-columns').value=table.rows[0].length;
+    $('insert-table-border').value=table.style?.border_style||'solid';
+    $('insert-table-color').value=table.style?.border_color||'#bba477';
+    $('insert-table-line').value=table.style?.border_width_mm??.3;
+    $('insert-table-padding').value=table.style?.cell_padding_mm??1;
+   }else{
+    $('insert-screen-cartouche').querySelector(
+     'input[value="'+insertDraft.object.orientation+'"]').checked=true;
+   }
+  }
+  if(insertDraft?.object)requestInsertPreview();
+  else $('insert-preview-status').textContent='Choose an item to preview it on the page';
+ }catch(error){
+  if(insertDraft?.token===token){
+   $('insert-preview-status').textContent=error.message;
+   $('insert-sheet-confirm').disabled=true;
+  }
+ }
+ $('insert-sheet').focus();
+}
+async function chooseInsertArtwork(art){
+ const draft=insertDraft;
+ if(!draft||draft.kind!=='clipart'||draft.busy)return;
+ draft.busy=true;
+ try{
+  const created=await insertPrototype({op:'insert_clipart',
+    artwork_id:art.id},draft.index);
+  if(insertDraft!==draft)return;
+  draft.object=created;
+  $('insert-artwork-name').textContent=art.name;
+  displayArtworkGrid($('artwork-search').value);
+  requestInsertPreview();
+ }catch(err){$('insert-preview-status').textContent=err.message;}
+ finally{draft.busy=false;}
+}
+function previewDocument(){
+ const d=insertDraft;
+ if(!d?.object||!doc)return null;
+ const items=doc.items.slice();
+ if(d.existingId)items[d.index]=d.object;
+ else items.splice(d.index,0,d.object);
+ // Preview revision lives only in this isolated worker call. The active
+ // editor session never receives a speculative transaction.
+ return {...doc,items,revision:doc.revision};
+}
+function requestInsertPreview(){
+ const d=insertDraft;if(!d?.object)return;
+ d.valid=false;$('insert-sheet-confirm').disabled=true;
+ if(insertPreviewTimer!==null)clearTimeout(insertPreviewTimer);
+ const version=++insertPreviewVersion;
+ insertPreviewTimer=setTimeout(()=>{insertPreviewTimer=null;
+   void runInsertPreview(d,version);},130);
+}
+async function runInsertPreview(d,version){
+ if(insertDraft!==d)return;
+ $('insert-preview-status').textContent='Calculating live text reflow…';
+ try{
+  const proposed=previewDocument();
+  const response=await layoutRpc('layout',{document:proposed});
+  if(insertDraft!==d||version!==insertPreviewVersion)return;
+  const pages=response.layout.pages;
+  const page=pages.find(p=>p.columns.some(c=>c.placements.some(
+    pos=>pos.id===d.object.id)))||pages[0];
+  const position=page.columns.flatMap(c=>c.placements).find(
+    pos=>pos.id===d.object.id);
+  if(!position)throw Error('Proposed object is not visible in its writing frame');
+  const holder=$('insert-preview');
+  holder.replaceChildren();
+  const limitW=Math.max(150,holder.clientWidth-22),limitH=Math.max(130,holder.clientHeight-22);
+  const scale=Math.min(.95,limitW/(page.width*pxmm),limitH/(page.height*pxmm));
+  const shell=document.createElement('div');
+  shell.className='insert-preview-shell';
+  shell.style.width=mm(page.width*scale);shell.style.height=mm(page.height*scale);
+  holder.append(shell);
+  const oldZoom=zoom;
+  try{zoom=scale;paintPageContent(null,page,shell);}
+  finally{zoom=oldZoom;}
+  const paper=shell.querySelector('.paper');
+  if(paper)paper.style.pointerEvents='none';
+  const selection=document.createElement('div');
+  selection.className='insert-preview-selection';
+  selection.style.left=mm(position.x*scale);
+  selection.style.top=mm(position.y*scale);
+  selection.style.width=mm(position.width_mm*scale);
+  selection.style.height=mm(position.height*scale);
+  selection.setAttribute('role','group');
+  selection.setAttribute('aria-label','Move or resize preview object');
+  const handle=document.createElement('span');
+  handle.className='insert-preview-handle';
+  handle.setAttribute('aria-label','Resize temporary object');
+  selection.append(handle);shell.append(selection);
+  enableInsertPreviewDrag(selection,d,scale,page,position);
+  $('insert-preview-status').textContent='Live page preview · nothing saved until Confirm';
+  $('insert-placement').hidden=false;
+  $('insert-object-width').disabled=d.kind==='cartouche';
+  $('insert-object-width').value=d.kind==='cartouche'?'':String(
+    Math.round((d.object.width_mm||position.width_mm)*10)/10);
+  $('insert-object-width').min=d.kind==='table'?'15':'6';
+  $('insert-object-width').max=d.kind==='table'?'500':'300';
+  $('insert-object-y').value=Math.round((d.object.y_align??.5)*100);
+  d.valid=true;$('insert-sheet-confirm').disabled=false;
+ }catch(err){
+  if(insertDraft===d&&version===insertPreviewVersion){
+   d.valid=false;
+   $('insert-sheet-confirm').disabled=true;
+   $('insert-preview-status').textContent='Cannot place object: '+err.message;
+  }
+ }
+}
+function enableInsertPreviewDrag(node,d,scale,page,pos){
+ node.addEventListener('pointerdown',e=>{
+  if(e.button!==0||insertDraft!==d)return;
+  e.preventDefault();e.stopPropagation();
+  const resize=Boolean(e.target.closest('.insert-preview-handle'));
+  const startX=e.clientX,startY=e.clientY;
+  const base=structuredClone(d.object);
+  const baseWidth=pos.width_mm;
+  const room=page.height-(doc.margins_mm?.top??18)-
+   (doc.margins_mm?.bottom??18)-pos.height;
+  node.setPointerCapture(e.pointerId);
+  let changed=false;
+  const move=ev=>{
+   if(ev.pointerId!==e.pointerId)return;
+   const dx=(ev.clientX-startX)/(scale*pxmm),
+         dy=(ev.clientY-startY)/(scale*pxmm);
+   if(Math.abs(dx)+Math.abs(dy)<.2)return;
+   changed=true;
+   if(resize){
+    if(d.kind==='cartouche'){
+     d.object.enclosure_padding_mm=Math.min(30,Math.max(0,
+      Math.round(((base.enclosure_padding_mm||0)+dx/2)*10)/10));
+    }else{
+     const min=d.kind==='table'?15:6,max=d.kind==='table'?500:300;
+     d.object.width_mm=Math.min(max,Math.max(min,
+      Math.round((baseWidth+dx)*10)/10));
+    }
+   }else{
+    const logical=doc.direction==='rtl'?-dx:dx;
+    d.object.x_offset_mm=Math.min(2000,Math.max(-2000,
+     Math.round(((base.x_offset_mm||0)+logical)*10)/10));
+    d.object.y_align=Math.min(1,Math.max(0,(base.y_align??.5)+
+     (room>0?dy/room:0)));
+   }
+   node.style.transform='translate('+(resize?0:ev.clientX-startX)+'px,'+
+    (resize?0:ev.clientY-startY)+'px)';
+  };
+  const finish=ev=>{
+   if(ev.pointerId!==e.pointerId)return;
+   node.removeEventListener('pointermove',move);
+   node.removeEventListener('pointerup',finish);
+   node.removeEventListener('pointercancel',cancel);
+   node.style.transform='';
+   if(changed)requestInsertPreview();
+  };
+  const cancel=()=>{d.object=base;node.style.transform='';
+   node.removeEventListener('pointermove',move);
+   node.removeEventListener('pointerup',finish);
+   node.removeEventListener('pointercancel',cancel);};
+  node.addEventListener('pointermove',move);
+  node.addEventListener('pointerup',finish);
+  node.addEventListener('pointercancel',cancel);
+ });
+}
+async function changeInsertTableDimensions(){
+ const d=insertDraft;if(!d||d.kind!=='table'||d.busy)return;
+ const rows=Number($('insert-table-rows').value),cols=Number($('insert-table-columns').value);
+ if(!Number.isInteger(rows)||rows<1||rows>24||!Number.isInteger(cols)||cols<1||cols>12){
+  $('insert-preview-status').textContent='Choose 1–24 rows and 1–12 columns';return;
+ }
+ d.busy=true;$('insert-sheet-confirm').disabled=true;
+ try{
+  let sandbox={...doc,items:[d.object]};
+  const id=d.object.id;
+  for(let n=sandbox.items[0].rows.length;n<rows;n++)
+   sandbox=(await rpc('transact',{document:sandbox,action:{
+    op:'table_insert_row',id,index:n}})).document;
+  while(sandbox.items[0].rows.length>rows)
+   sandbox=(await rpc('transact',{document:sandbox,action:{
+    op:'table_delete_row',id,index:sandbox.items[0].rows.length-1}})).document;
+  for(let n=sandbox.items[0].rows[0].length;n<cols;n++)
+   sandbox=(await rpc('transact',{document:sandbox,action:{
+    op:'table_insert_column',id,index:n}})).document;
+  while(sandbox.items[0].rows[0].length>cols)
+   sandbox=(await rpc('transact',{document:sandbox,action:{
+    op:'table_delete_column',id,index:sandbox.items[0].rows[0].length-1}})).document;
+  if(insertDraft===d){d.object=sandbox.items[0];requestInsertPreview();}
+ }catch(e){if(insertDraft===d)$('insert-preview-status').textContent=e.message;}
+ finally{d.busy=false;}
+}
+for(const id of ['insert-table-rows','insert-table-columns'])
+ $(id).addEventListener('change',()=>void changeInsertTableDimensions());
+function changeInsertStyle(){
+ const d=insertDraft;if(!d||d.kind!=='table'||d.busy)return;
+ d.object.style={
+  border_style:$('insert-table-border').value,
+  border_color:$('insert-table-color').value,
+  border_width_mm:Number($('insert-table-line').value),
+  cell_padding_mm:Number($('insert-table-padding').value)};
+ requestInsertPreview();
+}
+for(const id of ['insert-table-border','insert-table-color','insert-table-line',
+                  'insert-table-padding'])
+ $(id).addEventListener('change',changeInsertStyle);
+for(const input of $('insert-screen-cartouche').querySelectorAll('input[type=radio]'))
+ input.addEventListener('change',()=>{
+  if(insertDraft?.kind==='cartouche'&&input.checked){
+   insertDraft.object.orientation=input.value;requestInsertPreview();
+  }
+ });
+$('insert-object-width').addEventListener('change',e=>{
+ const d=insertDraft;if(!d?.object||d.kind==='cartouche')return;
+ const width=Number(e.target.value);
+ if(!Number.isFinite(width)||width<(d.kind==='table'?15:6)||
+    width>(d.kind==='table'?500:300))return;
+ d.object.width_mm=width;requestInsertPreview();
+});
+$('insert-object-y').addEventListener('input',e=>{
+ if(insertDraft?.object){insertDraft.object.y_align=Number(e.target.value)/100;
+  requestInsertPreview();}
+});
+$('insert-image-choose').onclick=()=>$('insert-image-file').click();
+$('insert-image-file').addEventListener('change',async e=>{
+ const file=e.target.files?.[0];e.target.value='';
+ const d=insertDraft;if(!file||d?.kind!=='image'||d.busy)return;
+ d.busy=true;
+ try{
+  $('insert-preview-status').textContent='Preparing embedded image…';
+  const image=await prepareImportedImage(file);
+  const created=await insertPrototype({op:'insert_image',...image},d.index);
+  if(insertDraft!==d)return;
+  d.object=created;
+  $('insert-image-name').textContent=file.name;
+  $('insert-image-thumbnail').src=created.data_url;
+  $('insert-image-thumbnail').hidden=false;
+  requestInsertPreview();
+ }catch(error){if(insertDraft===d)$('insert-preview-status').textContent=error.message;}
+ finally{d.busy=false;}
+});
+$('insert-sheet-cancel').onclick=closeInsertSheet;
+$('insert-sheet-cancel-top').onclick=closeInsertSheet;
+$('insert-dialog-backdrop').addEventListener('pointerdown',e=>{
+ if(e.target===$('insert-dialog-backdrop'))closeInsertSheet();
+});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&!$('insert-dialog-backdrop').hidden){
+  e.preventDefault();e.stopImmediatePropagation();closeInsertSheet();
+ }
+},true);
+$('insert-sheet-confirm').onclick=async()=>{
+ const d=insertDraft;
+ if(!d?.object||!d.valid||d.busy)return;
+ d.busy=true;$('insert-sheet-confirm').disabled=true;
+ const action=d.existingId?{op:'splice',index:d.index,
+  delete_count:1,objects:[d.object],fresh_ids:false}:
+  {op:'insert_existing',index:d.index,object:d.object};
+ const success=await apply(action);
+ if(insertDraft!==d)return;
+ if(success){closeInsertSheet();clearSelection();
+  caretIndex=Math.min(doc.items.length,d.index+1);
+  updateSelection();}
+ else{d.busy=false;d.valid=true;$('insert-sheet-confirm').disabled=false;}
+};
+
 // Convert local PNG/JPEG/WebP into a portable PNG plus a conservative alpha
 // contour. No Blob URL or file-system path is persisted in the document.
 async function prepareImportedImage(file){
