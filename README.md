@@ -15,9 +15,9 @@ repository until an explicit migration cutover.
 
 The pinned headless Hieroglyphic Keyboard API v2 lives under `web/vendor/hieroglyphic/` and owns sign lookup, native Unicode predictions and dictionary integrity. It runs in `web/keyboard-prediction-worker.mjs`. Python owns document validation, transactions and quadrat layout only; no duplicate prediction implementation is bundled. The historical corpus remains incomplete, and local recovery history is not an external backup.
 
-## Portable backups
+## Documents and local storage
 
-The library supports per-document `.mdwnfr.json` Export and Import. Imported documents pass Python validation, and duplicate document IDs are rejected without overwriting content. Keep exports outside the browser to survive data clearing or device loss.
+The Documents library presents New Document and the basic Rename/Delete actions. Import, Export, and document-history controls are deliberately excluded from this interface. Documents are saved locally in IndexedDB, with internal rotating recovery snapshots; those local snapshots are not external backups and do not survive cleared browser data or device loss. An emergency download is available only when an unsaved document cannot be committed.
 
 Keyboard dependency upgrades require a reviewed change; CI verifies the pinned release without pushing automatically to main.
 
