@@ -115,6 +115,70 @@ class ObjectSequenceLayout(unittest.TestCase):
             if pl['type']=='word' for g in pl['quadrat']['signs']]
         self.assertEqual(atoms(first),atoms(second))
 
+    def test_default_table_uses_real_writing_space_with_editable_cell_heights(self):
+        from mdwnfr.tables import table
+        for surface in ('A4','A3','A2'):
+            for direction in ('ltr','rtl'):
+                with self.subTest(surface=surface,direction=direction):
+                    doc=new_document('Readable blank table',direction=direction,
+                                     surface=surface,font_size_pt=10)
+                    obj=table(2,2)
+                    doc['items']=[obj]
+                    layout=layout_document(doc)
+                    slots=[p for page in layout['pages'] for column in page['columns']
+                           if column['kind']=='table' for p in column['placements']]
+                    self.assertEqual(len(slots),1)
+                    placement=slots[0]
+                    geo=placement['table']
+                    glyph_width=layout['column_width_mm']
+                    self.assertGreaterEqual(geo['width_mm'],glyph_width*10,
+                        'New 2-column tables must not be tiny unreadable boxes')
+                    self.assertGreaterEqual(geo['row_heights'][0],glyph_width*2.5)
+                    self.assertEqual(geo['columns'],2)
+                    self.assertEqual(geo['rows'],2)
+                    self.assertEqual(len(geo['cells']),4)
+                    for cell in geo['cells']:
+                        self.assertGreaterEqual(cell['height'],glyph_width*2.5)
+                        self.assertGreaterEqual(cell['width'],glyph_width*2)
+                        self.assertGreaterEqual(cell['x'],0)
+                        self.assertLessEqual(cell['x']+cell['width'],
+                                             geo['width_mm']+.0001)
+                        self.assertLessEqual(cell['y']+cell['height'],
+                                             geo['height']+.0001)
+                    compact,_=incremental_layout_document(doc,compact=True)
+                    self.assertEqual(expand_compact_layout(compact,
+                        {obj['id']:obj}),layout)
+
+    def test_table_explicit_width_is_retained_and_cell_text_remains_inside(self):
+        from mdwnfr.tables import table
+        from mdwnfr.document import transaction
+        doc=new_document('User-defined table size',direction='ltr',
+                         surface='A4',font_size_pt=10)
+        obj=table(2,2,width_mm=60)
+        obj['rows'][0][0]['items']=[word(['𓅓','𓏏']),word(['𓈖','𓇋'])]
+        doc['items']=[obj]
+        layout=layout_document(doc)
+        fragment=next(p['table'] for page in layout['pages']
+                      for c in page['columns'] if c['kind']=='table'
+                      for p in c['placements'])
+        self.assertGreaterEqual(fragment['width_mm'],60)
+        self.assertLess(fragment['width_mm'],70)
+        word_count=0
+        for cell in fragment['cells']:
+            for item in cell['words']:
+                word_count+=1
+                self.assertGreaterEqual(item['x'],0)
+                self.assertGreaterEqual(item['y'],0)
+                self.assertLessEqual(item['x']+item['quadrat']['width'],
+                                     cell['width']+.00001)
+                self.assertLessEqual(item['y']+item['height'],
+                                     cell['height']+.00001)
+        self.assertEqual(word_count,2)
+        edit=transaction(doc,{'op':'set_table_cell','id':obj['id'],
+            'row':1,'column':1,'mode':'text','words':[['𓅓','𓏏']]})
+        self.assertEqual(len(edit['items'][0]['rows'][1][1]['items']),1)
+        self.assertEqual(edit['items'][0]['id'],obj['id'])
+
     def test_paginated_table_continuations_get_fresh_obstacle_fields(self):
         from mdwnfr.tables import table
         doc=new_document('Tall table',font_size_pt=16)
