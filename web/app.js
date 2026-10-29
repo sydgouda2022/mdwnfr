@@ -681,6 +681,16 @@ function closeInsertSheet(){
  if(insertPreviewTimer!==null)clearTimeout(insertPreviewTimer);
  insertPreviewTimer=null;
  const previous=insertDraft;
+ // Direct manipulation must restore the original selected DOM node if a
+ // gesture is cancelled or the Python transaction is rejected. Moving it into
+ // the overlay kept pointer identity stable during the drag.
+ if(previous?.gestureOnly&&previous.liveObject){
+  if(previous.basePaper?.isConnected&&
+     previous.liveObject.parentElement!==previous.basePaper)
+   previous.basePaper.append(previous.liveObject);
+  if(previous.savedStyle!==undefined)
+   previous.liveObject.style.cssText=previous.savedStyle;
+ }
  if(previous?.previewHost){
   previous.previewHost.remove();
   previous.basePaper?.classList.remove('draft-source-hidden');
@@ -1291,6 +1301,28 @@ function clipartDropIndex(page,clientX,clientY,excludeId){
 // One pointer lifecycle for EVERY embedded object and the temporary Insert
 // preview. Window-level capture keeps WebKit touch drags alive when a pointer
 // crosses a handle or a partially re-rendered page; no stored pixel positions.
+function startExistingObjectPreview(object,node){
+ if(insertDraft)return null;
+ const index=logicalIndexById.get(object.id);
+ if(index===undefined)return null;
+ const draft={token:++insertTicket,kind:object.type,index,
+  existingId:object.id,object:structuredClone(object),
+  gestureOnly:true,dragging:true,liveObject:node,
+  firstPositionShown:true,savedStyle:node.style.cssText,
+  busy:false,valid:false};
+ insertDraft=draft;
+ return draft;
+}
+function finishExistingObjectPreview(draft,action){
+ if(insertDraft!==draft)return;
+ draft.dragging=false;
+ // Commit a single validated transaction. The preview never mutates the
+ // persisted document, and a failed transaction restores the old page.
+ if(action)void apply(action).finally(()=>{
+  if(insertDraft===draft)closeInsertSheet();
+ });
+ else closeInsertSheet();
+}
 function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5}){
  if(e.button!==0||!e.isPrimary)return false;
  const pointer=e.pointerId,startX=e.clientX,startY=e.clientY;
