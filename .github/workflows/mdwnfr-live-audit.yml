@@ -10,7 +10,13 @@ permissions:
 jobs:
   audit-live:
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        name: [small-phone, phone, tablet, desktop]
+    env:
+      AUDIT_VARIANT: ${{ matrix.name }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -25,6 +31,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: user-journey-audit-screenshots
+          name: user-journey-audit-screenshots-${{ matrix.name }}
           path: /tmp/mdwnfr-audit-*.png
           if-no-files-found: ignore
