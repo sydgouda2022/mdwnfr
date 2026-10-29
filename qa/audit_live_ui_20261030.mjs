@@ -15,7 +15,7 @@ const record=(config,scenario,status,detail={})=>{
 const wait=async(page,predicate,timeout=90000)=>
   page.waitForFunction(predicate,null,{timeout});
 const sleep=(n)=>new Promise(resolve=>setTimeout(resolve,n));
-for(const config of configurations){
+for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name===process.env.AUDIT_VARIANT)){
  const browser=await (config.engine==='webkit'?webkit:chromium).launch({headless:true,args:config.engine==='chromium'?['--disable-dev-shm-usage']:[]});
  const context=await browser.newContext({
   viewport:{width:config.width,height:config.height},
