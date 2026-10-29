@@ -1,4 +1,5 @@
 name: MdwNfr CI and pinned Hieroglyphic Keyboard verification
+# A release-marker commit triggers a verified, explicitly authorized Cloudflare deployment.
 on:
   push:
     branches: [main]
