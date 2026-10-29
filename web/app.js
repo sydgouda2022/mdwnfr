@@ -331,8 +331,12 @@ function paintPageContent(slot,p,shell){
     node.addEventListener('pointerdown',e=>beginNestedDrag(e,item,c,p,node));
     if(range&&itemIndex>=range.start&&itemIndex<range.end)node.classList.add('selected','in-range');
     const geometry=item.table;
+    const borderStyle=geometry.border_style||'solid',borderColor=geometry.border_color||'#bba477';
+    const borderWidth=geometry.border_width_mm??.3;
+    node.style.border=borderStyle==='none'?'none':Math.max(1,borderWidth*pxmm)+'px '+borderStyle+' '+borderColor;
     for(const cell of geometry.cells){
      const box=document.createElement('div');box.className='table-cell-view';
+     box.style.border=borderStyle==='none'?'none':Math.max(1,borderWidth*pxmm)+'px '+borderStyle+' '+borderColor;
      box.style.left=mm(cell.x);box.style.top=mm(cell.y);
      box.style.width=mm(cell.width);box.style.height=mm(cell.height);
      box.dataset.row=cell.row;box.dataset.column=cell.column;
@@ -404,7 +408,7 @@ function paintPageContent(slot,p,shell){
     const img=document.createElement('img');img.className='clipart-image';
     // IDs are validated against the bundled catalog by the Python core.
     const original=objectById(item.id);
-    img.src=item.type==='image'?original?.data_url:'/artwork/'+(asset?.file||item.artwork_id+'.png');
+    img.src=item.type==='image'?(original?.data_url||(insertDraft?.object?.id===item.id?insertDraft.object.data_url:null)):'/artwork/'+(asset?.file||item.artwork_id+'.png');
     img.alt=item.type==='image'?(original?.name||'Imported image'):(asset?.name||item.artwork_id);img.draggable=false;
     // Python provides the same resolved orientation used for 2D clearance.
     const mirrored=(item.resolved_flip||item.flip)==='mirror';
