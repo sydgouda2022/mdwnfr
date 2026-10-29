@@ -161,13 +161,12 @@
         <div class="hex-control"><span id="selected-color-chip" class="colour-chip" aria-hidden="true"></span><input id="color-hex" type="text" value="#1F4BA8" maxlength="7" pattern="#[0-9A-Fa-f]{6}" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Hex color"/></div>
       </div>
     </aside>
-    <!-- Object insertion is a draft: no session transaction until Confirm.
-         Each screen has its own inputs but shares the same Python preview. -->
+    <!-- Contextual iPad/iPhone inspector. The actual writing page supplies
+         the sole visual preview; no separate document thumbnail or modal. -->
     <div id="insert-dialog-backdrop" class="insert-dialog-backdrop" hidden>
-      <section id="insert-sheet" class="insert-sheet" role="dialog" aria-modal="true" aria-labelledby="insert-sheet-title" tabindex="-1">
+      <section id="insert-sheet" class="insert-sheet" role="region" aria-labelledby="insert-sheet-title" tabindex="-1">
         <header class="insert-sheet-heading">
           <h2 id="insert-sheet-title">Insert</h2>
-          <button id="insert-sheet-cancel-top" type="button" aria-label="Cancel insertion">✕</button>
         </header>
         <div id="insert-screen-clipart" class="insert-screen" hidden>
           <div id="artwork-picker" class="artwork-picker">
@@ -209,10 +208,9 @@
           <p class="insert-hint">Drag the outlined object in the preview to move it. Drag the corner handle to resize it. Hieroglyphs keep the document's size and direction.</p>
         </div>
         <div id="insert-preview-status" class="insert-hint" role="status" aria-live="polite">Preparing preview…</div>
-        <div id="insert-preview" class="insert-preview" role="region" aria-label="Live document placement preview"></div>
         <footer class="insert-sheet-footer">
           <button id="insert-sheet-cancel" type="button" class="insert-action">Cancel</button>
-          <button id="insert-sheet-confirm" type="button" class="insert-action insert-primary" disabled>Insert</button>
+          <button id="insert-sheet-confirm" type="button" class="insert-action insert-primary" disabled>Done</button>
         </footer>
       </section>
     </div>

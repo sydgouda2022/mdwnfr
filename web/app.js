@@ -109,6 +109,7 @@ let itemIndexById=new Map(),placementById=new Map();
 // Stable logical indices are independent of viewport and page-detail eviction.
 let logicalIndexById=new Map();
 function objectById(id){
+ if(insertDraft?.object?.id===id)return insertDraft.object;
  const idx=logicalIndexById.get(id);
  return idx===undefined?null:doc?.items[idx];
 }
@@ -329,7 +330,7 @@ function paintPageContent(slot,p,shell){
     node.dataset.index=String(itemIndex);node.style.left=mm(item.x);node.style.top=mm(item.y);
     node.style.width=mm(item.width_mm);node.style.height=mm(item.height);
     node.setAttribute('role','group');node.setAttribute('aria-label','Hieroglyphic table');
-    node.addEventListener('pointerdown',e=>beginNestedDrag(e,item,c,p,node));
+    node.addEventListener('pointerdown',e=>beginObjectDrag(e,item,c,p,node));
     if(range&&itemIndex>=range.start&&itemIndex<range.end)node.classList.add('selected','in-range');
     const geometry=item.table;
     const borderStyle=geometry.border_style||'solid',borderColor=geometry.border_color||'#bba477';
@@ -358,6 +359,7 @@ function paintPageContent(slot,p,shell){
      if(cell.error){const err=document.createElement('span');err.className='table-cell-error';err.textContent='⚠';err.title=cell.error;box.append(err);}
      node.append(box);
     }
+    addObjectResizeHandles(node,item);
     paper.append(node);continue;
    }
    if(item.type==='cartouche'){
@@ -370,7 +372,7 @@ function paintPageContent(slot,p,shell){
     node.addEventListener('click',e=>{e.stopPropagation();selectWord(item.id,e.shiftKey);});
     node.addEventListener('dblclick',e=>{e.stopPropagation();void beginInsertSheet('cartouche',item.id);});
     node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectWord(item.id);if(activePanel!=='format')switchPanel('format');}});
-    node.addEventListener('pointerdown',e=>beginNestedDrag(e,item,c,p,node));
+    node.addEventListener('pointerdown',e=>beginObjectDrag(e,item,c,p,node));
     const geometry=item.cartouche;
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
     svg.setAttribute('class','cartouche-outline');svg.setAttribute('viewBox',geometry.view_box);
@@ -385,6 +387,7 @@ function paintPageContent(slot,p,shell){
      drawQuadratInk(wordNode,w.quadrat,w.color,w.bold);
      node.append(wordNode);
     }
+    addObjectResizeHandles(node,item);
     paper.append(node);continue;
    }
    const isArt=item.type==='clipart'||item.type==='image';
@@ -397,7 +400,7 @@ function paintPageContent(slot,p,shell){
    node.setAttribute('role','button');node.setAttribute('tabindex','0');
    node.setAttribute('aria-label',isArt?(item.type==='image'?'Image '+(objectById(item.id)?.name||'Imported image'):'Clip art '+(artworkById.get(item.artwork_id)?.name||item.artwork_id)):'Word '+item.signs.join(''));
    node.addEventListener('click',e=>{e.stopPropagation();if(!suppressWordClick)selectWord(item.id,e.shiftKey);});
-   if(isArt)node.addEventListener('pointerdown',e=>beginClipartDrag(e,item,c,p,node));
+   if(isArt)node.addEventListener('pointerdown',e=>beginObjectDrag(e,item,c,p,node));
    else node.addEventListener('pointerdown',e=>beginMouseRangeDrag(e,item.id));
    node.addEventListener('dblclick',e=>{e.stopPropagation();if(!suppressWordClick){if(isArt)void beginInsertSheet(item.type,item.id);else openWord(item.id);}});
    node.addEventListener('keydown',e=>{
@@ -415,12 +418,7 @@ function paintPageContent(slot,p,shell){
     const mirrored=(item.resolved_flip||item.flip)==='mirror';
     img.style.transform=mirrored?'scaleX(-1)':'';
     node.append(img);
-    for(const edge of ['top-left','top','top-right','right','bottom-right','bottom','bottom-left','left']){
-     const h=document.createElement('span');h.className='art-resize '+edge;h.dataset.handle=edge;
-     h.setAttribute('aria-label','Resize '+(asset?.name||'clip art')+' '+edge);
-     h.addEventListener('pointerdown',ev=>beginClipartResize(ev,item,node,edge));
-     node.append(h);
-    }
+    addObjectResizeHandles(node,item);
    }else{
     drawQuadratInk(node,item.quadrat,item.color,item.bold);
    }
@@ -681,9 +679,29 @@ let insertTicket=0,insertPreviewTimer=null,insertPreviewVersion=0;
 function closeInsertSheet(){
  ++insertTicket;++insertPreviewVersion;
  if(insertPreviewTimer!==null)clearTimeout(insertPreviewTimer);
- insertPreviewTimer=null;insertDraft=null;
+ insertPreviewTimer=null;
+ const previous=insertDraft;
+ // Direct manipulation must restore the original selected DOM node if a
+ // gesture is cancelled or the Python transaction is rejected. Moving it into
+ // the overlay kept pointer identity stable during the drag.
+ if(previous?.gestureOnly&&previous.liveObject){
+  if(previous.basePaper?.isConnected&&
+     previous.liveObject.parentElement!==previous.basePaper)
+   previous.basePaper.append(previous.liveObject);
+  if(previous.savedStyle!==undefined)
+   previous.liveObject.style.cssText=previous.savedStyle;
+ }
+ if(previous?.previewHost){
+  previous.previewHost.remove();
+  previous.basePaper?.classList.remove('draft-source-hidden');
+ }
+ insertDraft=null;
+ // A newly opened page may have been virtualized before the first detail
+ // paint. The temporary page is still visible, but Cancel must explicitly
+ // restore the normal Python-rendered page instead of leaving empty paper.
+ if(previous&&!previous.basePaper&&Number.isInteger(previous.pageIndex))
+  void renderPageDetails(previous.pageIndex);
  $('insert-dialog-backdrop').hidden=true;
- $('insert-preview').replaceChildren();
  $('insert-sheet-confirm').disabled=true;
 }
 function insertIndex(){
@@ -706,12 +724,20 @@ async function beginInsertSheet(kind,existingId=null){
  $('insert-dialog-backdrop').hidden=false;
  $('insert-sheet-title').textContent=(original?'Edit ':'Insert ')+
   ({clipart:'Clip Art',image:'Image',table:'Table',cartouche:'Cartouche'}[kind]);
- $('insert-sheet-confirm').textContent=original?'Apply':'Insert';
+ $('insert-sheet-confirm').textContent='Done';
  for(const name of ['clipart','image','table','cartouche'])
   $('insert-screen-'+name).hidden=name!==kind;
+ // Prevent edits until the initial Python draft has been constructed.
+ // Otherwise a late default can silently overwrite the user's choices.
+ const initializing=!original&&(kind==='table'||kind==='cartouche');
+ for(const id of ['insert-table-rows','insert-table-columns',
+                  'insert-table-border','insert-table-color',
+                  'insert-table-line','insert-table-padding'])
+  $(id).disabled=initializing;
+ for(const input of $('insert-screen-cartouche').querySelectorAll('input[type=radio]'))
+  input.disabled=initializing;
  $('insert-placement').hidden=true;
- $('insert-preview-status').textContent='Preparing document preview…';
- $('insert-preview').replaceChildren();
+ $('insert-preview-status').textContent='Select an object to see it on the writing page';
  $('insert-sheet-confirm').disabled=true;
  try{
   if(kind==='clipart'){
@@ -744,6 +770,12 @@ async function beginInsertSheet(kind,existingId=null){
      'input[value="'+insertDraft.object.orientation+'"]').checked=true;
    }
   }
+  if(insertDraft?.token!==token)return;
+  for(const id of ['insert-table-rows','insert-table-columns',
+                   'insert-table-border','insert-table-color',
+                   'insert-table-line','insert-table-padding'])$(id).disabled=false;
+  for(const input of $('insert-screen-cartouche').querySelectorAll('input[type=radio]'))
+   input.disabled=false;
   if(insertDraft?.object)requestInsertPreview();
   else $('insert-preview-status').textContent='Choose an item to preview it on the page';
  }catch(error){
@@ -787,156 +819,202 @@ function requestInsertPreview(){
  insertPreviewTimer=setTimeout(()=>{insertPreviewTimer=null;
    void runInsertPreview(d,version);},130);
 }
+
+// Keep a temporary page composition on the ACTUAL writing surface. The saved
+// Python editor session is unaffected until Done. Surrounding text is drawn
+// from the same authoritative compositor as the normal page.
+function showDraftPage(d,page,placement){
+ const slot=pageSlots[page.index]||pageSlots.at(-1);
+ if(!slot)throw Error('Writing surface is not available');
+ d.pageIndex=pageSlots.indexOf(slot);
+ const base=slot.shell.querySelector(':scope > .paper:not(.draft-paper)');
+ // Detached scratch paper is safe to paint: it uses the same renderer and zoom.
+ const scratch=document.createElement('div');
+ paintPageContent(null,page,scratch);
+ const rendered=scratch.querySelector('.paper');
+ if(!rendered)throw Error('The page preview cannot be rendered');
+ rendered.classList.add('draft-paper');
+ const replacement=rendered.querySelector('[data-id="'+CSS.escape(d.object.id)+'"]');
+ if(!replacement)throw Error('Object is not on this page');
+ let actual=replacement;
+ if(d.dragging && d.liveObject?.isConnected){
+  // Do NOT destroy the selected DOM element mid-gesture. Pointer capture and
+  // touch stability depend on retaining its identity while other text reflows.
+  actual=d.liveObject;
+  replacement.replaceWith(actual);
+ }
+ actual.classList.add('selected','draft-object');
+ actual.style.pointerEvents='auto';
+ actual.setAttribute('aria-label','Move or resize selected '+d.kind);
+ actual.querySelectorAll('.art-resize').forEach(handle=>handle.style.pointerEvents='auto');
+ if(!d.dragging){
+  actual.style.transform='';
+  actual.style.left=mm(placement.x);
+  actual.style.top=mm(placement.y);
+  actual.style.width=mm(placement.width_mm);
+  actual.style.height=mm(placement.height);
+ }
+ if(!actual.dataset.draftPointerBound){
+  actual.dataset.draftPointerBound='true';
+  actual.addEventListener('pointerdown',e=>draftObjectPointerDown(e,d),true);
+ }
+ let host=d.previewHost;
+ if(!host||host.parentElement!==slot.shell){
+  if(host)host.remove();
+  if(d.basePaper)d.basePaper.classList.remove('draft-source-hidden');
+  host=document.createElement('div');host.className='draft-page-layer';
+  d.previewHost=host;d.basePaper=base;
+  slot.shell.append(host);
+ }
+ d.basePaper?.classList.add('draft-source-hidden');
+ host.replaceChildren(rendered);
+ d.liveObject=actual;
+ d.placement=placement;
+ d.previewPage=page;
+ if(!d.firstPositionShown){
+  d.firstPositionShown=true;
+  // Do not zoom the entire page into a tiny duplicate inspector.
+  slot.shell.scrollIntoView({behavior:'auto',block:'nearest',inline:'nearest'});
+ }
+}
+function draftObjectPointerDown(e,d){
+ if(insertDraft!==d||!d.object||e.button!==0)return;
+ e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+ const resizing=Boolean(e.target.closest('.art-resize'));
+ const baseline=structuredClone(d.object);
+ const placement=d.placement,page=d.previewPage;
+ if(!placement||!page)return;
+ const unit=Math.max(.1,zoom)*pxmm;
+ const node=d.liveObject;
+ d.dragging=true;
+ let moved=false,lastUpdate=0;
+ trackObjectPointer(e,{node,threshold:0,
+  onMove:({dx,dy})=>{
+   moved=true;
+   const x=dx/unit,y=dy/unit;
+   if(resizing){
+    if(d.kind==='cartouche'){
+     d.object.enclosure_padding_mm=Math.min(30,Math.max(0,
+      Math.round(((baseline.enclosure_padding_mm||0)+x/2)*10)/10));
+     const extra=d.object.enclosure_padding_mm-(baseline.enclosure_padding_mm||0);
+     node.style.width=mm(Math.max(6,placement.width_mm+2*extra));
+    }else{
+     const low=d.kind==='table'?15:6,high=d.kind==='table'?500:300;
+     d.object.width_mm=Math.min(high,Math.max(low,
+      Math.round((placement.width_mm+x)*10)/10));
+     node.style.width=mm(d.object.width_mm);
+    }
+   }else{
+    d.object.x_offset_mm=Math.max(-2000,Math.min(2000,
+     Math.round(((baseline.x_offset_mm||0)+(doc.direction==='rtl'?-x:x))*10)/10));
+    const margins=doc.margins_mm||{top:18,bottom:18};
+    const room=Math.max(0,page.height-margins.top-margins.bottom-placement.height);
+    d.object.y_align=Math.min(1,Math.max(0,
+     (baseline.y_align??.5)+(room?y/room:0)));
+    node.style.transform='translate('+x*pxmm+'px,'+y*pxmm+'px)';
+   }
+   const now=performance.now();
+   if(now-lastUpdate>160){lastUpdate=now;requestInsertPreview();}
+  },
+  onCancel:()=>{
+   d.object=baseline;d.dragging=false;
+   node.style.transform='';requestInsertPreview();
+  },
+  onFinish:()=>{
+   d.dragging=false;node.style.transform='';
+   if(moved)requestInsertPreview();
+  }
+ });
+}
 async function runInsertPreview(d,version){
  if(insertDraft!==d)return;
- $('insert-preview-status').textContent='Calculating live text reflow…';
+ $('insert-preview-status').textContent='Updating the writing page…';
  try{
-  const proposed=previewDocument();
-  const response=await layoutRpc('layout',{document:proposed});
+  const response=await layoutRpc('layout',{document:previewDocument()});
   if(insertDraft!==d||version!==insertPreviewVersion)return;
   const pages=response.layout.pages;
-  const page=pages.find(p=>p.columns.some(c=>c.placements.some(
-    pos=>pos.id===d.object.id)))||pages[0];
-  const position=page.columns.flatMap(c=>c.placements).find(
-    pos=>pos.id===d.object.id);
-  if(!position)throw Error('Proposed object is not visible in its writing frame');
-  const holder=$('insert-preview');
-  holder.replaceChildren();
-  const limitW=Math.max(150,holder.clientWidth-22),limitH=Math.max(130,holder.clientHeight-22);
-  const scale=Math.min(.95,limitW/(page.width*pxmm),limitH/(page.height*pxmm));
-  const shell=document.createElement('div');
-  shell.className='insert-preview-shell';
-  shell.style.width=mm(page.width*scale);shell.style.height=mm(page.height*scale);
-  holder.append(shell);
-  const oldZoom=zoom;
-  try{zoom=scale;paintPageContent(null,page,shell);}
-  finally{zoom=oldZoom;}
-  const paper=shell.querySelector('.paper');
-  if(paper)paper.style.pointerEvents='none';
-  const selection=document.createElement('div');
-  selection.className='insert-preview-selection';
-  selection.style.left=mm(position.x*scale);
-  selection.style.top=mm(position.y*scale);
-  selection.style.width=mm(position.width_mm*scale);
-  selection.style.height=mm(position.height*scale);
-  selection.setAttribute('role','group');
-  selection.setAttribute('aria-label','Move or resize preview object');
-  const handle=document.createElement('span');
-  handle.className='insert-preview-handle';
-  handle.setAttribute('aria-label','Resize temporary object');
-  selection.append(handle);shell.append(selection);
-  enableInsertPreviewDrag(selection,d,scale,page,position);
-  $('insert-preview-status').textContent='Live page preview · nothing saved until Confirm';
+  const page=pages.find(p=>p.columns.some(c=>c.placements.some(pos=>pos.id===d.object.id)));
+  if(!page)throw Error('The object does not fit on the document');
+  const position=page.columns.flatMap(c=>c.placements).find(pos=>pos.id===d.object.id);
+  showDraftPage(d,page,position);
+  $('insert-preview-status').textContent='Preview on page · changes are not saved';
   $('insert-placement').hidden=false;
-  $('insert-object-width').disabled=d.kind==='cartouche';
-  $('insert-object-width').value=d.kind==='cartouche'?'':String(
-    Math.round((d.object.width_mm||position.width_mm)*10)/10);
+  d.lastPlacementWidth=position.width_mm;
+  $('insert-object-width').disabled=false;
+  if(document.activeElement!==$('insert-object-width'))
+   $('insert-object-width').value=String(Math.round(position.width_mm*10)/10);
   $('insert-object-width').min=d.kind==='table'?'15':'6';
   $('insert-object-width').max=d.kind==='table'?'500':'300';
-  $('insert-object-y').value=Math.round((d.object.y_align??.5)*100);
+  if(document.activeElement!==$('insert-object-y'))
+   $('insert-object-y').value=Math.round((d.object.y_align??.5)*100);
   d.valid=true;$('insert-sheet-confirm').disabled=false;
- }catch(err){
+ }catch(error){
   if(insertDraft===d&&version===insertPreviewVersion){
-   d.valid=false;
-   $('insert-sheet-confirm').disabled=true;
-   $('insert-preview-status').textContent='Cannot place object: '+err.message;
+   d.valid=false;$('insert-sheet-confirm').disabled=true;
+   $('insert-preview-status').textContent='Unable to preview: '+error.message;
   }
  }
 }
-function enableInsertPreviewDrag(node,d,scale,page,pos){
- node.addEventListener('pointerdown',e=>{
-  if(e.button!==0||insertDraft!==d)return;
-  e.preventDefault();e.stopPropagation();
-  const resize=Boolean(e.target.closest('.insert-preview-handle'));
-  const startX=e.clientX,startY=e.clientY;
-  const base=structuredClone(d.object);
-  const baseWidth=pos.width_mm;
-  const room=page.height-(doc.margins_mm?.top??18)-
-   (doc.margins_mm?.bottom??18)-pos.height;
-  node.setPointerCapture(e.pointerId);
-  let changed=false;
-  const move=ev=>{
-   if(ev.pointerId!==e.pointerId)return;
-   const dx=(ev.clientX-startX)/(scale*pxmm),
-         dy=(ev.clientY-startY)/(scale*pxmm);
-   if(Math.abs(dx)+Math.abs(dy)<.2)return;
-   changed=true;
-   if(resize){
-    if(d.kind==='cartouche'){
-     d.object.enclosure_padding_mm=Math.min(30,Math.max(0,
-      Math.round(((base.enclosure_padding_mm||0)+dx/2)*10)/10));
-    }else{
-     const min=d.kind==='table'?15:6,max=d.kind==='table'?500:300;
-     d.object.width_mm=Math.min(max,Math.max(min,
-      Math.round((baseWidth+dx)*10)/10));
-    }
-   }else{
-    const logical=doc.direction==='rtl'?-dx:dx;
-    d.object.x_offset_mm=Math.min(2000,Math.max(-2000,
-     Math.round(((base.x_offset_mm||0)+logical)*10)/10));
-    d.object.y_align=Math.min(1,Math.max(0,(base.y_align??.5)+
-     (room>0?dy/room:0)));
-   }
-   node.style.transform='translate('+(resize?0:ev.clientX-startX)+'px,'+
-    (resize?0:ev.clientY-startY)+'px)';
-  };
-  const finish=ev=>{
-   if(ev.pointerId!==e.pointerId)return;
-   node.removeEventListener('pointermove',move);
-   node.removeEventListener('pointerup',finish);
-   node.removeEventListener('pointercancel',cancel);
-   node.style.transform='';
-   if(changed)requestInsertPreview();
-  };
-  const cancel=()=>{d.object=base;node.style.transform='';
-   node.removeEventListener('pointermove',move);
-   node.removeEventListener('pointerup',finish);
-   node.removeEventListener('pointercancel',cancel);};
-  node.addEventListener('pointermove',move);
-  node.addEventListener('pointerup',finish);
-  node.addEventListener('pointercancel',cancel);
- });
-}
-async function changeInsertTableDimensions(){
- const d=insertDraft;if(!d||d.kind!=='table'||d.busy)return;
- const rows=Number($('insert-table-rows').value),cols=Number($('insert-table-columns').value);
- if(!Number.isInteger(rows)||rows<1||rows>24||!Number.isInteger(cols)||cols<1||cols>12){
-  $('insert-preview-status').textContent='Choose 1–24 rows and 1–12 columns';return;
- }
- d.busy=true;$('insert-sheet-confirm').disabled=true;
- try{
-  let sandbox={...doc,items:[d.object]};
-  const id=d.object.id;
-  for(let n=sandbox.items[0].rows.length;n<rows;n++)
-   sandbox=(await rpc('transact',{document:sandbox,action:{
-    op:'table_insert_row',id,index:n}})).document;
-  while(sandbox.items[0].rows.length>rows)
-   sandbox=(await rpc('transact',{document:sandbox,action:{
-    op:'table_delete_row',id,index:sandbox.items[0].rows.length-1}})).document;
-  for(let n=sandbox.items[0].rows[0].length;n<cols;n++)
-   sandbox=(await rpc('transact',{document:sandbox,action:{
-    op:'table_insert_column',id,index:n}})).document;
-  while(sandbox.items[0].rows[0].length>cols)
-   sandbox=(await rpc('transact',{document:sandbox,action:{
-    op:'table_delete_column',id,index:sandbox.items[0].rows[0].length-1}})).document;
-  if(insertDraft===d){d.object=sandbox.items[0];requestInsertPreview();}
- }catch(e){if(insertDraft===d)$('insert-preview-status').textContent=e.message;}
- finally{d.busy=false;}
-}
-for(const id of ['insert-table-rows','insert-table-columns'])
- $(id).addEventListener('change',()=>void changeInsertTableDimensions());
-function changeInsertStyle(){
- const d=insertDraft;if(!d||d.kind!=='table'||d.busy)return;
- d.object.style={
+// One requested table specification per user event, queued in order.
+// The Python transaction replaces dimensions and styling in one operation;
+// later user input wins, and preview never shows an earlier stale request.
+function scheduleInsertTableSpec(){
+ const d=insertDraft;
+ if(!d||d.kind!=='table'||!d.object)return;
+ const rows=Number($('insert-table-rows').value);
+ const cols=Number($('insert-table-columns').value);
+ const style={
   border_style:$('insert-table-border').value,
   border_color:$('insert-table-color').value,
   border_width_mm:Number($('insert-table-line').value),
   cell_padding_mm:Number($('insert-table-padding').value)};
- requestInsertPreview();
+ const requestKey=JSON.stringify([rows,cols,style]);
+ // When Confirm receives a pointer press, the currently focused field blurs
+ // and fires change. Do not disable Confirm for that duplicate snapshot:
+ // doing so between pointerdown and click silently eats the user's click.
+ if(requestKey===d.lastRequestedSpec)return;
+ d.lastRequestedSpec=requestKey;
+ const version=d.specRequested=(d.specRequested||0)+1;
+ // Invalidate any layout already in flight: otherwise its stale completion
+ // can re-enable Confirm before this newer table specification is validated.
+ ++insertPreviewVersion;
+ if(insertPreviewTimer!==null){clearTimeout(insertPreviewTimer);insertPreviewTimer=null;}
+ d.valid=false;$('insert-sheet-confirm').disabled=true;
+ if(!Number.isInteger(rows)||rows<1||rows>24||
+    !Number.isInteger(cols)||cols<1||cols>12||
+    !Number.isFinite(style.border_width_mm)||!Number.isFinite(style.cell_padding_mm)){
+  $('insert-preview-status').textContent='Choose a valid table size and style';
+  return;
+ }
+ const previous=d.specQueue||Promise.resolve();
+ d.specQueue=previous.catch(()=>{}).then(async()=>{
+  if(insertDraft!==d||version!==d.specRequested)return;
+  const sandbox={...doc,items:[d.object]};
+  try{
+   const response=await rpc('transact',{document:sandbox,action:{
+    op:'set_table_spec',id:d.object.id,rows,columns:cols,style}});
+   if(insertDraft!==d||version!==d.specRequested)return;
+   d.object=response.document.items[0];
+   d.specApplied=version;
+   requestInsertPreview();
+  }catch(err){
+   if(insertDraft===d&&version===d.specRequested){
+    d.valid=false;$('insert-sheet-confirm').disabled=true;
+    $('insert-preview-status').textContent='Invalid table configuration: '+err.message;
+   }
+  }
+ });
 }
-for(const id of ['insert-table-border','insert-table-color','insert-table-line',
-                  'insert-table-padding'])
- $(id).addEventListener('change',changeInsertStyle);
+for(const id of ['insert-table-rows','insert-table-columns',
+                  'insert-table-border','insert-table-color',
+                  'insert-table-line','insert-table-padding']){
+ $(id).addEventListener('change',scheduleInsertTableSpec);
+}
+// Apply typed values before blur so a Confirm press never initiates a new
+// specification as a side effect of losing focus.
+for(const id of ['insert-table-rows','insert-table-columns',
+                  'insert-table-color','insert-table-line','insert-table-padding'])
+ $(id).addEventListener('input',scheduleInsertTableSpec);
 for(const input of $('insert-screen-cartouche').querySelectorAll('input[type=radio]'))
  input.addEventListener('change',()=>{
   if(insertDraft?.kind==='cartouche'&&input.checked){
@@ -944,11 +1022,17 @@ for(const input of $('insert-screen-cartouche').querySelectorAll('input[type=rad
   }
  });
 $('insert-object-width').addEventListener('change',e=>{
- const d=insertDraft;if(!d?.object||d.kind==='cartouche')return;
+ const d=insertDraft;if(!d?.object)return;
  const width=Number(e.target.value);
  if(!Number.isFinite(width)||width<(d.kind==='table'?15:6)||
     width>(d.kind==='table'?500:300))return;
- d.object.width_mm=width;requestInsertPreview();
+ if(d.kind==='cartouche'){
+  // Change the enclosure, never the document's hieroglyph font size.
+  const prior=Number(d.lastPlacementWidth||width);
+  d.object.enclosure_padding_mm=Math.min(30,Math.max(0,
+   Math.round(((d.object.enclosure_padding_mm||0)+(width-prior)/2)*10)/10));
+ }else d.object.width_mm=width;
+ requestInsertPreview();
 });
 $('insert-object-y').addEventListener('input',e=>{
  if(insertDraft?.object){insertDraft.object.y_align=Number(e.target.value)/100;
@@ -973,10 +1057,13 @@ $('insert-image-file').addEventListener('change',async e=>{
  finally{d.busy=false;}
 });
 $('insert-sheet-cancel').onclick=closeInsertSheet;
-$('insert-sheet-cancel-top').onclick=closeInsertSheet;
-$('insert-dialog-backdrop').addEventListener('pointerdown',e=>{
- if(e.target===$('insert-dialog-backdrop'))closeInsertSheet();
-});
+// A contextual inspector is not a modal dialog. Touching outside it and the
+// draft object dismisses the uncommitted draft, returning to the real page.
+document.addEventListener('pointerdown',e=>{
+ if(!insertDraft)return;
+ if(e.target.closest('#insert-sheet,.draft-object'))return;
+ closeInsertSheet();
+},true);
 document.addEventListener('keydown',e=>{
  if(e.key==='Escape'&&!$('insert-dialog-backdrop').hidden){
   e.preventDefault();e.stopImmediatePropagation();closeInsertSheet();
@@ -985,6 +1072,10 @@ document.addEventListener('keydown',e=>{
 $('insert-sheet-confirm').onclick=async()=>{
  const d=insertDraft;
  if(!d?.object||!d.valid||d.busy)return;
+ if(d.kind==='table' && (d.specApplied||0)!==(d.specRequested||0)){
+  $('insert-preview-status').textContent='Updating table settings; confirm when the latest preview is ready…';
+  return;
+ }
  d.busy=true;$('insert-sheet-confirm').disabled=true;
  const action=d.existingId?{op:'splice',index:d.index,
   delete_count:1,objects:[d.object],fresh_ids:false}:
@@ -994,7 +1085,10 @@ $('insert-sheet-confirm').onclick=async()=>{
  if(success){closeInsertSheet();clearSelection();
   caretIndex=Math.min(doc.items.length,d.index+1);
   updateSelection();}
- else{d.busy=false;d.valid=true;$('insert-sheet-confirm').disabled=false;}
+ else{
+  d.busy=false;d.valid=true;$('insert-sheet-confirm').disabled=false;
+  $('insert-preview-status').textContent='Could not commit the object. Check the editor status and try again.';
+ }
 };
 
 // Convert local PNG/JPEG/WebP into a portable PNG plus a conservative alpha
@@ -1209,164 +1303,223 @@ function clipartDropIndex(page,clientX,clientY,excludeId){
  candidates.sort((a,b)=>a.score-b.score||a.gap-b.gap);
  return {gap:candidates.length?candidates[0].gap:null,page:targetPage,paper};
 }
-function beginNestedDrag(e,placement,column,page,node){
- if(e.button!==0 || e.target.closest('.table-cell-view'))return;
+
+// One pointer lifecycle for EVERY embedded object and the temporary Insert
+// preview. Window-level capture keeps WebKit touch drags alive when a pointer
+// crosses a handle or a partially re-rendered page; no stored pixel positions.
+function startExistingObjectPreview(object,node){
+ if(insertDraft)return null;
+ const index=logicalIndexById.get(object.id);
+ if(index===undefined)return null;
+ const draft={token:++insertTicket,kind:object.type,index,
+  existingId:object.id,object:structuredClone(object),
+  gestureOnly:true,dragging:true,liveObject:node,
+  firstPositionShown:true,savedStyle:node.style.cssText,
+  busy:false,valid:false};
+ insertDraft=draft;
+ return draft;
+}
+function finishExistingObjectPreview(draft,action){
+ if(insertDraft!==draft)return;
+ draft.dragging=false;
+ // Commit a single validated transaction. The preview never mutates the
+ // persisted document, and a failed transaction restores the old page.
+ if(action)void apply(action).finally(()=>{
+  if(insertDraft===draft)closeInsertSheet();
+ });
+ else closeInsertSheet();
+}
+function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5}){
+ if(e.button!==0||!e.isPrimary)return false;
+ const pointer=e.pointerId,startX=e.clientX,startY=e.clientY;
+ let lastX=startX,lastY=startY,moved=false,ended=false;
+ const source=e.currentTarget;
  e.stopPropagation();
+ if(source instanceof Element&&source.setPointerCapture){
+  try{source.setPointerCapture(pointer);}catch(_){}
+ }
+ const release=()=>{
+  if(ended)return false;ended=true;
+  window.removeEventListener('pointermove',move,true);
+  window.removeEventListener('pointerup',finish,true);
+  window.removeEventListener('pointercancel',cancel,true);
+  try{if(source?.hasPointerCapture?.(pointer))source.releasePointerCapture(pointer);}catch(_){}
+  return true;
+ };
+ const move=ev=>{
+  if(ev.pointerId!==pointer||ended)return;
+  lastX=ev.clientX;lastY=ev.clientY;
+  const distance=Math.hypot(lastX-startX,lastY-startY);
+  if(!moved&&distance<threshold)return;
+  moved=true;
+  suppressWordClick=true;suppressPaperClick=true;
+  if(ev.cancelable)ev.preventDefault();
+  onMove?.({dx:lastX-startX,dy:lastY-startY,clientX:lastX,clientY:lastY,event:ev});
+ };
+ const finish=ev=>{
+  if(ev.pointerId!==pointer||!release())return;
+  try{onFinish?.({moved,dx:lastX-startX,dy:lastY-startY,clientX:lastX,clientY:lastY});}
+  finally{if(moved)setTimeout(()=>{suppressWordClick=false;suppressPaperClick=false;},0);}
+ };
+ const cancel=ev=>{
+  if(ev.pointerId!==pointer||!release())return;
+  onCancel?.();
+  suppressWordClick=false;suppressPaperClick=false;
+ };
+ window.addEventListener('pointermove',move,true);
+ window.addEventListener('pointerup',finish,true);
+ window.addEventListener('pointercancel',cancel,true);
+ return true;
+}
+const OBJECT_EDGES=['bottom-right']; // one unambiguous finger-sized resize target
+function addObjectResizeHandles(node,placement){
+ // The page itself is scaled to fit a phone. Cancel that scale on hit targets
+ // so a 44px handle remains finger-sized in the actual viewport.
+ node.style.setProperty('--resize-inverse',String(1/Math.max(.1,zoom)));
+ for(const edge of OBJECT_EDGES){
+  const handle=document.createElement('span');
+  handle.className='art-resize '+edge;
+  handle.dataset.handle=edge;
+  handle.setAttribute('role','button');
+  handle.setAttribute('aria-label','Resize '+placement.type+' '+edge);
+  handle.addEventListener('pointerdown',ev=>beginObjectResize(ev,placement,node,edge));
+  node.append(handle);
+ }
+}
+function beginObjectDrag(e,placement,column,page,node){
+ if(e.button!==0||e.target.closest('.art-resize,.table-cell-view'))return;
+ const original=objectById(placement.id);
+ if(!original||insertDraft)return;
+ const draft=startExistingObjectPreview(original,node);
+ if(!draft)return;
+ const source=itemIndexById.get(placement.id);
+ const unit=zoom*pxmm;
+ const isNested=original.type==='table'||original.type==='cartouche';
+ const reset=()=>{node.classList.remove('drag-preview');node.style.transform='';};
+ trackObjectPointer(e,{
+  node,
+  onMove:({dx,dy})=>{
+   node.classList.add('drag-preview');
+   node.style.transform='translate('+dx/zoom+'px,'+dy/zoom+'px)';
+   const x=dx/unit,y=dy/unit;
+   const margins=doc.margins_mm||{top:18,bottom:18};
+   const room=Math.max(0,page.height-margins.top-margins.bottom-placement.height);
+   draft.object.y_align=Math.min(1,Math.max(0,
+    (original.y_align??.5)+(room?y/room:0)));
+   draft.object.x_offset_mm=Math.max(-2000,Math.min(2000,
+    Math.round(((original.x_offset_mm||0)+
+      (doc.direction==='rtl'?-x:x))*10)/10));
+   if(isNested){
+    const horizontalRoom=Math.max(0,column.width-placement.width_mm);
+    draft.object.x_align=horizontalRoom?Math.min(1,Math.max(0,
+     (placement.x+x-column.x)/horizontalRoom)):0;
+   }
+   if(performance.now()-(draft.lastReflow||0)>170){
+    draft.lastReflow=performance.now();requestInsertPreview();
+   }
+  },
+  onCancel:()=>{reset();finishExistingObjectPreview(draft,null);},
+  onFinish:({moved,dx,dy,clientX,clientY})=>{
+   node.classList.remove('drag-preview');
+   if(!moved){reset();finishExistingObjectPreview(draft,null);
+    selectWord(placement.id);return;}
+   const deltaX=dx/unit,deltaY=dy/unit;
+   const hit=clipartDropIndex(page,clientX,clientY,placement.id);
+   const destination=hit?.page??page;
+   const margins=doc.margins_mm||{top:18,bottom:18};
+   const room=Math.max(0,destination.height-margins.top-margins.bottom-placement.height);
+   const proposedTop=placement.y+deltaY;
+   const yAlign=room?Math.max(0,Math.min(1,(proposedTop-margins.top)/room)):0;
+   let target=source,action;
+   if(isNested){
+    if(destination!==page||Math.abs(deltaX)>column.width*.45){
+     if(hit?.gap!=null)target=Math.max(0,Math.min(doc.items.length-1,
+      hit.gap-(source<hit.gap?1:0)));
+    }
+    const horizontalRoom=Math.max(0,column.width-placement.width_mm);
+    const logical=doc.direction==='rtl'?-deltaX:deltaX;
+    const xAlign=horizontalRoom?Math.max(0,Math.min(1,
+      (placement.x+deltaX-column.x)/horizontalRoom)):0;
+    const xOffset=Math.max(-2000,Math.min(2000,(original.x_offset_mm||0)+logical));
+    action={op:'relocate_nested',id:placement.id,index:target,
+      x_offset_mm:Math.round(xOffset*10)/10,
+      x_align:Math.round(xAlign*10000)/10000,
+      y_align:Math.round(yAlign*10000)/10000};
+   }else{
+    const desiredX=placement.x+deltaX;
+    const rawOffset=doc.direction==='rtl'
+      ?column.x+column.width-desiredX-placement.width_mm
+      :desiredX-column.x;
+    const maximalOffset=destination===page
+      ?(doc.surface==='papyrus'?2000:Math.max(0,page.width-margins.left-margins.right-placement.width_mm))
+      :0;
+    let xOffset=Math.round(Math.max(-2000,Math.min(2000,maximalOffset,rawOffset))*10)/10;
+    if(destination!==page){
+     if(hit?.gap!=null)target=Math.max(0,Math.min(doc.items.length-1,
+      hit.gap-(source<hit.gap?1:0)));
+     xOffset=0;
+    }
+    action={op:original.type==='image'?'relocate_image':'relocate_clipart',
+      id:placement.id,index:target,x_offset_mm:xOffset,
+      y_align:Math.round(yAlign*10000)/10000};
+   }
+   selectWord(placement.id);
+   finishExistingObjectPreview(draft,action);
+  }
+ });
+}
+function beginObjectResize(e,placement,node,edge){
+ if(e.button!==0||insertDraft)return;
+ e.preventDefault();e.stopPropagation();
  const original=objectById(placement.id);
  if(!original)return;
- const source=itemIndexById.get(placement.id);
- const startX=e.clientX,startY=e.clientY;
- let moved=false,lastX=startX,lastY=startY;
- const onMove=event=>{
-  if(event.pointerId!==e.pointerId)return;
-  lastX=event.clientX;lastY=event.clientY;
-  if(!moved&&Math.hypot(lastX-startX,lastY-startY)<6)return;
-  moved=true;suppressWordClick=true;suppressPaperClick=true;
-  node.classList.add('drag-preview');
-  node.style.transform=`translate(${(lastX-startX)/zoom}px,${(lastY-startY)/zoom}px)`;
- };
- const cleanup=()=>{
-  window.removeEventListener('pointermove',onMove);
-  window.removeEventListener('pointerup',onUp);
-  window.removeEventListener('pointercancel',onCancel);
-  node.style.transform='';node.classList.remove('drag-preview');
-  if(moved)setTimeout(()=>{suppressWordClick=false;suppressPaperClick=false;},0);
- };
- const onCancel=()=>cleanup();
- const onUp=event=>{
-  if(event.pointerId!==e.pointerId)return;
-  cleanup();
-  if(!moved){selectWord(placement.id);return;}
-  const unit=zoom*pxmm,deltaX=(lastX-startX)/unit,deltaY=(lastY-startY)/unit;
-  const hit=clipartDropIndex(page,lastX,lastY,placement.id);
-  const dstPage=hit?.page??page;
-  let target=source;
-  if(dstPage!==page||Math.abs(deltaX)>column.width*.45){
-   if(hit?.gap!==null&&hit?.gap!==undefined)
-    target=Math.max(0,Math.min(doc.items.length-1,hit.gap-(source<hit.gap?1:0)));
+ selectWord(placement.id);
+ const draft=startExistingObjectPreview(original,node);
+ if(!draft)return;
+ const initial=placement.width_mm;
+ const aspect=placement.width_mm/Math.max(.01,placement.height);
+ const isCartouche=original.type==='cartouche';
+ const isTable=original.type==='table';
+ const baseline=isCartouche?(original.enclosure_padding_mm||0)
+  :(original.width_mm??initial);
+ let value=baseline,lastReflow=0;
+ trackObjectPointer(e,{node,threshold:0,
+  onMove:({dx,dy})=>{
+   const factor=(edge.includes('left')?-1:edge.includes('right')?1:0);
+   const vfactor=(edge.includes('top')?-1:edge.includes('bottom')?1:0);
+   const changeX=dx/(zoom*pxmm)*factor;
+   const changeY=dy/(zoom*pxmm)*aspect*vfactor;
+   const delta=Math.abs(changeX)>=Math.abs(changeY)?changeX:changeY;
+   if(isCartouche){
+    value=Math.min(30,Math.max(0,Math.round((baseline+delta/2)*10)/10));
+    draft.object.enclosure_padding_mm=value;
+   }else{
+    value=Math.min(isTable?500:300,Math.max(isTable?15:6,
+      Math.round((baseline+delta)*10)/10));
+    draft.object.width_mm=value;
+   }
+   // Resize the REAL object, not a placeholder rectangle. Authoritative
+   // Python compositions replace its internal cells, glyphs and text flow.
+   const width=isCartouche?Math.max(1,initial+2*(value-baseline)):value;
+   node.style.width=mm(width);
+   node.style.height=mm(placement.height*width/initial);
+   if(performance.now()-lastReflow>170){
+    lastReflow=performance.now();
+    requestInsertPreview();
+   }
+  },
+  onCancel:()=>finishExistingObjectPreview(draft,null),
+  onFinish:({moved})=>{
+   if(!moved||value===baseline){finishExistingObjectPreview(draft,null);return;}
+   let action;
+   if(isCartouche)action={op:'replace_cartouche',id:original.id,
+    object:{...structuredClone(original),enclosure_padding_mm:value}};
+   else if(isTable)action={op:'set_table_width',id:original.id,width_mm:value};
+   else action={op:original.type==='image'?'set_image':'set_clipart',
+    id:original.id,width_mm:value};
+   finishExistingObjectPreview(draft,action);
   }
-  const margins=doc.margins_mm||{top:18,bottom:18};
-  const room=Math.max(0,dstPage.height-margins.top-margins.bottom-placement.height);
-  const newTop=Math.max(margins.top,Math.min(dstPage.height-margins.bottom-placement.height,placement.y+deltaY));
-  const yAlign=room?Math.max(0,Math.min(1,(newTop-margins.top)/room)):0;
-  const horizontalRoom=Math.max(0,column.width-placement.width_mm);
-  const inDirection=doc.direction==='rtl'?-deltaX:deltaX;
-  const xOffset=Math.max(-2000,Math.min(2000,(original.x_offset_mm||0)+inDirection));
-  const xAlign=horizontalRoom?Math.max(0,Math.min(1,(placement.x+deltaX-column.x)/horizontalRoom)):0;
-  selectWord(placement.id);
-  apply({op:'relocate_nested',id:placement.id,index:target,
-    x_offset_mm:Math.round(xOffset*10)/10,
-    x_align:Math.round(xAlign*10000)/10000,y_align:Math.round(yAlign*10000)/10000});
- };
- window.addEventListener('pointermove',onMove);
- window.addEventListener('pointerup',onUp);
- window.addEventListener('pointercancel',onCancel);
-}
-
-function beginClipartDrag(e,placement,column,page,node){
- if(e.button!==0||e.target.closest('.art-resize'))return;
- // Touch devices share the same pointer workflow; a tap still selects.
- e.stopPropagation();
- const original=doc?.items.find(item=>item.id===placement.id);
- if(!original)return;
- const initialIndex=itemIndexById.get(placement.id);
- const startX=e.clientX,startY=e.clientY,unit=zoom*pxmm;
- let moved=false,lastX=startX,lastY=startY;
- const move=ev=>{
-  if(ev.pointerId!==e.pointerId)return;
-  lastX=ev.clientX;lastY=ev.clientY;
-  if(!moved&&Math.hypot(lastX-startX,lastY-startY)<6)return;
-  moved=true;suppressWordClick=true;suppressPaperClick=true;
-  node.classList.add('drag-preview');
-  node.style.transform=`translate(${(lastX-startX)/zoom}px,${(lastY-startY)/zoom}px)`;
- };
- const cleanup=()=>{
-  window.removeEventListener('pointermove',move);
-  window.removeEventListener('pointerup',done);
-  window.removeEventListener('pointercancel',cancel);
-  node.classList.remove('drag-preview');node.style.transform='';
-  if(moved)setTimeout(()=>{suppressWordClick=false;suppressPaperClick=false;},0);
- };
- const cancel=()=>cleanup();
- const done=ev=>{
-  if(ev.pointerId!==e.pointerId)return;
-  cleanup();
-  if(!moved){selectWord(placement.id);return;}
-  const dx=(lastX-startX)/unit,dy=(lastY-startY)/unit;
-  const target=clipartDropIndex(page,lastX,lastY,placement.id);
-  const newPage=target?.page??page;
-  const margins=doc.margins_mm||{top:18,bottom:18};
-   const yRoom=Math.max(0,newPage.height-margins.top-margins.bottom-placement.height);
-  const initialTop=node.getBoundingClientRect().top;
-  // Node preview has been cleared; preserve the original pointer grab offset.
-  const grabY=(startY-initialTop)/(unit);
-  const destinationRect=target?.paper.getBoundingClientRect();
-  const proposedTop=destinationRect?(lastY-destinationRect.top)/unit-grabY:placement.y+dy;
-  const yAlign=yRoom?Math.max(0,Math.min(1,(proposedTop-margins.top)/yRoom)):0.5;
-  // A float's horizontal position is a millimetre offset *forward in
-  // reading order* from its document anchor, not an absolute page pixel.
-  // Python reserves the crossed slots, then flows words through every safe
-  // silhouette sector in those slots and derives the final position.
-  const desiredX=placement.x+dx;
-  const rawOffset=doc.direction==='rtl'
-    ?column.x+column.width-desiredX-placement.width_mm
-    :desiredX-column.x;
-  const maximalOffset=newPage===page
-    ?(doc.surface==='papyrus'?2000:Math.max(0,page.width-(doc.margins_mm?.left??18)-(doc.margins_mm?.right??18)-placement.width_mm))
-    :0;
-  // Negative values move the art back over preceding text columns; Python
-  // alone reflows those columns, preserving logical object order.
-  let xOffset=Math.round(Math.max(-2000,Math.min(2000,maximalOffset,rawOffset))*10)/10;
-  let index=initialIndex;
-  // Moving before the current anchor or crossing pages requires a logical
-  // relocation. Floating forward inside a page never reorders document items.
-  if(newPage!==page){
-   if(target?.gap!==null&&target?.gap!==undefined)
-    index=Math.max(0,Math.min(doc.items.length-1,
-      target.gap-(initialIndex<target.gap?1:0)));
-   xOffset=0;
-  }
-  selectWord(placement.id);
-  apply({op:original.type==='image'?'relocate_image':'relocate_clipart',id:placement.id,index,
-         x_offset_mm:xOffset,y_align:Math.round(yAlign*10000)/10000});
- };
- window.addEventListener('pointermove',move);
- window.addEventListener('pointerup',done);
- window.addEventListener('pointercancel',cancel);
-}
-
-function beginClipartResize(e,item,node,edge){
- if(e.button!==0)return;
- e.preventDefault();e.stopPropagation();suppressPaperClick=true;suppressWordClick=true;
- selectWord(item.id);
- const original=objectById(item.id);
- if(!original)return;
- const startX=e.clientX,startY=e.clientY;
- const ratio=item.width_mm/item.height;
- const unit=zoom*pxmm;
- let width=original.width_mm;
- const track=ev=>{
-  const dx=(ev.clientX-startX)/unit*(edge.includes('left')?-1:edge.includes('right')?1:0);
-  const dy=(ev.clientY-startY)/unit*ratio*(edge.includes('top')?-1:edge.includes('bottom')?1:0);
-  const delta=Math.abs(dx)>=Math.abs(dy)?dx:dy;
-  width=Math.min(300,Math.max(6,Math.round((original.width_mm+delta)*10)/10));
-  node.style.outline='2px dashed #bb9150';
-  node.title='Width: '+width+' mm';
- };
- const done=()=>{
-  window.removeEventListener('pointermove',track);
-  window.removeEventListener('pointerup',done);
-  window.removeEventListener('pointercancel',cancel);
-  if(width!==original.width_mm)apply({op:original.type==='image'?'set_image':'set_clipart',id:item.id,width_mm:width});
-  node.style.outline='';node.title='';
-  setTimeout(()=>{suppressPaperClick=false;suppressWordClick=false;},0);
- };
- const cancel=()=>{window.removeEventListener('pointermove',track);
-  window.removeEventListener('pointerup',done);window.removeEventListener('pointercancel',cancel);
-  node.style.outline='';suppressPaperClick=false;suppressWordClick=false;};
- window.addEventListener('pointermove',track);
- window.addEventListener('pointerup',done,{once:true});
- window.addEventListener('pointercancel',cancel,{once:true});
+ });
 }
 $('font-decrease').onclick=()=>doc&&apply({op:'set_document',font_size_pt:Math.max(6,Number(doc.font_size_pt)-1)});
 $('font-increase').onclick=()=>doc&&apply({op:'set_document',font_size_pt:Math.min(72,Number(doc.font_size_pt)+1)});
@@ -1423,6 +1576,7 @@ function showLibraryError(message=''){
  const el=$('library-error');el.hidden=!message;el.textContent=message;
 }
 function showLibrary(){
+ if(insertDraft)closeInsertSheet();
  ++layoutVersion;queuedLayout=null;repairedDetailRevisions.clear();libraryScreen.hidden=false;editorScreen.hidden=true;
  releaseLayoutWorker();
  for(const job of layoutPending.values())job.reject(new Error('Editor closed'));
@@ -1433,6 +1587,7 @@ function showLibrary(){
  document.title='MdwNfr — Documents';
 }
 function showEditor(){
+ if(insertDraft)closeInsertSheet();
  libraryScreen.hidden=true;editorScreen.hidden=false;closePanels();
  document.title='MdwNfr — '+doc.name;
 }

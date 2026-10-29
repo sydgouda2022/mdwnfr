@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/mdwnfr-live-audit.yml'
+      - 'qa/audit_live_ui_20261030.mjs'
   workflow_dispatch:
 permissions:
   contents: read

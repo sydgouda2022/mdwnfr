@@ -240,7 +240,9 @@ def typeset_table(obj:dict, sign_width:float, width_mm:float, usable_height:floa
                            'width':round(each,5),'height':heights[ri]})
         offset+=heights[ri]
     return {'width_mm':round(width_mm,5),'height':round(total,5),
-            'row_heights':heights,'columns':ncols,'rows':nrows,'cells':result}
+            'row_heights':heights,'columns':ncols,'rows':nrows,'cells':result,
+            'border_style':border_style,'border_color':border_color,
+            'border_width_mm':border_width,'cell_padding_mm':padding}
 
 
 # Geometry-only page segmentation: never changes the persistent table or cell IDs.

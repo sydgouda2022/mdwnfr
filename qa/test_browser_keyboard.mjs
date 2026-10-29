@@ -177,10 +177,18 @@ try{
   await page.locator('#artwork-grid .artwork-choice').first().click();
   await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm').disabled,
     null,{timeout:90000});
-  assert.ok(await page.locator('#insert-preview .paper').count(),
-    'Clip-art selection must produce Python-composed page preview');
+  assert.ok(await page.locator('#pages .draft-page-layer .draft-paper .draft-object').count(),
+    'Clip-art selection must render its Python-composed object on the actual writing page');
+  assert.equal(await page.locator('#insert-preview').count(),0,
+    'There must not be a second miniature document preview');
+  assert.equal(await page.locator('#insert-sheet-cancel-top').count(),0,
+    'The contextual inspector must not have a desktop close X');
+  assert.equal(await page.locator('#insert-sheet').getAttribute('aria-modal'),null,
+    'Insert must not behave as a modal desktop dialog');
   await page.locator('#insert-sheet-cancel').click();
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
+  assert.equal(await page.locator('#pages .draft-page-layer').count(),0,
+    'Cancel removes the temporary page layer');
   assert.equal(await page.locator('.clipart-object').count(),0,
     'Cancel leaves no clip art in the saved document');
 
@@ -211,6 +219,76 @@ try{
   await page.locator('#insert-sheet-cancel').click();
   assert.equal(await page.locator('.clipart-object').count(),0,
     'Cancelling image selection does not add a document object');
+  // Reproduce the production failure: configure a table in multiple
+  // rapid changes and ensure Confirm commits the final 3x4 border settings.
+  if(!await page.locator('#format-panel').isVisible())
+    await page.locator('#format-toggle').click();
+  await page.locator('#insert-table').click();
+  await page.locator('#insert-table-rows').fill('3');
+  await page.locator('#insert-table-rows').dispatchEvent('change');
+  await page.locator('#insert-table-columns').fill('4');
+  await page.locator('#insert-table-columns').dispatchEvent('change');
+  await page.locator('#insert-table-border').selectOption('dashed');
+  await page.locator('#insert-table-color').fill('#217acc');
+  await page.locator('#insert-table-line').fill('1');
+  await page.locator('#insert-table-line').dispatchEvent('change');
+  await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm').disabled,
+    null,{timeout:90000});
+  console.log('TABLE_REQUESTED_UI',JSON.stringify(await page.evaluate(()=>({
+    rows:document.getElementById('insert-table-rows').value,
+    columns:document.getElementById('insert-table-columns').value,
+    border:document.getElementById('insert-table-border').value,
+    color:document.getElementById('insert-table-color').value,
+    thickness:document.getElementById('insert-table-line').value,
+    status:document.getElementById('insert-preview-status').textContent
+  }))));
+  await page.locator('#insert-sheet-confirm').click();
+  try{
+   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden',timeout:30000});
+  }catch(error){
+   console.error('Table confirm failure status:',
+     await page.locator('#state').textContent().catch(()=>null));
+   console.error('Table preview status:',
+     await page.locator('#insert-preview-status').textContent().catch(()=>null));
+   throw error;
+  }
+  // The newly inserted table may be on a virtualized page outside the
+  // viewport. Verify that the real IndexedDB transaction persisted its full
+  // structure/style; the visible-table interaction is covered earlier.
+  // Poll IndexedDB from Node rather than returning a Promise to
+  // waitForFunction: the latter can treat the Promise itself as truthy.
+  let snapshot=[];
+  for(let attempt=0;attempt<50;attempt++){
+    snapshot=await page.evaluate(async()=>{
+    const db=await new Promise((resolve,reject)=>{
+      const r=indexedDB.open('mdwnfr-canonical-v1',1);
+      r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+    });
+    try{
+      const entries=await new Promise((resolve,reject)=>{
+        const tx=db.transaction('documents','readonly');
+        const r=tx.objectStore('documents').getAll();
+        r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+      });
+      return entries.map(doc=>({
+        id:doc.id,name:doc.name,revision:doc.revision,
+        tables:doc.items.filter(item=>item.type==='table').map(item=>({
+          rows:item.rows.length,cols:item.rows[0].length,style:item.style||{}
+        }))
+      }));
+    }finally{db.close();}
+  });
+    if(snapshot.some(doc=>doc.name==='Untitled'&&doc.tables.length===2))break;
+    await page.waitForTimeout(200);
+  }
+  console.log('TABLE_DB_DIAGNOSTICS',JSON.stringify(snapshot));
+  const tables=snapshot.find(doc=>doc.name==='Untitled'&&doc.tables.length===2)?.tables||[];
+  assert.equal(tables.length,2,'Both existing and configured tables persist');
+  assert.equal(tables.at(-1).rows,3);
+  assert.equal(tables.at(-1).cols,4);
+  assert.equal(tables.at(-1).style.border_style,'dashed');
+  assert.equal(tables.at(-1).style.border_color,'#217acc');
+  assert.equal(tables.at(-1).style.border_width_mm,1);
   assert.deepEqual(errors,[],'Browser page errors');
   console.log('PASS: mobile create → type → preview → insert → leave → reload → reopen');
 }catch(error){

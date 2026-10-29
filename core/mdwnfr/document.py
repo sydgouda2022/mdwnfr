@@ -480,6 +480,28 @@ def transaction(document: dict, action: dict) -> dict:
         if type(index) is not int or not 0<=index<=len(items):
             raise DocumentError('Invalid table insertion index')
         items.insert(index,table(action.get('rows',2),action.get('columns',2)))
+    elif op == 'set_table_spec':
+        # One atomic structure/style edit instead of N asynchronous row and
+        # column transactions. Reuse every cell in the overlapping rectangle
+        # to preserve nested content and stable cell/word IDs.
+        idx=_locate(items,action.get('id',''))
+        if idx<0 or items[idx]['type']!='table':
+            raise DocumentError('Selected table not found')
+        rows_count=action.get('rows')
+        columns_count=action.get('columns')
+        if (type(rows_count) is not int or type(columns_count) is not int
+                or not 1<=rows_count<=MAX_ROWS or not 1<=columns_count<=MAX_COLS):
+            raise DocumentError('Table must have 1–24 rows and 1–12 columns')
+        obj=deepcopy(items[idx])
+        previous=obj['rows']
+        obj['rows']=[
+            [previous[r][c] if r<len(previous) and c<len(previous[0]) else cell()
+             for c in range(columns_count)]
+            for r in range(rows_count)]
+        if 'style' in action:obj['style']=deepcopy(action['style'])
+        if 'width_mm' in action:obj['width_mm']=action['width_mm']
+        validate_table(obj)
+        items[idx]=obj
     elif op in ('set_table_cell','table_insert_row','table_delete_row',
                 'table_insert_column','table_delete_column','set_table_width'):
         idx=_locate(items,action.get('id',''))
