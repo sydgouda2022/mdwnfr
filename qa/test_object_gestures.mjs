@@ -51,8 +51,19 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
     assert.ok(rect?.width>=43.9&&rect?.height>=43.9,kind+' handle below 44px');
     const previous=kind==='cartouche'?(obj.enclosure_padding_mm||0):(obj.width_mm||0);
     const x=rect.x+rect.width/2,y=rect.y+rect.height/2;
+    const hit=await page.evaluate(({x,y})=>{
+      const el=document.elementFromPoint(x,y);
+      return {name:el?.className,id:el?.closest('[data-id]')?.dataset.id,
+        classNames:el?.getAttribute('class')};
+    },{x,y});
+    console.log('GESTURE_START',JSON.stringify({engine:name,width,kind,id:obj.id,
+      original:previous,box:rect,hit}));
     await page.mouse.move(x,y);await page.mouse.down();
     await page.mouse.move(x+32,y,{steps:7});await page.mouse.up();
+    console.log('GESTURE_END',JSON.stringify({
+      status:await page.locator('#state').textContent().catch(()=>null),
+      saved:await saved()
+    }).slice(0,1000));
     const updated=await waitPersist(d=>{
      const o=d.items.find(v=>v.id===obj.id);
      return (kind==='cartouche'?(o?.enclosure_padding_mm||0):(o?.width_mm||0))>previous;
