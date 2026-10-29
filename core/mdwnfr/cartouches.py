@@ -58,7 +58,7 @@ def typeset_cartouche(obj: dict, sign_width: float, available_width: float,
     pad_long=.85*sign_width+extra
     gap=.15*sign_width
     if horizontal:
-        word_width=sign_width*.90
+        word_width=sign_width
         quadrats=[compose(w['signs'],word_width,metrics) for w in words]
         natural_w=sum(q.width for q in quadrats)+gap*max(0,len(quadrats)-1)
         natural_h=max((q.height for q in quadrats),default=sign_width*.75)
@@ -68,7 +68,7 @@ def typeset_cartouche(obj: dict, sign_width: float, available_width: float,
         required_w=natural_w+2*pad_long+.28*sign_width
         required_h=natural_h+2*pad_cross
     else:
-        word_width=sign_width*.78
+        word_width=sign_width
         quadrats=[compose(w['signs'],word_width,metrics) for w in words]
         natural_w=max((q.width for q in quadrats),default=word_width)
         natural_h=sum(q.height for q in quadrats)+gap*max(0,len(quadrats)-1)
