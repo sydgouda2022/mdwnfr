@@ -443,6 +443,14 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         aligned = (expanded and abs(
             projected[-1][2] +
             max(g.y + g.height for g in projected[-1][1].signs) - bottom) < 1e-3)
+        if aligned:
+            # Source and compact views both serialize origins to five places.
+            # Align the last visible ink exactly instead of leaving a 0.00005
+            # millimetre round-off at the rigid paper boundary.
+            item, shape, _, correction = projected[-1]
+            projected[-1] = (item, shape, round(bottom - shape.height, 5),
+                             correction)
+        sector_terminal_ids = [entries[-1][0]['id'] for entries in sectors]
         placements = []
         runs = []
         previous_end = None
@@ -471,6 +479,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
             'text_bottom': round(runs[-1][1], 5),
             'text_runs': [(round(a, 5), round(b, 5)) for a, b in runs],
             'terminal_gap_removed': True,
+            'sector_terminal_ids': sector_terminal_ids,
             **({'symbol_gap_justify': True} if expanded else {}),
             **({'ink_bottom_aligned': True} if aligned else {})})
         stats['computed_columns'] += 1
@@ -798,8 +807,9 @@ def expand_compact_page(page: dict, document_by_id: dict[str, dict],
             spelling = tuple(signs)
             ratios = tuple(_shape_ratio(sign, glyph_metrics) for sign in spelling)
             source=_cached_quadrat(spelling,column_width,ratios)
-            last_ink=(column.get('terminal_gap_removed')
-                      and entry_index==len(column['placements'])-1)
+            last_ink=(ident in column.get('sector_terminal_ids',())
+                      or (column.get('terminal_gap_removed')
+                          and entry_index==len(column['placements'])-1))
             quadrat=(expand_to_ink_bottom(source,extra) if last_ink
                      else expand_internal(source,extra))
             placements.append({'id': ident, 'type': 'word', 'signs': signs,
