@@ -1,5 +1,5 @@
 import {chromium,webkit} from 'playwright';
-const base='https://mdwnfr.sydgouda.workers.dev/';
+const base=process.env.AUDIT_BASE_URL||'https://mdwnfr.sydgouda.workers.dev/';
 const configurations=[
   {name:'small-phone',engine:'webkit',width:375,height:667,mobile:true},
   {name:'phone',engine:'chromium',width:390,height:844,mobile:true},
@@ -255,3 +255,5 @@ console.log('AUDIT_SUMMARY '+JSON.stringify({
   total:all.length,passed:all.length-failures.length,failed:failures.length,
   failures:failures.map(f=>({configuration:f.configuration,scenario:f.scenario,error:f.error}))
 }));
+if(failures.length)process.exitCode=1;
+
