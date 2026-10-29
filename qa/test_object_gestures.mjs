@@ -45,6 +45,9 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
     await node.waitFor({state:'visible',timeout:90000});
     if(kind==='table')await node.locator('.table-cell-view').first().click();
     else await node.click();
+    // Format floats over the page; dismiss it before direct manipulation.
+    if(await page.locator('#format-panel').isVisible())
+     await page.locator('#format-toggle').click();
     const handle=node.locator('.art-resize.right');
     await handle.waitFor({state:'visible'});
     const rect=await handle.boundingBox();
@@ -56,8 +59,9 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
       return {name:el?.className,id:el?.closest('[data-id]')?.dataset.id,
         classNames:el?.getAttribute('class')};
     },{x,y});
-    console.log('GESTURE_START',JSON.stringify({engine:name,width,kind,id:obj.id,
-      original:previous,box:rect,hit}));
+    assert.ok((hit.classNames||'').includes('art-resize'),
+      kind+' resize handle is occluded by '+hit.classNames);
+    console.log('GESTURE_START',JSON.stringify({engine:name,width,kind,original:previous,hit}));
     await page.mouse.move(x,y);await page.mouse.down();
     await page.mouse.move(x+32,y,{steps:7});await page.mouse.up();
     console.log('GESTURE_END',JSON.stringify({
