@@ -114,10 +114,6 @@
           <button id="insert-cartouche" type="button" class="format-control" aria-label="Insert cartouche" title="Insert cartouche"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="18" rx="6"/><path d="M5 22h14M10 6h4M10 10h4m-4 4 1 1 1-1 1 1 1-1"/></svg></button>
         </div>
         <div class="object-inspector">
-<div id="artwork-picker" class="artwork-picker" hidden>
-          <input id="artwork-search" type="search" placeholder="Search 81 Egyptian artworks…" aria-label="Find clip art" />
-          <div id="artwork-grid" class="artwork-grid" aria-label="Clip-art library"></div>
-        </div>
 <div id="clipart-controls" class="clipart-controls" hidden>
           <label>Width (mm) <input id="clipart-width" type="number" min="6" max="300" step="1" /></label>
           <label>Facing <select id="clipart-flip"><option value="auto">Auto inward</option><option value="normal">Original</option><option value="mirror">Flipped</option></select></label>
@@ -165,6 +161,61 @@
         <div class="hex-control"><span id="selected-color-chip" class="colour-chip" aria-hidden="true"></span><input id="color-hex" type="text" value="#1F4BA8" maxlength="7" pattern="#[0-9A-Fa-f]{6}" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Hex color"/></div>
       </div>
     </aside>
+    <!-- Object insertion is a draft: no session transaction until Confirm.
+         Each screen has its own inputs but shares the same Python preview. -->
+    <div id="insert-dialog-backdrop" class="insert-dialog-backdrop" hidden>
+      <section id="insert-sheet" class="insert-sheet" role="dialog" aria-modal="true" aria-labelledby="insert-sheet-title" tabindex="-1">
+        <header class="insert-sheet-heading">
+          <h2 id="insert-sheet-title">Insert</h2>
+          <button id="insert-sheet-cancel-top" type="button" aria-label="Cancel insertion">✕</button>
+        </header>
+        <div id="insert-screen-clipart" class="insert-screen" hidden>
+          <div id="artwork-picker" class="artwork-picker">
+            <label for="artwork-search">Search Egyptian clip art</label>
+            <input id="artwork-search" type="search" placeholder="Search artwork…" aria-label="Find clip art"/>
+            <div id="artwork-grid" class="artwork-grid" aria-label="Clip-art library"></div>
+          </div>
+          <div id="insert-artwork-name" class="insert-object-name" role="status">Choose an illustration to preview</div>
+        </div>
+        <div id="insert-screen-image" class="insert-screen" hidden>
+          <button id="insert-image-choose" type="button" class="insert-action">Choose from Photos or Files</button>
+          <input id="insert-image-file" type="file" accept="image/png,image/jpeg,image/webp" hidden aria-label="Choose a local picture"/>
+          <div id="insert-image-name" class="insert-object-name" role="status">No picture selected</div>
+          <img id="insert-image-thumbnail" class="insert-image-thumbnail" alt="Selected picture preview" hidden/>
+        </div>
+        <div id="insert-screen-table" class="insert-screen" hidden>
+          <div class="insert-fields">
+            <label>Rows<input id="insert-table-rows" type="number" inputmode="numeric" min="1" max="24" value="2"/></label>
+            <label>Columns<input id="insert-table-columns" type="number" inputmode="numeric" min="1" max="12" value="2"/></label>
+            <label>Border<select id="insert-table-border"><option value="solid">Solid</option><option value="dashed">Dashed</option><option value="none">None</option></select></label>
+            <label>Border color<input id="insert-table-color" type="color" value="#bba477"/></label>
+            <label>Line width (mm)<input id="insert-table-line" type="number" min="0" max="2.5" step="0.1" value="0.3"/></label>
+            <label>Cell padding (mm)<input id="insert-table-padding" type="number" min="0" max="12" step="0.5" value="1"/></label>
+          </div>
+        </div>
+        <div id="insert-screen-cartouche" class="insert-screen" hidden>
+          <fieldset class="insert-orientation"><legend>Cartouche orientation</legend>
+            <label><input type="radio" name="insert-cartouche-direction" value="vertical" checked/> Vertical</label>
+            <label><input type="radio" name="insert-cartouche-direction" value="horizontal"/> Horizontal</label>
+          </fieldset>
+          <p class="insert-hint">Writing direction and glyph size follow the document.</p>
+        </div>
+        <div id="insert-placement" class="insert-placement" hidden>
+          <strong>Position and size</strong>
+          <div class="insert-fields">
+            <label>Width (mm)<input id="insert-object-width" type="number" min="6" max="500" step="1"/></label>
+            <label>Height position (%)<input id="insert-object-y" type="range" min="0" max="100" value="50"/></label>
+          </div>
+          <p class="insert-hint">Drag the outlined object in the preview to move it. Drag the corner handle to resize it. Hieroglyphs keep the document's size and direction.</p>
+        </div>
+        <div id="insert-preview-status" class="insert-hint" role="status" aria-live="polite">Preparing preview…</div>
+        <div id="insert-preview" class="insert-preview" role="region" aria-label="Live document placement preview"></div>
+        <footer class="insert-sheet-footer">
+          <button id="insert-sheet-cancel" type="button" class="insert-action">Cancel</button>
+          <button id="insert-sheet-confirm" type="button" class="insert-action insert-primary" disabled>Insert</button>
+        </footer>
+      </section>
+    </div>
     <div id="selection-summary" class="visually-hidden" role="status" aria-live="polite">No selection</div>
     <div id="edit-menu" class="edit-menu" role="menu" aria-label="Edit selection" hidden>
       <button id="cut-selection" type="button" role="menuitem" aria-label="Cut" aria-keyshortcuts="Meta+X Control+X"><span>Cut</span><kbd>⌘X</kbd></button>
