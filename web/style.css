@@ -382,3 +382,34 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .page-overview-item{height:132px}
 .pages-overview.virtual-pages{display:block;position:relative}
 .virtual-pages .page-overview-item{position:absolute;left:0;width:100%}
+
+/* Dedicated, reversible object insertion. The panel is a phone sheet / iPad
+   floating inspector; Python alone owns glyph positions and text reflow. */
+.insert-dialog-backdrop{position:fixed;inset:0;z-index:110;background:#091d3459;display:flex;align-items:center;justify-content:center;padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom))}
+.insert-sheet{width:min(510px,100%);max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;background:#fbfaf5;border:1px solid #d5c8ad;border-radius:20px;box-shadow:0 20px 65px #102b4d55;padding:16px;display:grid;gap:12px;color:#143151;font:15px system-ui}
+.insert-sheet-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}.insert-sheet-heading h2{margin:0;font-size:21px}
+.insert-sheet-heading button{min-height:44px;min-width:44px;font-size:23px;border:0;border-radius:12px;background:#edf1f6;color:#173a62}
+.insert-screen{display:grid;gap:12px}.insert-screen label{display:grid;gap:5px;color:#244867;font-size:13px;font-weight:600}
+.insert-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.insert-fields input,.insert-fields select,.insert-screen input[type=search]{width:100%;min-width:0;min-height:44px;box-sizing:border-box;border:1px solid #bbcad5;border-radius:9px;padding:8px 10px;background:white;color:#122e4b;font:16px system-ui}
+.insert-screen input[type=color]{padding:5px}
+.insert-hint{margin:0;color:#587087;font-size:12px;line-height:1.5}
+.insert-object-name{color:#234b75;font-size:13px;min-height:20px}
+.insert-image-thumbnail{max-width:100%;max-height:130px;object-fit:contain;margin:auto;background:white;border-radius:9px}
+.insert-orientation{display:flex;gap:16px;flex-wrap:wrap;border:1px solid #d8e1e9;border-radius:10px;padding:12px}.insert-orientation legend{font-weight:600}.insert-orientation label{display:flex;gap:8px;align-items:center;min-height:44px}
+.insert-action{min-height:44px;padding:9px 16px;border-radius:10px;border:1px solid #b6c8d8;background:#f7f9fc;color:#163a62;font-weight:650;cursor:pointer}
+.insert-action:disabled{opacity:.45;cursor:default}.insert-primary{background:#133b67;border-color:#133b67;color:white}
+.insert-sheet-footer{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.insert-preview{position:relative;min-height:175px;height:clamp(175px,28dvh,300px);overflow:auto;border:1px solid #c9d5df;border-radius:12px;background:#e9eff3;display:flex;justify-content:center;align-items:flex-start;padding:8px}
+.insert-preview .insert-preview-shell{position:relative;flex:none;margin:auto}
+.insert-preview .paper{position:relative;transform-origin:top left;box-shadow:0 2px 8px #11294b22}
+.insert-preview .paper .selectable-item,.insert-preview .paper .divider-line{pointer-events:none}
+.insert-preview .insert-preview-selection{position:absolute;border:2px dashed #167ac7;box-sizing:border-box;touch-action:none;cursor:grab;outline:2px solid #ffffffbf}
+.insert-preview .insert-preview-selection:active{cursor:grabbing}
+.insert-preview .insert-preview-handle{position:absolute;width:24px;height:24px;border-radius:50%;border:3px solid white;background:#167ac7;right:-13px;bottom:-13px;cursor:nwse-resize;touch-action:none}
+.insert-placement{display:grid;gap:8px;border-top:1px solid #e1e8ed;padding-top:10px}
+.insert-placement>strong{font-size:14px}
+.insert-screen .artwork-picker{display:grid;gap:10px}.insert-screen .artwork-grid{max-height:200px;overflow-y:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.insert-screen .artwork-choice{min-width:0}
+.insert-screen .artwork-choice[aria-pressed=true]{outline:3px solid #1277b2;outline-offset:1px;background:#e2f3fc}
+@media(max-width:720px){.insert-dialog-backdrop{align-items:flex-end;padding:0}.insert-sheet{width:100%;max-height:calc(100dvh - env(safe-area-inset-top) - 10px);border-radius:22px 22px 0 0;padding:16px max(14px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom))}.insert-preview{height:clamp(165px,25dvh,245px)}}
