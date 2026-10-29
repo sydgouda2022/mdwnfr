@@ -266,7 +266,7 @@ try{
         const r=tx.objectStore('documents').getAll();
         r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
       });
-      const selected=entries.find(doc=>doc.name==='Untitled');
+      const selected=entries.find(doc=>doc.name==='Untitled'&&doc.items.filter(item=>item.type==='table').length===2);
       return selected?.items.filter(item=>item.type==='table').map(item=>({
         rows:item.rows.length,cols:item.rows[0].length,style:item.style||{}
       }))||[];
