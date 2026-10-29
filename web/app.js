@@ -345,7 +345,7 @@ function paintPageContent(slot,p,shell){
      box.setAttribute('aria-label',`Table cell ${String.fromCharCode(65+cell.column)}${cell.row+1}`);
      const choose=()=>selectTableCell(item.id,cell.row,cell.column);
      box.addEventListener('click',e=>{e.stopPropagation();choose();if(activePanel!=='format')switchPanel('format');});
-     box.addEventListener('dblclick',e=>{e.stopPropagation();choose();if(activePanel!=='format')switchPanel('format');});
+     box.addEventListener('dblclick',e=>{e.stopPropagation();choose();void beginInsertSheet('table',item.id);});
      box.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();if(activePanel!=='format')switchPanel('format');}});
      if(selectedTableCell?.tableId===item.id&&selectedTableCell.row===cell.row&&selectedTableCell.column===cell.column)box.classList.add('active');
      for(const w of cell.words){
@@ -368,7 +368,7 @@ function paintPageContent(slot,p,shell){
     if(range&&itemIndex>=range.start&&itemIndex<range.end)node.classList.add('selected','in-range');
     node.setAttribute('role','button');node.tabIndex=0;node.setAttribute('aria-label','Hieroglyphic cartouche');
     node.addEventListener('click',e=>{e.stopPropagation();selectWord(item.id,e.shiftKey);});
-    node.addEventListener('dblclick',e=>{e.stopPropagation();selectWord(item.id);if(activePanel!=='format')switchPanel('format');});
+    node.addEventListener('dblclick',e=>{e.stopPropagation();void beginInsertSheet('cartouche',item.id);});
     node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectWord(item.id);if(activePanel!=='format')switchPanel('format');}});
     node.addEventListener('pointerdown',e=>beginNestedDrag(e,item,c,p,node));
     const geometry=item.cartouche;
@@ -399,9 +399,9 @@ function paintPageContent(slot,p,shell){
    node.addEventListener('click',e=>{e.stopPropagation();if(!suppressWordClick)selectWord(item.id,e.shiftKey);});
    if(isArt)node.addEventListener('pointerdown',e=>beginClipartDrag(e,item,c,p,node));
    else node.addEventListener('pointerdown',e=>beginMouseRangeDrag(e,item.id));
-   node.addEventListener('dblclick',e=>{e.stopPropagation();if(!suppressWordClick)openWord(item.id);});
+   node.addEventListener('dblclick',e=>{e.stopPropagation();if(!suppressWordClick){if(isArt)void beginInsertSheet(item.type,item.id);else openWord(item.id);}});
    node.addEventListener('keydown',e=>{
-    if(e.key==='Enter')openWord(item.id);
+    if(e.key==='Enter'){if(isArt)void beginInsertSheet(item.type,item.id);else openWord(item.id);}
     if(e.key===' '){e.preventDefault();selectWord(item.id,e.shiftKey);}
    });
    if(isArt){
@@ -663,7 +663,7 @@ function displayArtworkGrid(filter=''){
  for(const art of artworkEntries||[]){
   if(term&&!`${art.name} ${art.category} ${art.id}`.toLowerCase().includes(term))continue;
   const button=document.createElement('button');button.type='button';button.className='artwork-choice';
-  button.title=art.name;button.setAttribute('aria-label','Insert '+art.name);
+  button.title=art.name;button.setAttribute('aria-label','Preview '+art.name);
   const img=document.createElement('img');img.src='/artwork/'+art.file;img.loading='lazy';img.alt='';
   const label=document.createElement('span');label.textContent=art.name;
   button.append(img,label);
