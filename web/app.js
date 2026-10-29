@@ -1421,8 +1421,6 @@ function beginObjectResize(e,placement,node,edge){
    else if(isTable)action={op:'set_table_width',id:original.id,width_mm:value};
    else action={op:original.type==='image'?'set_image':'set_clipart',
      id:original.id,width_mm:value};
-   console.info('RESIZE_COMMIT_DEBUG',JSON.stringify({
-    type:original.type,previous:baseline,value,action}));
    void apply(action);
   }
  });
