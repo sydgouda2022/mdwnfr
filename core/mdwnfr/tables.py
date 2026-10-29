@@ -213,11 +213,15 @@ def typeset_table(obj:dict, sign_width:float, width_mm:float, usable_height:floa
             advance=padding; glyphs=[]
             for oid,signs,color,bold,atom_ids in words:
                 ratios={s:_shape_ratio(s,metrics or {}) for s in signs}
-                q=compose(signs,each-2*padding,ratios)
+                # Cells inherit the document's glyph scale. A wide
+                # table cell increases whitespace, not the hieroglyph font.
+                q=compose(signs,min(sign_width,each-2*padding),ratios)
                 quad=q.payload()
                 for glyph,uid in zip(quad['signs'],atom_ids):
                     glyph['id']=uid
-                glyphs.append({'id':oid,'x':padding,'y':advance,'height':q.height,'quadrat':quad,
+                glyphs.append({'id':oid,
+                               'x':round(each-padding-q.width if direction=='rtl' else padding,5),
+                               'y':advance,'height':q.height,'quadrat':quad,
                                'color':color,'bold':bold})
                 advance+=q.height + padding*.5
             row_height=max(row_height,advance+padding*.5)
