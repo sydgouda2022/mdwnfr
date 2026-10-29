@@ -840,9 +840,11 @@ async function runInsertPreview(d,version){
   enableInsertPreviewDrag(selection,d,scale,page,position);
   $('insert-preview-status').textContent='Live page preview · nothing saved until Confirm';
   $('insert-placement').hidden=false;
-  $('insert-object-width').disabled=d.kind==='cartouche';
-  $('insert-object-width').value=d.kind==='cartouche'?'':String(
-    Math.round((d.object.width_mm||position.width_mm)*10)/10);
+  d.lastPlacementWidth=position.width_mm;
+  $('insert-object-width').disabled=false;
+  $('insert-object-width').value=String(
+    Math.round((d.kind==='cartouche'?position.width_mm:
+      d.object.width_mm||position.width_mm)*10)/10);
   $('insert-object-width').min=d.kind==='table'?'15':'6';
   $('insert-object-width').max=d.kind==='table'?'500':'300';
   $('insert-object-y').value=Math.round((d.object.y_align??.5)*100);
@@ -858,55 +860,48 @@ async function runInsertPreview(d,version){
 function enableInsertPreviewDrag(node,d,scale,page,pos){
  node.addEventListener('pointerdown',e=>{
   if(e.button!==0||insertDraft!==d)return;
-  e.preventDefault();e.stopPropagation();
-  const resize=Boolean(e.target.closest('.insert-preview-handle'));
-  const startX=e.clientX,startY=e.clientY;
-  const base=structuredClone(d.object);
-  const baseWidth=pos.width_mm;
-  const room=page.height-(doc.margins_mm?.top??18)-
-   (doc.margins_mm?.bottom??18)-pos.height;
-  node.setPointerCapture(e.pointerId);
-  let changed=false;
-  const move=ev=>{
-   if(ev.pointerId!==e.pointerId)return;
-   const dx=(ev.clientX-startX)/(scale*pxmm),
-         dy=(ev.clientY-startY)/(scale*pxmm);
-   if(Math.abs(dx)+Math.abs(dy)<.2)return;
-   changed=true;
-   if(resize){
-    if(d.kind==='cartouche'){
-     d.object.enclosure_padding_mm=Math.min(30,Math.max(0,
-      Math.round(((base.enclosure_padding_mm||0)+dx/2)*10)/10));
+  e.preventDefault();
+  const resizing=Boolean(e.target.closest('.insert-preview-handle'));
+  const base=structuredClone(d.object),baseWidth=pos.width_mm;
+  const margins=doc.margins_mm||{top:18,bottom:18};
+  const room=Math.max(0,page.height-margins.top-margins.bottom-pos.height);
+  let lastPreview=0,changed=false;
+  trackObjectPointer(e,{node,threshold:0,
+   onMove:({dx,dy})=>{
+    changed=true;
+    const x=dx/(scale*pxmm),y=dy/(scale*pxmm);
+    if(resizing){
+     if(d.kind==='cartouche'){
+      d.object.enclosure_padding_mm=Math.min(30,Math.max(0,
+       Math.round(((base.enclosure_padding_mm||0)+x/2)*10)/10));
+     }else{
+      const low=d.kind==='table'?15:6,high=d.kind==='table'?500:300;
+      d.object.width_mm=Math.min(high,Math.max(low,
+       Math.round((baseWidth+x)*10)/10));
+     }
+     const proposed=d.kind==='cartouche'
+       ?baseWidth+2*(d.object.enclosure_padding_mm-(base.enclosure_padding_mm||0))
+       :d.object.width_mm;
+     node.style.width=mm(Math.max(6,proposed)*scale);
     }else{
-     const min=d.kind==='table'?15:6,max=d.kind==='table'?500:300;
-     d.object.width_mm=Math.min(max,Math.max(min,
-      Math.round((baseWidth+dx)*10)/10));
+     const logical=doc.direction==='rtl'?-x:x;
+     d.object.x_offset_mm=Math.min(2000,Math.max(-2000,
+      Math.round(((base.x_offset_mm||0)+logical)*10)/10));
+     d.object.y_align=Math.min(1,Math.max(0,(base.y_align??.5)+(room?y/room:0)));
+     node.style.transform='translate('+dx+'px,'+dy+'px)';
     }
-   }else{
-    const logical=doc.direction==='rtl'?-dx:dx;
-    d.object.x_offset_mm=Math.min(2000,Math.max(-2000,
-     Math.round(((base.x_offset_mm||0)+logical)*10)/10));
-    d.object.y_align=Math.min(1,Math.max(0,(base.y_align??.5)+
-     (room>0?dy/room:0)));
+    // Throttle authoritative Python recomposition while moving; the browser
+    // does not invent text coordinates and stale worker replies are ignored.
+    if(performance.now()-lastPreview>200){
+     lastPreview=performance.now();requestInsertPreview();
+    }
+   },
+   onCancel:()=>{d.object=base;node.style.transform='';requestInsertPreview();},
+   onFinish:()=>{
+    node.style.transform='';
+    if(changed)requestInsertPreview();
    }
-   node.style.transform='translate('+(resize?0:ev.clientX-startX)+'px,'+
-    (resize?0:ev.clientY-startY)+'px)';
-  };
-  const finish=ev=>{
-   if(ev.pointerId!==e.pointerId)return;
-   node.removeEventListener('pointermove',move);
-   node.removeEventListener('pointerup',finish);
-   node.removeEventListener('pointercancel',cancel);
-   node.style.transform='';
-   if(changed)requestInsertPreview();
-  };
-  const cancel=()=>{d.object=base;node.style.transform='';
-   node.removeEventListener('pointermove',move);
-   node.removeEventListener('pointerup',finish);
-   node.removeEventListener('pointercancel',cancel);};
-  node.addEventListener('pointermove',move);
-  node.addEventListener('pointerup',finish);
-  node.addEventListener('pointercancel',cancel);
+  });
  });
 }
 // One requested table specification per user event, queued in order.
@@ -976,11 +971,17 @@ for(const input of $('insert-screen-cartouche').querySelectorAll('input[type=rad
   }
  });
 $('insert-object-width').addEventListener('change',e=>{
- const d=insertDraft;if(!d?.object||d.kind==='cartouche')return;
+ const d=insertDraft;if(!d?.object)return;
  const width=Number(e.target.value);
  if(!Number.isFinite(width)||width<(d.kind==='table'?15:6)||
     width>(d.kind==='table'?500:300))return;
- d.object.width_mm=width;requestInsertPreview();
+ if(d.kind==='cartouche'){
+  // Change the enclosure, never the document's hieroglyph font size.
+  const prior=Number(d.lastPlacementWidth||width);
+  d.object.enclosure_padding_mm=Math.min(30,Math.max(0,
+   Math.round(((d.object.enclosure_padding_mm||0)+(width-prior)/2)*10)/10));
+ }else d.object.width_mm=width;
+ requestInsertPreview();
 });
 $('insert-object-y').addEventListener('input',e=>{
  if(insertDraft?.object){insertDraft.object.y_align=Number(e.target.value)/100;
