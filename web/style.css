@@ -413,3 +413,13 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .insert-screen .artwork-choice{min-width:0}
 .insert-screen .artwork-choice[aria-pressed=true]{outline:3px solid #1277b2;outline-offset:1px;background:#e2f3fc}
 @media(max-width:720px){.insert-dialog-backdrop{align-items:flex-end;padding:0}.insert-sheet{width:100%;max-height:calc(100dvh - env(safe-area-inset-top) - 10px);border-radius:22px 22px 0 0;padding:16px max(14px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom))}.insert-preview{height:clamp(165px,25dvh,245px)}}
+
+/* One gesture surface for clip art, imported images, tables and cartouches.
+   Scale only the transparent handles back to physical 44px on zoomed paper. */
+.paper .table-object,.paper .cartouche-object,.paper .clipart-object{touch-action:none}
+.paper .table-object.drag-preview,.paper .cartouche-object.drag-preview,.paper .clipart-object.drag-preview{cursor:grabbing;outline:2px dashed #b68b40;z-index:8}
+.paper .table-object.selected .art-resize,.paper .cartouche-object.selected .art-resize,.paper .clipart-object.selected .art-resize{display:block}
+.paper .art-resize{transform:scale(var(--resize-inverse,1));transform-origin:center;touch-action:none}
+.paper .art-resize:focus-visible{outline:2px solid #277eb6}
+.paper .object-resize-ghost{position:absolute;pointer-events:none;z-index:15;border:2px dashed #277eb6;background:#167ac710;box-shadow:0 0 0 1px #fff9;touch-action:none}
+.insert-preview .insert-preview-handle{width:44px;height:44px;right:-22px;bottom:-22px;z-index:4}
