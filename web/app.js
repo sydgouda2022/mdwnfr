@@ -1297,6 +1297,9 @@ function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5}){
 }
 const OBJECT_EDGES=['top-left','top','top-right','right','bottom-right','bottom','bottom-left','left'];
 function addObjectResizeHandles(node,placement){
+ // The page itself is scaled to fit a phone. Cancel that scale on hit targets
+ // so a 44px handle remains finger-sized in the actual viewport.
+ node.style.setProperty('--resize-inverse',String(1/Math.max(.1,zoom)));
  for(const edge of OBJECT_EDGES){
   const handle=document.createElement('span');
   handle.className='art-resize '+edge;
