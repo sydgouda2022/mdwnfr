@@ -226,7 +226,14 @@ try{
   await page.locator('#insert-table-line').dispatchEvent('change');
   await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm').disabled,
     null,{timeout:90000});
-  const before=await page.locator('.table-object').count();
+  console.log('TABLE_REQUESTED_UI',JSON.stringify(await page.evaluate(()=>({
+    rows:document.getElementById('insert-table-rows').value,
+    columns:document.getElementById('insert-table-columns').value,
+    border:document.getElementById('insert-table-border').value,
+    color:document.getElementById('insert-table-color').value,
+    thickness:document.getElementById('insert-table-line').value,
+    status:document.getElementById('insert-preview-status').textContent
+  }))));
   await page.locator('#insert-sheet-confirm').click();
   try{
    await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden',timeout:30000});
