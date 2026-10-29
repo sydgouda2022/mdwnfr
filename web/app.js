@@ -109,6 +109,7 @@ let itemIndexById=new Map(),placementById=new Map();
 // Stable logical indices are independent of viewport and page-detail eviction.
 let logicalIndexById=new Map();
 function objectById(id){
+ if(insertDraft?.object?.id===id)return insertDraft.object;
  const idx=logicalIndexById.get(id);
  return idx===undefined?null:doc?.items[idx];
 }
@@ -678,9 +679,14 @@ let insertTicket=0,insertPreviewTimer=null,insertPreviewVersion=0;
 function closeInsertSheet(){
  ++insertTicket;++insertPreviewVersion;
  if(insertPreviewTimer!==null)clearTimeout(insertPreviewTimer);
- insertPreviewTimer=null;insertDraft=null;
+ insertPreviewTimer=null;
+ const previous=insertDraft;
+ if(previous?.previewHost){
+  previous.previewHost.remove();
+  previous.basePaper?.classList.remove('draft-source-hidden');
+ }
+ insertDraft=null;
  $('insert-dialog-backdrop').hidden=true;
- $('insert-preview').replaceChildren();
  $('insert-sheet-confirm').disabled=true;
 }
 function insertIndex(){
@@ -703,7 +709,7 @@ async function beginInsertSheet(kind,existingId=null){
  $('insert-dialog-backdrop').hidden=false;
  $('insert-sheet-title').textContent=(original?'Edit ':'Insert ')+
   ({clipart:'Clip Art',image:'Image',table:'Table',cartouche:'Cartouche'}[kind]);
- $('insert-sheet-confirm').textContent=original?'Apply':'Insert';
+ $('insert-sheet-confirm').textContent='Done';
  for(const name of ['clipart','image','table','cartouche'])
   $('insert-screen-'+name).hidden=name!==kind;
  // Prevent edits until the initial Python draft has been constructed.
@@ -716,8 +722,7 @@ async function beginInsertSheet(kind,existingId=null){
  for(const input of $('insert-screen-cartouche').querySelectorAll('input[type=radio]'))
   input.disabled=initializing;
  $('insert-placement').hidden=true;
- $('insert-preview-status').textContent='Preparing document preview…';
- $('insert-preview').replaceChildren();
+ $('insert-preview-status').textContent='Select an object to see it on the writing page';
  $('insert-sheet-confirm').disabled=true;
  try{
   if(kind==='clipart'){
@@ -799,110 +804,140 @@ function requestInsertPreview(){
  insertPreviewTimer=setTimeout(()=>{insertPreviewTimer=null;
    void runInsertPreview(d,version);},130);
 }
+
+// Keep a temporary page composition on the ACTUAL writing surface. The saved
+// Python editor session is unaffected until Done. Surrounding text is drawn
+// from the same authoritative compositor as the normal page.
+function showDraftPage(d,page,placement){
+ const slot=pageSlots[page.index]||pageSlots.at(-1);
+ if(!slot)throw Error('Writing surface is not available');
+ const base=slot.shell.querySelector(':scope > .paper:not(.draft-paper)');
+ // Detached scratch paper is safe to paint: it uses the same renderer and zoom.
+ const scratch=document.createElement('div');
+ paintPageContent(null,page,scratch);
+ const rendered=scratch.querySelector('.paper');
+ if(!rendered)throw Error('The page preview cannot be rendered');
+ rendered.classList.add('draft-paper');
+ const replacement=rendered.querySelector('[data-id="'+CSS.escape(d.object.id)+'"]');
+ if(!replacement)throw Error('Object is not on this page');
+ let actual=replacement;
+ if(d.dragging && d.liveObject?.isConnected){
+  // Do NOT destroy the selected DOM element mid-gesture. Pointer capture and
+  // touch stability depend on retaining its identity while other text reflows.
+  actual=d.liveObject;
+  replacement.replaceWith(actual);
+ }
+ actual.classList.add('selected','draft-object');
+ actual.style.pointerEvents='auto';
+ actual.setAttribute('aria-label','Move or resize selected '+d.kind);
+ actual.querySelectorAll('.art-resize').forEach(handle=>handle.style.pointerEvents='auto');
+ if(!d.dragging){
+  actual.style.transform='';
+  actual.style.left=mm(placement.x);
+  actual.style.top=mm(placement.y);
+  actual.style.width=mm(placement.width_mm);
+  actual.style.height=mm(placement.height);
+ }
+ if(!actual.dataset.draftPointerBound){
+  actual.dataset.draftPointerBound='true';
+  actual.addEventListener('pointerdown',e=>draftObjectPointerDown(e,d),true);
+ }
+ let host=d.previewHost;
+ if(!host||host.parentElement!==slot.shell){
+  if(host)host.remove();
+  if(d.basePaper)d.basePaper.classList.remove('draft-source-hidden');
+  host=document.createElement('div');host.className='draft-page-layer';
+  d.previewHost=host;d.basePaper=base;
+  slot.shell.append(host);
+ }
+ d.basePaper?.classList.add('draft-source-hidden');
+ host.replaceChildren(rendered);
+ d.liveObject=actual;
+ d.placement=placement;
+ d.previewPage=page;
+ if(!d.firstPositionShown){
+  d.firstPositionShown=true;
+  // Do not zoom the entire page into a tiny duplicate inspector.
+  slot.shell.scrollIntoView({behavior:'auto',block:'nearest',inline:'nearest'});
+ }
+}
+function draftObjectPointerDown(e,d){
+ if(insertDraft!==d||!d.object||e.button!==0)return;
+ e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+ const resizing=Boolean(e.target.closest('.art-resize'));
+ const baseline=structuredClone(d.object);
+ const placement=d.placement,page=d.previewPage;
+ if(!placement||!page)return;
+ const unit=Math.max(.1,zoom)*pxmm;
+ const node=d.liveObject;
+ d.dragging=true;
+ let moved=false,lastUpdate=0;
+ trackObjectPointer(e,{node,threshold:0,
+  onMove:({dx,dy})=>{
+   moved=true;
+   const x=dx/unit,y=dy/unit;
+   if(resizing){
+    if(d.kind==='cartouche'){
+     d.object.enclosure_padding_mm=Math.min(30,Math.max(0,
+      Math.round(((baseline.enclosure_padding_mm||0)+x/2)*10)/10));
+     const extra=d.object.enclosure_padding_mm-(baseline.enclosure_padding_mm||0);
+     node.style.width=mm(Math.max(6,placement.width_mm+2*extra));
+    }else{
+     const low=d.kind==='table'?15:6,high=d.kind==='table'?500:300;
+     d.object.width_mm=Math.min(high,Math.max(low,
+      Math.round((placement.width_mm+x)*10)/10));
+     node.style.width=mm(d.object.width_mm);
+    }
+   }else{
+    d.object.x_offset_mm=Math.max(-2000,Math.min(2000,
+     Math.round(((baseline.x_offset_mm||0)+(doc.direction==='rtl'?-x:x))*10)/10));
+    const margins=doc.margins_mm||{top:18,bottom:18};
+    const room=Math.max(0,page.height-margins.top-margins.bottom-placement.height);
+    d.object.y_align=Math.min(1,Math.max(0,
+     (baseline.y_align??.5)+(room?y/room:0)));
+    node.style.transform='translate('+x*pxmm+'px,'+y*pxmm+'px)';
+   }
+   const now=performance.now();
+   if(now-lastUpdate>160){lastUpdate=now;requestInsertPreview();}
+  },
+  onCancel:()=>{
+   d.object=baseline;d.dragging=false;
+   node.style.transform='';requestInsertPreview();
+  },
+  onFinish:()=>{
+   d.dragging=false;node.style.transform='';
+   if(moved)requestInsertPreview();
+  }
+ });
+}
 async function runInsertPreview(d,version){
  if(insertDraft!==d)return;
- $('insert-preview-status').textContent='Calculating live text reflow…';
+ $('insert-preview-status').textContent='Updating the writing page…';
  try{
-  const proposed=previewDocument();
-  const response=await layoutRpc('layout',{document:proposed});
+  const response=await layoutRpc('layout',{document:previewDocument()});
   if(insertDraft!==d||version!==insertPreviewVersion)return;
   const pages=response.layout.pages;
-  const page=pages.find(p=>p.columns.some(c=>c.placements.some(
-    pos=>pos.id===d.object.id)))||pages[0];
-  const position=page.columns.flatMap(c=>c.placements).find(
-    pos=>pos.id===d.object.id);
-  if(!position)throw Error('Proposed object is not visible in its writing frame');
-  const holder=$('insert-preview');
-  holder.replaceChildren();
-  const limitW=Math.max(150,holder.clientWidth-22),limitH=Math.max(130,holder.clientHeight-22);
-  const scale=Math.min(.95,limitW/(page.width*pxmm),limitH/(page.height*pxmm));
-  const shell=document.createElement('div');
-  shell.className='insert-preview-shell';
-  shell.style.width=mm(page.width*scale);shell.style.height=mm(page.height*scale);
-  holder.append(shell);
-  const oldZoom=zoom;
-  try{zoom=scale;paintPageContent(null,page,shell);}
-  finally{zoom=oldZoom;}
-  const paper=shell.querySelector('.paper');
-  if(paper)paper.style.pointerEvents='none';
-  const selection=document.createElement('div');
-  selection.className='insert-preview-selection';
-  selection.style.left=mm(position.x*scale);
-  selection.style.top=mm(position.y*scale);
-  selection.style.width=mm(position.width_mm*scale);
-  selection.style.height=mm(position.height*scale);
-  selection.setAttribute('role','group');
-  selection.setAttribute('aria-label','Move or resize preview object');
-  const handle=document.createElement('span');
-  handle.className='insert-preview-handle';
-  handle.setAttribute('aria-label','Resize temporary object');
-  selection.append(handle);shell.append(selection);
-  enableInsertPreviewDrag(selection,d,scale,page,position);
-  $('insert-preview-status').textContent='Live page preview · nothing saved until Confirm';
+  const page=pages.find(p=>p.columns.some(c=>c.placements.some(pos=>pos.id===d.object.id)));
+  if(!page)throw Error('The object does not fit on the document');
+  const position=page.columns.flatMap(c=>c.placements).find(pos=>pos.id===d.object.id);
+  showDraftPage(d,page,position);
+  $('insert-preview-status').textContent='Preview on page · changes are not saved';
   $('insert-placement').hidden=false;
   d.lastPlacementWidth=position.width_mm;
   $('insert-object-width').disabled=false;
-  $('insert-object-width').value=String(
-    Math.round((d.kind==='cartouche'?position.width_mm:
-      d.object.width_mm||position.width_mm)*10)/10);
+  if(document.activeElement!==$('insert-object-width'))
+   $('insert-object-width').value=String(Math.round(position.width_mm*10)/10);
   $('insert-object-width').min=d.kind==='table'?'15':'6';
   $('insert-object-width').max=d.kind==='table'?'500':'300';
-  $('insert-object-y').value=Math.round((d.object.y_align??.5)*100);
+  if(document.activeElement!==$('insert-object-y'))
+   $('insert-object-y').value=Math.round((d.object.y_align??.5)*100);
   d.valid=true;$('insert-sheet-confirm').disabled=false;
- }catch(err){
+ }catch(error){
   if(insertDraft===d&&version===insertPreviewVersion){
-   d.valid=false;
-   $('insert-sheet-confirm').disabled=true;
-   $('insert-preview-status').textContent='Cannot place object: '+err.message;
+   d.valid=false;$('insert-sheet-confirm').disabled=true;
+   $('insert-preview-status').textContent='Unable to preview: '+error.message;
   }
  }
-}
-function enableInsertPreviewDrag(node,d,scale,page,pos){
- node.addEventListener('pointerdown',e=>{
-  if(e.button!==0||insertDraft!==d)return;
-  e.preventDefault();
-  const resizing=Boolean(e.target.closest('.insert-preview-handle'));
-  const base=structuredClone(d.object),baseWidth=pos.width_mm;
-  const margins=doc.margins_mm||{top:18,bottom:18};
-  const room=Math.max(0,page.height-margins.top-margins.bottom-pos.height);
-  let lastPreview=0,changed=false;
-  trackObjectPointer(e,{node,threshold:0,
-   onMove:({dx,dy})=>{
-    changed=true;
-    const x=dx/(scale*pxmm),y=dy/(scale*pxmm);
-    if(resizing){
-     if(d.kind==='cartouche'){
-      d.object.enclosure_padding_mm=Math.min(30,Math.max(0,
-       Math.round(((base.enclosure_padding_mm||0)+x/2)*10)/10));
-     }else{
-      const low=d.kind==='table'?15:6,high=d.kind==='table'?500:300;
-      d.object.width_mm=Math.min(high,Math.max(low,
-       Math.round((baseWidth+x)*10)/10));
-     }
-     const proposed=d.kind==='cartouche'
-       ?baseWidth+2*(d.object.enclosure_padding_mm-(base.enclosure_padding_mm||0))
-       :d.object.width_mm;
-     node.style.width=mm(Math.max(6,proposed)*scale);
-    }else{
-     const logical=doc.direction==='rtl'?-x:x;
-     d.object.x_offset_mm=Math.min(2000,Math.max(-2000,
-      Math.round(((base.x_offset_mm||0)+logical)*10)/10));
-     d.object.y_align=Math.min(1,Math.max(0,(base.y_align??.5)+(room?y/room:0)));
-     node.style.transform='translate('+dx+'px,'+dy+'px)';
-    }
-    // Throttle authoritative Python recomposition while moving; the browser
-    // does not invent text coordinates and stale worker replies are ignored.
-    if(performance.now()-lastPreview>200){
-     lastPreview=performance.now();requestInsertPreview();
-    }
-   },
-   onCancel:()=>{d.object=base;node.style.transform='';requestInsertPreview();},
-   onFinish:()=>{
-    node.style.transform='';
-    if(changed)requestInsertPreview();
-   }
-  });
- });
 }
 // One requested table specification per user event, queued in order.
 // The Python transaction replaces dimensions and styling in one operation;
