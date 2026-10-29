@@ -177,10 +177,18 @@ try{
   await page.locator('#artwork-grid .artwork-choice').first().click();
   await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm').disabled,
     null,{timeout:90000});
-  assert.ok(await page.locator('#insert-preview .paper').count(),
-    'Clip-art selection must produce Python-composed page preview');
+  assert.ok(await page.locator('#pages .draft-page-layer .draft-paper .draft-object').count(),
+    'Clip-art selection must render its Python-composed object on the actual writing page');
+  assert.equal(await page.locator('#insert-preview').count(),0,
+    'There must not be a second miniature document preview');
+  assert.equal(await page.locator('#insert-sheet-cancel-top').count(),0,
+    'The contextual inspector must not have a desktop close X');
+  assert.equal(await page.locator('#insert-sheet').getAttribute('aria-modal'),null,
+    'Insert must not behave as a modal desktop dialog');
   await page.locator('#insert-sheet-cancel').click();
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
+  assert.equal(await page.locator('#pages .draft-page-layer').count(),0,
+    'Cancel removes the temporary page layer');
   assert.equal(await page.locator('.clipart-object').count(),0,
     'Cancel leaves no clip art in the saved document');
 
