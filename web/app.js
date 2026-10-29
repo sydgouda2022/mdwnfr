@@ -43,6 +43,7 @@ let nextLayoutReq=0;const layoutPending=new Map();
 let nextReq=0;const pending=new Map();
 let ready=false,doc=null,selectedId=null,editingId=null,caretIndex=0;
 let artworkEntries=null,artworkById=new Map();
+let insertDraft=null; // Python-projected temporary object; only Confirm may persist it.
 let selectedTableCell=null; // {tableId,row,column}; coordinates are UI-only
 // Selection endpoints are stable object IDs, never viewport coordinates.
 let selectionAnchorId=null,selectionFocusId=null;
@@ -666,26 +667,12 @@ function displayArtworkGrid(filter=''){
   const img=document.createElement('img');img.src='/artwork/'+art.file;img.loading='lazy';img.alt='';
   const label=document.createElement('span');label.textContent=art.name;
   button.append(img,label);
-  button.onclick=async()=>{
-   if(!doc)return;
-   const range=selectedRange();
-   // An insertion into an existing selection occurs at the logical caret,
-   // without ever changing the selected words unless user explicitly deletes.
-   const index=range?range.end:caretIndex;
-   const ok=await apply({op:'insert_clipart',index,artwork_id:art.id});
-   if(ok){clearSelection();caretIndex=index+1;updateSelection();
-    $('artwork-picker').hidden=true;$('insert-clipart').setAttribute('aria-expanded','false');closePanels();}
-  };
+  button.onclick=()=>chooseInsertArtwork(art);
+  button.setAttribute('aria-pressed',String(insertDraft?.object?.artwork_id===art.id));
   root.append(button);
  }
 }
-$('insert-clipart').onclick=async()=>{
- const picker=$('artwork-picker');
- if(!picker.hidden){picker.hidden=true;$('insert-clipart').setAttribute('aria-expanded','false');return;}
- try{await ensureArtworkCatalog();picker.hidden=false;
-  $('insert-clipart').setAttribute('aria-expanded','true');displayArtworkGrid($('artwork-search').value);
- }catch(e){status('Clip-art library: '+e.message,true);}
-};
+$('insert-clipart').onclick=()=>beginInsertSheet('clipart');
 $('artwork-search').addEventListener('input',e=>displayArtworkGrid(e.target.value));
 
 // Convert local PNG/JPEG/WebP into a portable PNG plus a conservative alpha
@@ -735,14 +722,7 @@ async function prepareImportedImage(file){
 }
 // Table data is a nested word list. All edits are sent as one Python
 // transaction and the page only mirrors the resulting geometry.
-$('insert-cartouche').onclick=async()=>{
- if(!doc)return;
- const range=selectedRange(),index=range?range.end:caretIndex;
- const success=await apply({op:'insert_cartouche',index,orientation:'vertical'});
- if(success){const item=doc.items[index];if(item?.type==='cartouche'){
-  selectWord(item.id);if(activePanel!=='format')switchPanel('format');
- }}
-};
+$('insert-cartouche').onclick=()=>beginInsertSheet('cartouche');
 function selectedCartoucheObject(){const selected=selectedItems();
  return selected.length===1&&selected[0]?.type==='cartouche'?selected[0]:null;}
 $('cartouche-orientation').onchange=e=>{const item=selectedCartoucheObject();
@@ -755,12 +735,7 @@ $('cartouche-save').onclick=()=>{const item=selectedCartoucheObject();if(!item)r
  apply({op:'set_cartouche_words',id:item.id,words:parts.map(s=>Array.from(s))});
 };
 $('cartouche-keyboard').onclick=()=>{if(selectedCartoucheObject()&&activePanel!=='keyboard')switchPanel('keyboard');};
-$('insert-table').onclick=async()=>{
- if(!doc)return;
- const range=selectedRange();const index=range?range.end:caretIndex;
- const ok=await apply({op:'insert_table',index,rows:2,columns:2});
- if(ok){const obj=doc.items[index];if(obj?.type==='table'){selectTableCell(obj.id,0,0);if(activePanel!=='format')switchPanel('format');}}
-};
+$('insert-table').onclick=()=>beginInsertSheet('table');
 function selectedTable(){
  const table=selectedItems();return table.length===1&&table[0]?.type==='table'?table[0]:null;
 }
@@ -837,20 +812,7 @@ $('table-width').onchange=e=>{
  const v=e.target.value.trim();
  apply({op:'set_table_width',id:table.id,width_mm:v===''?null:Number(v)});
 };
-$('insert-image').onclick=()=>{if(doc)$('image-file').click();};
-$('image-file').addEventListener('change',async e=>{
- const file=e.target.files?.[0];e.target.value='';if(!file||!doc)return;
- const currentId=doc.id;
- try{
-  status('Preparing local image…');
-  const image=await prepareImportedImage(file);
-  if(doc?.id!==currentId)throw Error('Document changed during import');
-  const range=selectedRange();const index=range?range.end:caretIndex;
-  const ok=await apply({op:'insert_image',index,...image});
-  if(ok){clearSelection();caretIndex=index+1;updateSelection();closePanels();}
- }catch(error){status('Image import: '+error.message,true);}
-});
-
+$('insert-image').onclick=()=>beginInsertSheet('image');
 for(const [control,field] of [['nested-horizontal','x_align'],['nested-vertical','y_align']]){
  $(control).onchange=e=>{
   const obj=selectedItems();const item=obj.length===1&&['table','cartouche'].includes(obj[0]?.type)?obj[0]:null;
