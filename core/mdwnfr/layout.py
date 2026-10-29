@@ -363,7 +363,9 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         last_gap = last.flexible_gaps[-1]
         eligible = sum(len(q.signs) for _, q, _ in pending) - len(last.rows[-1])
         original_bottom = pending[-1][2] + last.height
-        available = max(0., bottom-original_bottom+last_gap)
+        natural_height = sum(q.height for _,q,_ in pending)
+        available = max(0., bottom-(original_bottom if nearby else
+                                   lane_start+natural_height)+last_gap)
         target = available/eligible if overflow and len(pending)>1 and eligible else 0.
 
         def project(share):
@@ -372,10 +374,10 @@ def _layout(doc: dict, glyph_metrics: dict | None,
             for index, (item, quadrat, original_y) in enumerate(pending):
                 terminal = index == len(pending)-1
                 count = len(quadrat.signs) - (len(quadrat.rows[-1]) if terminal else 0)
-                extra = share*count - (last_gap if terminal else 0.)
+                extra = round(share*count - (last_gap if terminal else 0.), 10)
                 shape = (expand_to_ink_bottom(quadrat, extra) if terminal
                          else expand_internal(quadrat, extra))
-                origin = max(original_y, cursor)
+                origin = max(original_y, cursor) if nearby else cursor
                 result.append((item, shape, origin, extra))
                 cursor = origin+shape.height
             return result
