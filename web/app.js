@@ -696,6 +696,11 @@ function closeInsertSheet(){
   previous.basePaper?.classList.remove('draft-source-hidden');
  }
  insertDraft=null;
+ // A newly opened page may have been virtualized before the first detail
+ // paint. The temporary page is still visible, but Cancel must explicitly
+ // restore the normal Python-rendered page instead of leaving empty paper.
+ if(previous&&!previous.basePaper&&Number.isInteger(previous.pageIndex))
+  void renderPageDetails(previous.pageIndex);
  $('insert-dialog-backdrop').hidden=true;
  $('insert-sheet-confirm').disabled=true;
 }
@@ -821,6 +826,7 @@ function requestInsertPreview(){
 function showDraftPage(d,page,placement){
  const slot=pageSlots[page.index]||pageSlots.at(-1);
  if(!slot)throw Error('Writing surface is not available');
+ d.pageIndex=pageSlots.indexOf(slot);
  const base=slot.shell.querySelector(':scope > .paper:not(.draft-paper)');
  // Detached scratch paper is safe to paint: it uses the same renderer and zoom.
  const scratch=document.createElement('div');
