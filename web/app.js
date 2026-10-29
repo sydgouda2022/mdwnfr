@@ -897,46 +897,54 @@ function enableInsertPreviewDrag(node,d,scale,page,pos){
   node.addEventListener('pointercancel',cancel);
  });
 }
-async function changeInsertTableDimensions(){
- const d=insertDraft;if(!d||d.kind!=='table'||d.busy)return;
- const rows=Number($('insert-table-rows').value),cols=Number($('insert-table-columns').value);
- if(!Number.isInteger(rows)||rows<1||rows>24||!Number.isInteger(cols)||cols<1||cols>12){
-  $('insert-preview-status').textContent='Choose 1–24 rows and 1–12 columns';return;
- }
- d.busy=true;$('insert-sheet-confirm').disabled=true;
- try{
-  let sandbox={...doc,items:[d.object]};
-  const id=d.object.id;
-  for(let n=sandbox.items[0].rows.length;n<rows;n++)
-   sandbox=(await rpc('transact',{document:sandbox,action:{
-    op:'table_insert_row',id,index:n}})).document;
-  while(sandbox.items[0].rows.length>rows)
-   sandbox=(await rpc('transact',{document:sandbox,action:{
-    op:'table_delete_row',id,index:sandbox.items[0].rows.length-1}})).document;
-  for(let n=sandbox.items[0].rows[0].length;n<cols;n++)
-   sandbox=(await rpc('transact',{document:sandbox,action:{
-    op:'table_insert_column',id,index:n}})).document;
-  while(sandbox.items[0].rows[0].length>cols)
-   sandbox=(await rpc('transact',{document:sandbox,action:{
-    op:'table_delete_column',id,index:sandbox.items[0].rows[0].length-1}})).document;
-  if(insertDraft===d){d.object=sandbox.items[0];requestInsertPreview();}
- }catch(e){if(insertDraft===d)$('insert-preview-status').textContent=e.message;}
- finally{d.busy=false;}
-}
-for(const id of ['insert-table-rows','insert-table-columns'])
- $(id).addEventListener('change',()=>void changeInsertTableDimensions());
-function changeInsertStyle(){
- const d=insertDraft;if(!d||d.kind!=='table'||d.busy)return;
- d.object.style={
+// One requested table specification per user event, queued in order.
+// The Python transaction replaces dimensions and styling in one operation;
+// later user input wins, and preview never shows an earlier stale request.
+function scheduleInsertTableSpec(){
+ const d=insertDraft;
+ if(!d||d.kind!=='table'||!d.object)return;
+ const rows=Number($('insert-table-rows').value);
+ const cols=Number($('insert-table-columns').value);
+ const style={
   border_style:$('insert-table-border').value,
   border_color:$('insert-table-color').value,
   border_width_mm:Number($('insert-table-line').value),
   cell_padding_mm:Number($('insert-table-padding').value)};
- requestInsertPreview();
+ const version=d.specRequested=(d.specRequested||0)+1;
+ d.valid=false;$('insert-sheet-confirm').disabled=true;
+ if(!Number.isInteger(rows)||rows<1||rows>24||
+    !Number.isInteger(cols)||cols<1||cols>12||
+    !Number.isFinite(style.border_width_mm)||!Number.isFinite(style.cell_padding_mm)){
+  $('insert-preview-status').textContent='Choose a valid table size and style';
+  return;
+ }
+ const previous=d.specQueue||Promise.resolve();
+ d.specQueue=previous.catch(()=>{}).then(async()=>{
+  if(insertDraft!==d||version!==d.specRequested)return;
+  const sandbox={...doc,items:[d.object]};
+  try{
+   const response=await rpc('transact',{document:sandbox,action:{
+    op:'set_table_spec',id:d.object.id,rows,columns:cols,style}});
+   if(insertDraft!==d||version!==d.specRequested)return;
+   d.object=response.document.items[0];
+   d.specApplied=version;
+   requestInsertPreview();
+  }catch(err){
+   if(insertDraft===d&&version===d.specRequested){
+    d.valid=false;$('insert-sheet-confirm').disabled=true;
+    $('insert-preview-status').textContent='Invalid table configuration: '+err.message;
+   }
+  }
+ });
 }
-for(const id of ['insert-table-border','insert-table-color','insert-table-line',
-                  'insert-table-padding'])
- $(id).addEventListener('change',changeInsertStyle);
+for(const id of ['insert-table-rows','insert-table-columns',
+                  'insert-table-border','insert-table-color',
+                  'insert-table-line','insert-table-padding']){
+ $(id).addEventListener('change',scheduleInsertTableSpec);
+}
+// Color and padding previews also respond to continuous user adjustments.
+for(const id of ['insert-table-color','insert-table-line','insert-table-padding'])
+ $(id).addEventListener('input',scheduleInsertTableSpec);
 for(const input of $('insert-screen-cartouche').querySelectorAll('input[type=radio]'))
  input.addEventListener('change',()=>{
   if(insertDraft?.kind==='cartouche'&&input.checked){
@@ -985,6 +993,10 @@ document.addEventListener('keydown',e=>{
 $('insert-sheet-confirm').onclick=async()=>{
  const d=insertDraft;
  if(!d?.object||!d.valid||d.busy)return;
+ if(d.kind==='table' && (d.specApplied||0)!==(d.specRequested||0)){
+  $('insert-preview-status').textContent='Updating table settings before insertion…';
+  return;
+ }
  d.busy=true;$('insert-sheet-confirm').disabled=true;
  const action=d.existingId?{op:'splice',index:d.index,
   delete_count:1,objects:[d.object],fresh_ids:false}:
@@ -994,7 +1006,10 @@ $('insert-sheet-confirm').onclick=async()=>{
  if(success){closeInsertSheet();clearSelection();
   caretIndex=Math.min(doc.items.length,d.index+1);
   updateSelection();}
- else{d.busy=false;d.valid=true;$('insert-sheet-confirm').disabled=false;}
+ else{
+  d.busy=false;d.valid=true;$('insert-sheet-confirm').disabled=false;
+  $('insert-preview-status').textContent='Could not commit the object. Check the editor status and try again.';
+ }
 };
 
 // Convert local PNG/JPEG/WebP into a portable PNG plus a conservative alpha
