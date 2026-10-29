@@ -17,6 +17,9 @@ class CartoucheError(ValueError):
 def validate_cartouche(obj: dict, check_word=None) -> None:
     if obj.get('type') != 'cartouche' or obj.get('orientation') not in ('vertical','horizontal'):
         raise CartoucheError('Invalid cartouche orientation')
+    padding=obj.get('enclosure_padding_mm',0.0)
+    if type(padding) not in (int,float) or not isfinite(padding) or padding<0 or padding>30:
+        raise CartoucheError('Invalid cartouche enclosure padding')
     items = obj.get('items')
     if not isinstance(items, list) or len(items)>MAX_CARTOUCHE_WORDS:
         raise CartoucheError('Cartouche must contain no more than 48 words')
@@ -49,9 +52,10 @@ def typeset_cartouche(obj: dict, sign_width: float, available_width: float,
     horizontal=obj['orientation']=='horizontal'
     words=obj['items']
     # Padded clear area between signs and the enclosing oval.
-    pad_cross=.22*sign_width
-    # Curve radius must be clear of signs: the loop is not a UI pill.
-    pad_long=.85*sign_width
+    extra=obj.get('enclosure_padding_mm',0.0)
+    pad_cross=.22*sign_width+extra
+    # Extra enclosure space does not scale or stretch document glyphs.
+    pad_long=.85*sign_width+extra
     gap=.15*sign_width
     if horizontal:
         word_width=sign_width*.90
