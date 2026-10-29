@@ -562,10 +562,21 @@ def _layout(doc: dict, glyph_metrics: dict | None,
             return [(iw,ih,{'mask':mask},geometry)]
         if kind=='table':
             ncols = len(item['rows'][0])
-            desired = item.get('width_mm') or ncols*max(width*1.6,13.0)
+            # A table must occupy a usable portion of the writing frame,
+            # not a miniature block of 1.6 glyph widths per cell. Preserve
+            # explicit legacy/user widths; only automatic sizing changes.
+            if item.get('width_mm') is None:
+                minimum = ncols * max(width*3.5, 14.0)
+                target = (min(capacity*width*.40, 14*width)
+                          if capacity is not None else minimum)
+                desired = max(minimum, target)
+            else:
+                desired = item['width_mm']
             maximum = capacity*width if capacity is not None else desired
-            iw = max(ncols*6,min(desired,maximum))
-            iw = ceil((iw-1e-8)/width)*width
+            if ncols*6 > maximum+1e-8:
+                raise TableError('Too many table columns for this writing frame')
+            iw = min(max(ncols*6, min(desired, maximum)), maximum)
+            iw = min(maximum, ceil((iw-1e-8)/width)*width)
             try:
                 geo = typeset_table(item,width,iw,None,metrics,doc['direction'])
                 fragments = paginate_table(geo,usable_height)
