@@ -366,7 +366,7 @@ class VisibleInkComposition(unittest.TestCase):
                     for i,row in enumerate(natural.rows):
                         expected=(0 if final and i==len(natural.rows)-1 else
                                   natural.flexible_gaps[i]+unit*len(row))
-                        near(self,q['flexible_gaps'][i],expected)
+                        self.assertAlmostEqual(q['flexible_gaps'][i],expected,places=4)
                 if final:near(self,q['flexible_gaps'][-1],0)
             self.assertTrue(units)
             self.assertLess(max(units)-min(units),.00002)
