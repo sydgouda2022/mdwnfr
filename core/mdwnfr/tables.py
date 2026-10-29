@@ -62,6 +62,17 @@ def validate_table(obj:dict, check_stream=None):
     width=obj.get('width_mm')
     if width is not None and (type(width) not in (int,float) or not isfinite(width) or not 15<=width<=500):
         raise TableError('Invalid table width')
+    style=obj.get('style',{})
+    if not isinstance(style,dict) or set(style)-{'border_style','border_color','border_width_mm','cell_padding_mm'}:
+        raise TableError('Invalid table style')
+    if style.get('border_style','solid') not in ('solid','dashed','none'):
+        raise TableError('Invalid table border style')
+    if not isinstance(style.get('border_color','#bba477'),str) or not re.fullmatch(r'#[0-9a-fA-F]{6}',style.get('border_color','#bba477')):
+        raise TableError('Invalid table border color')
+    for field,limit in (('border_width_mm',2.5),('cell_padding_mm',12.0)):
+        value=style.get(field)
+        if value is not None and (type(value) not in (int,float) or not isfinite(value) or value<0 or value>limit):
+            raise TableError('Invalid '+field)
     for row in rows:
         if not isinstance(row,list) or len(row)!=count:
             raise TableError('Table rows must have equal column counts')
@@ -172,7 +183,11 @@ def typeset_table(obj:dict, sign_width:float, width_mm:float, usable_height:floa
     from .document import symbol_ids_for_word
     values=evaluate_table(obj)
     ncols=len(obj['rows'][0]); nrows=len(obj['rows'])
-    padding=max(1.0,sign_width*.12)
+    style=obj.get('style',{})
+    padding=style.get('cell_padding_mm',max(1.0,sign_width*.12))
+    border_style=style.get('border_style','solid')
+    border_color=style.get('border_color','#bba477')
+    border_width=style.get('border_width_mm',.3)
     each=width_mm/ncols
     if each-2*padding<=2:raise TableError('Table columns too narrow for signs')
     calculated=[];heights=[]
@@ -293,7 +308,11 @@ def paginate_table(geometry: dict, page_height: float) -> list[dict]:
         fragments.append({'width_mm':geometry['width_mm'],
             'height':round(end-cursor,5), 'columns':geometry['columns'],
             'rows':len(heights), 'row_heights':heights,'cells':visible,
-            'source_top':round(cursor,5),'source_bottom':round(end,5)})
+            'source_top':round(cursor,5),'source_bottom':round(end,5),
+            'border_style':geometry.get('border_style','solid'),
+            'border_color':geometry.get('border_color','#bba477'),
+            'border_width_mm':geometry.get('border_width_mm',.3),
+            'cell_padding_mm':geometry.get('cell_padding_mm',1.)})
         cursor=end
     for j,fragment in enumerate(fragments):
         fragment['fragment_index']=j
