@@ -1,7 +1,7 @@
 name: MdwNfr Live User Journey Audit (read-only)
 on:
   push:
-    branches: [main, 'fix/p0-p2-reliability-20261029']
+    branches: [main]
     paths:
       - '.github/workflows/mdwnfr-live-audit.yml'
       - 'qa/audit_live_ui_20261030.mjs'
