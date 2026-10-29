@@ -709,6 +709,15 @@ async function beginInsertSheet(kind,existingId=null){
  $('insert-sheet-confirm').textContent=original?'Apply':'Insert';
  for(const name of ['clipart','image','table','cartouche'])
   $('insert-screen-'+name).hidden=name!==kind;
+ // Prevent edits until the initial Python draft has been constructed.
+ // Otherwise a late default can silently overwrite the user's choices.
+ const initializing=!original&&(kind==='table'||kind==='cartouche');
+ for(const id of ['insert-table-rows','insert-table-columns',
+                  'insert-table-border','insert-table-color',
+                  'insert-table-line','insert-table-padding'])
+  $(id).disabled=initializing;
+ for(const input of $('insert-screen-cartouche').querySelectorAll('input[type=radio]'))
+  input.disabled=initializing;
  $('insert-placement').hidden=true;
  $('insert-preview-status').textContent='Preparing document preview…';
  $('insert-preview').replaceChildren();
@@ -744,6 +753,12 @@ async function beginInsertSheet(kind,existingId=null){
      'input[value="'+insertDraft.object.orientation+'"]').checked=true;
    }
   }
+  if(insertDraft?.token!==token)return;
+  for(const id of ['insert-table-rows','insert-table-columns',
+                   'insert-table-border','insert-table-color',
+                   'insert-table-line','insert-table-padding'])$(id).disabled=false;
+  for(const input of $('insert-screen-cartouche').querySelectorAll('input[type=radio]'))
+   input.disabled=false;
   if(insertDraft?.object)requestInsertPreview();
   else $('insert-preview-status').textContent='Choose an item to preview it on the page';
  }catch(error){
