@@ -428,8 +428,6 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .paper .table-object.selected .art-resize,.paper .cartouche-object.selected .art-resize,.paper .clipart-object.selected .art-resize{display:block}
 .paper .art-resize{transform:scale(var(--resize-inverse,1));transform-origin:center;touch-action:none}
 .paper .art-resize:focus-visible{outline:2px solid #277eb6}
-.paper .object-resize-ghost{position:absolute;pointer-events:none;z-index:15;border:2px dashed #277eb6;background:#167ac710;box-shadow:0 0 0 1px #fff9;touch-action:none}
-.insert-preview .insert-preview-handle{width:44px;height:44px;right:-22px;bottom:-22px;z-index:4}
 
 /* Keep the phone inspector away from the initial RTL writing column and its
    resize handles. The editor can still dismiss the inspector for direct work. */
