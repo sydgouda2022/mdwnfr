@@ -996,6 +996,9 @@ document.addEventListener('keydown',e=>{
 },true);
 $('insert-sheet-confirm').onclick=async()=>{
  const d=insertDraft;
+ console.info('INSERT_CONFIRM_EVENT',JSON.stringify({kind:d?.kind||null,
+   title:$('insert-sheet-title').textContent,valid:d?.valid,busy:d?.busy,
+   disabled:$('insert-sheet-confirm').disabled}));
  if(d?.kind==='table')console.info('TABLE_CONFIRM_TRACE',JSON.stringify({
   object:!!d.object,valid:d.valid,busy:d.busy,
   specRequested:d.specRequested,specApplied:d.specApplied,
