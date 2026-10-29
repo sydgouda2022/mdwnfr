@@ -1,4 +1,4 @@
-import {save,load,list,remove,loadProfile,updateProfile,listSnapshots,restoreSnapshot} from './storage.js';
+import {save,load,list,remove,loadProfile,updateProfile} from './storage.js';
 import {createKeyboardFromData} from './vendor/hieroglyphic/keyboard_api.mjs';
 import {NO_MIRROR_HIEROGLYPHS,mirrorSign,reverseVisualQuadrat} from './hieroglyph_facing.mjs';
 import {fitQuadrat} from './quadrat_preview.mjs';
@@ -1149,7 +1149,7 @@ function showEditor(){
  document.title='MdwNfr — '+doc.name;
 }
 function setLibraryBusy(value){
- libraryBusy=value;$('create-document').disabled=value||!ready;$('import-document').disabled=value||!ready;
+ libraryBusy=value;$('create-document').disabled=value||!ready;
  for(const btn of document.querySelectorAll('.document-grid button')){
   const needsEngine=btn.classList.contains('document-open')||btn.classList.contains('rename-action');
   btn.disabled=value||(needsEngine&&!ready);
@@ -2157,22 +2157,6 @@ $('bold').onclick=()=>{
 $('delete').onclick=()=>{hideEditMenu();deleteSelection();};
 $('library').onclick=()=>{closePanels();backToLibrary();};
 $('create-document').onclick=createDocument;
-$('import-document').onclick=()=>$('import-file').click();
-$('import-file').addEventListener('change',async event=>{
- const file=event.target.files?.[0];event.target.value='';if(!file||libraryBusy||!ready)return;
- setLibraryBusy(true);showLibraryError();
- try{
-  // 160 MiB admits recovery exports from the 120 MiB large-checkpoint range.
-  // Keep a hard browser-memory bound on untrusted imported JSON.
-  if(file.size>160*1024*1024)throw new Error('Backup exceeds 160 MiB');
-  const entry=JSON.parse(await file.text());
-  if(!entry||typeof entry!=='object'||Array.isArray(entry))throw new Error('Invalid backup');
-  await rpc('validate',{document:entry});
-  if(await load(entry.id))throw new Error('Document already exists. Existing content was not overwritten.');
-  await save(entry,null);await renderDocList();status('Imported '+entry.name);
- }catch(error){showLibraryError('Import failed: '+error.message);}
- finally{setLibraryBusy(false);}
-});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&doc)flushAutosave().catch(()=>{});});
 window.addEventListener('pagehide',()=>{if(doc)flushAutosave().catch(()=>{});});
 
@@ -2224,51 +2208,6 @@ async function renameDocument(id){
  }catch(e){showLibraryError('Could not rename document: '+e.message);}
  finally{setLibraryBusy(false);}
 }
-async function restoreDocumentHistory(id){
- if(libraryBusy)return;
- const snapshots=await listSnapshots(id);
- if(!snapshots.length){showLibraryError('No recovery points yet. Recovery points appear automatically as you edit.');return;}
- const selection=await chooseRecoveryPoint(snapshots);
- if(!selection)return;
- const docEntry=await load(id);
- const check=await modal({title:'Restore this version?',
-  description:'This replaces “'+(docEntry?.name||'Untitled')+'” with the selected version. The current document is kept as a recovery point so you can reverse the restore.',
-  action:'Restore'});
- if(!check.confirmed)return;
- setLibraryBusy(true);showLibraryError();
- try{await restoreSnapshot(id,selection,docEntry?.revision);await renderDocList();}
- catch(e){showLibraryError('Could not restore document: '+e.message);}
- finally{setLibraryBusy(false);}
-}
-function chooseRecoveryPoint(entries){
- return new Promise(resolve=>{
-  const bg=$('dialog-backdrop'),ok=$('dialog-ok'),cancel=$('dialog-cancel'),input=$('dialog-input');
-  $('dialog-title').textContent='Document history';
-  $('dialog-desc').textContent='Choose a saved recovery point. Recent versions are kept more frequently.';
-  input.hidden=true;
-  const select=document.createElement('select');select.className='recovery-select';
-  select.setAttribute('aria-label','Recovery point');
-  for(const item of entries){
-   const option=document.createElement('option');option.value=item.key;
-   option.textContent=new Date(item.captured_at).toLocaleString()+' — Revision '+item.revision+
-    (item.reason==='before-restore'?' (before restore)':'');
-   select.append(option);
-  }
-  input.before(select);ok.textContent='Continue';bg.classList.remove('hidden');
-  const done=value=>{
-   bg.classList.add('hidden');select.remove();
-   ok.removeEventListener('click',yes);cancel.removeEventListener('click',no);
-   bg.removeEventListener('click',outside);document.removeEventListener('keydown',escape);
-   resolve(value);
-  };
-  const yes=()=>done(select.value),no=()=>done(null);
-  const outside=e=>{if(e.target===bg)no();};
-  const escape=e=>{if(e.key==='Escape')no();};
-  ok.addEventListener('click',yes);cancel.addEventListener('click',no);
-  bg.addEventListener('click',outside);document.addEventListener('keydown',escape);
-  select.focus();
- });
-}
 async function deleteDocument(id){
  if(libraryBusy)return;
  const entry=await load(id);if(!entry){await renderDocList();return;}
@@ -2302,26 +2241,13 @@ async function renderDocList(){
   open.setAttribute('aria-label','Open '+(entry.name||'Untitled'));
   open.onclick=()=>openDocument(entry.id);
   const actions=document.createElement('div');actions.className='document-actions';
-  const exportButton=document.createElement('button');exportButton.type='button';exportButton.className='document-action';
-  exportButton.textContent='Export';exportButton.setAttribute('aria-label','Export '+entry.name);
-  exportButton.onclick=async()=>{
-   try{
-    const current=await load(entry.id);if(!current)throw new Error('Document missing');
-    const url=URL.createObjectURL(new Blob([JSON.stringify(current,null,2)],{type:'application/json'}));
-    const link=document.createElement('a');link.href=url;link.download='mdwnfr-'+entry.id+'.mdwnfr.json';
-    document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
-   }catch(error){showLibraryError('Export failed: '+error.message);}
-  };
   const rename=document.createElement('button');rename.type='button';rename.className='document-action rename-action';rename.textContent='Rename';
   rename.setAttribute('aria-label','Rename '+(entry.name||'Untitled'));
   rename.onclick=()=>renameDocument(entry.id);
   const del=document.createElement('button');del.type='button';del.className='document-action delete-action';del.textContent='Delete';
   del.setAttribute('aria-label','Delete '+(entry.name||'Untitled'));
   del.onclick=()=>deleteDocument(entry.id);
-  const history=document.createElement('button');history.type='button';history.className='document-action';
-  history.textContent='History';history.setAttribute('aria-label','History '+(entry.name||'Untitled'));
-  history.onclick=()=>restoreDocumentHistory(entry.id);
-  actions.append(exportButton,history,rename,del);card.append(open,actions);root.append(card);
+  actions.append(rename,del);card.append(open,actions);root.append(card);
  }
  setLibraryBusy(libraryBusy);
 }
@@ -2354,11 +2280,11 @@ async function showOfflineReadiness(){
   }
   notice.hidden=installed;
   if(!installed)notice.textContent=state.offline_ready===true
-   ?'Offline editing is not yet confirmed on this device. Keep an exported backup until the verified installation finishes.'
+   ?'Offline editing is not yet confirmed on this device. Let the installation finish before relying on offline use.'
    :'Offline editing is not installed: the local Python runtime or hieroglyph font is incomplete.';
  }catch(error){
   notice.hidden=false;
-  notice.textContent='Could not verify the offline editor installation. Export a backup before relying on offline use.';
+  notice.textContent='Could not verify the offline editor installation. Do not clear this app’s site data.';
  }
 }
 if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('controllerchange',()=>{void showOfflineReadiness();});
