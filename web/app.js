@@ -1248,164 +1248,178 @@ function clipartDropIndex(page,clientX,clientY,excludeId){
  candidates.sort((a,b)=>a.score-b.score||a.gap-b.gap);
  return {gap:candidates.length?candidates[0].gap:null,page:targetPage,paper};
 }
-function beginNestedDrag(e,placement,column,page,node){
- if(e.button!==0 || e.target.closest('.table-cell-view'))return;
+
+// One pointer lifecycle for EVERY embedded object and the temporary Insert
+// preview. Window-level capture keeps WebKit touch drags alive when a pointer
+// crosses a handle or a partially re-rendered page; no stored pixel positions.
+function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5}){
+ if(e.button!==0||!e.isPrimary)return false;
+ const pointer=e.pointerId,startX=e.clientX,startY=e.clientY;
+ let lastX=startX,lastY=startY,moved=false,ended=false;
+ const source=e.currentTarget;
  e.stopPropagation();
+ if(source instanceof Element&&source.setPointerCapture){
+  try{source.setPointerCapture(pointer);}catch(_){}
+ }
+ const release=()=>{
+  if(ended)return false;ended=true;
+  window.removeEventListener('pointermove',move,true);
+  window.removeEventListener('pointerup',finish,true);
+  window.removeEventListener('pointercancel',cancel,true);
+  try{if(source?.hasPointerCapture?.(pointer))source.releasePointerCapture(pointer);}catch(_){}
+  return true;
+ };
+ const move=ev=>{
+  if(ev.pointerId!==pointer||ended)return;
+  lastX=ev.clientX;lastY=ev.clientY;
+  const distance=Math.hypot(lastX-startX,lastY-startY);
+  if(!moved&&distance<threshold)return;
+  moved=true;
+  suppressWordClick=true;suppressPaperClick=true;
+  if(ev.cancelable)ev.preventDefault();
+  onMove?.({dx:lastX-startX,dy:lastY-startY,clientX:lastX,clientY:lastY,event:ev});
+ };
+ const finish=ev=>{
+  if(ev.pointerId!==pointer||!release())return;
+  try{onFinish?.({moved,dx:lastX-startX,dy:lastY-startY,clientX:lastX,clientY:lastY});}
+  finally{if(moved)setTimeout(()=>{suppressWordClick=false;suppressPaperClick=false;},0);}
+ };
+ const cancel=ev=>{
+  if(ev.pointerId!==pointer||!release())return;
+  onCancel?.();
+  suppressWordClick=false;suppressPaperClick=false;
+ };
+ window.addEventListener('pointermove',move,true);
+ window.addEventListener('pointerup',finish,true);
+ window.addEventListener('pointercancel',cancel,true);
+ return true;
+}
+const OBJECT_EDGES=['top-left','top','top-right','right','bottom-right','bottom','bottom-left','left'];
+function addObjectResizeHandles(node,placement){
+ for(const edge of OBJECT_EDGES){
+  const handle=document.createElement('span');
+  handle.className='art-resize '+edge;
+  handle.dataset.handle=edge;
+  handle.setAttribute('role','button');
+  handle.setAttribute('aria-label','Resize '+placement.type+' '+edge);
+  handle.addEventListener('pointerdown',ev=>beginObjectResize(ev,placement,node,edge));
+  node.append(handle);
+ }
+}
+function beginObjectDrag(e,placement,column,page,node){
+ if(e.button!==0||e.target.closest('.art-resize,.table-cell-view'))return;
  const original=objectById(placement.id);
  if(!original)return;
  const source=itemIndexById.get(placement.id);
- const startX=e.clientX,startY=e.clientY;
- let moved=false,lastX=startX,lastY=startY;
- const onMove=event=>{
-  if(event.pointerId!==e.pointerId)return;
-  lastX=event.clientX;lastY=event.clientY;
-  if(!moved&&Math.hypot(lastX-startX,lastY-startY)<6)return;
-  moved=true;suppressWordClick=true;suppressPaperClick=true;
-  node.classList.add('drag-preview');
-  node.style.transform=`translate(${(lastX-startX)/zoom}px,${(lastY-startY)/zoom}px)`;
- };
- const cleanup=()=>{
-  window.removeEventListener('pointermove',onMove);
-  window.removeEventListener('pointerup',onUp);
-  window.removeEventListener('pointercancel',onCancel);
-  node.style.transform='';node.classList.remove('drag-preview');
-  if(moved)setTimeout(()=>{suppressWordClick=false;suppressPaperClick=false;},0);
- };
- const onCancel=()=>cleanup();
- const onUp=event=>{
-  if(event.pointerId!==e.pointerId)return;
-  cleanup();
-  if(!moved){selectWord(placement.id);return;}
-  const unit=zoom*pxmm,deltaX=(lastX-startX)/unit,deltaY=(lastY-startY)/unit;
-  const hit=clipartDropIndex(page,lastX,lastY,placement.id);
-  const dstPage=hit?.page??page;
-  let target=source;
-  if(dstPage!==page||Math.abs(deltaX)>column.width*.45){
-   if(hit?.gap!==null&&hit?.gap!==undefined)
-    target=Math.max(0,Math.min(doc.items.length-1,hit.gap-(source<hit.gap?1:0)));
-  }
-  const margins=doc.margins_mm||{top:18,bottom:18};
-  const room=Math.max(0,dstPage.height-margins.top-margins.bottom-placement.height);
-  const newTop=Math.max(margins.top,Math.min(dstPage.height-margins.bottom-placement.height,placement.y+deltaY));
-  const yAlign=room?Math.max(0,Math.min(1,(newTop-margins.top)/room)):0;
-  const horizontalRoom=Math.max(0,column.width-placement.width_mm);
-  const inDirection=doc.direction==='rtl'?-deltaX:deltaX;
-  const xOffset=Math.max(-2000,Math.min(2000,(original.x_offset_mm||0)+inDirection));
-  const xAlign=horizontalRoom?Math.max(0,Math.min(1,(placement.x+deltaX-column.x)/horizontalRoom)):0;
-  selectWord(placement.id);
-  apply({op:'relocate_nested',id:placement.id,index:target,
-    x_offset_mm:Math.round(xOffset*10)/10,
-    x_align:Math.round(xAlign*10000)/10000,y_align:Math.round(yAlign*10000)/10000});
- };
- window.addEventListener('pointermove',onMove);
- window.addEventListener('pointerup',onUp);
- window.addEventListener('pointercancel',onCancel);
-}
-
-function beginClipartDrag(e,placement,column,page,node){
- if(e.button!==0||e.target.closest('.art-resize'))return;
- // Touch devices share the same pointer workflow; a tap still selects.
- e.stopPropagation();
- const original=doc?.items.find(item=>item.id===placement.id);
- if(!original)return;
- const initialIndex=itemIndexById.get(placement.id);
- const startX=e.clientX,startY=e.clientY,unit=zoom*pxmm;
- let moved=false,lastX=startX,lastY=startY;
- const move=ev=>{
-  if(ev.pointerId!==e.pointerId)return;
-  lastX=ev.clientX;lastY=ev.clientY;
-  if(!moved&&Math.hypot(lastX-startX,lastY-startY)<6)return;
-  moved=true;suppressWordClick=true;suppressPaperClick=true;
-  node.classList.add('drag-preview');
-  node.style.transform=`translate(${(lastX-startX)/zoom}px,${(lastY-startY)/zoom}px)`;
- };
- const cleanup=()=>{
-  window.removeEventListener('pointermove',move);
-  window.removeEventListener('pointerup',done);
-  window.removeEventListener('pointercancel',cancel);
-  node.classList.remove('drag-preview');node.style.transform='';
-  if(moved)setTimeout(()=>{suppressWordClick=false;suppressPaperClick=false;},0);
- };
- const cancel=()=>cleanup();
- const done=ev=>{
-  if(ev.pointerId!==e.pointerId)return;
-  cleanup();
-  if(!moved){selectWord(placement.id);return;}
-  const dx=(lastX-startX)/unit,dy=(lastY-startY)/unit;
-  const target=clipartDropIndex(page,lastX,lastY,placement.id);
-  const newPage=target?.page??page;
-  const margins=doc.margins_mm||{top:18,bottom:18};
-   const yRoom=Math.max(0,newPage.height-margins.top-margins.bottom-placement.height);
-  const initialTop=node.getBoundingClientRect().top;
-  // Node preview has been cleared; preserve the original pointer grab offset.
-  const grabY=(startY-initialTop)/(unit);
-  const destinationRect=target?.paper.getBoundingClientRect();
-  const proposedTop=destinationRect?(lastY-destinationRect.top)/unit-grabY:placement.y+dy;
-  const yAlign=yRoom?Math.max(0,Math.min(1,(proposedTop-margins.top)/yRoom)):0.5;
-  // A float's horizontal position is a millimetre offset *forward in
-  // reading order* from its document anchor, not an absolute page pixel.
-  // Python reserves the crossed slots, then flows words through every safe
-  // silhouette sector in those slots and derives the final position.
-  const desiredX=placement.x+dx;
-  const rawOffset=doc.direction==='rtl'
-    ?column.x+column.width-desiredX-placement.width_mm
-    :desiredX-column.x;
-  const maximalOffset=newPage===page
-    ?(doc.surface==='papyrus'?2000:Math.max(0,page.width-(doc.margins_mm?.left??18)-(doc.margins_mm?.right??18)-placement.width_mm))
-    :0;
-  // Negative values move the art back over preceding text columns; Python
-  // alone reflows those columns, preserving logical object order.
-  let xOffset=Math.round(Math.max(-2000,Math.min(2000,maximalOffset,rawOffset))*10)/10;
-  let index=initialIndex;
-  // Moving before the current anchor or crossing pages requires a logical
-  // relocation. Floating forward inside a page never reorders document items.
-  if(newPage!==page){
-   if(target?.gap!==null&&target?.gap!==undefined)
-    index=Math.max(0,Math.min(doc.items.length-1,
-      target.gap-(initialIndex<target.gap?1:0)));
-   xOffset=0;
-  }
-  selectWord(placement.id);
-  apply({op:original.type==='image'?'relocate_image':'relocate_clipart',id:placement.id,index,
-         x_offset_mm:xOffset,y_align:Math.round(yAlign*10000)/10000});
- };
- window.addEventListener('pointermove',move);
- window.addEventListener('pointerup',done);
- window.addEventListener('pointercancel',cancel);
-}
-
-function beginClipartResize(e,item,node,edge){
- if(e.button!==0)return;
- e.preventDefault();e.stopPropagation();suppressPaperClick=true;suppressWordClick=true;
- selectWord(item.id);
- const original=objectById(item.id);
- if(!original)return;
- const startX=e.clientX,startY=e.clientY;
- const ratio=item.width_mm/item.height;
  const unit=zoom*pxmm;
- let width=original.width_mm;
- const track=ev=>{
-  const dx=(ev.clientX-startX)/unit*(edge.includes('left')?-1:edge.includes('right')?1:0);
-  const dy=(ev.clientY-startY)/unit*ratio*(edge.includes('top')?-1:edge.includes('bottom')?1:0);
-  const delta=Math.abs(dx)>=Math.abs(dy)?dx:dy;
-  width=Math.min(300,Math.max(6,Math.round((original.width_mm+delta)*10)/10));
-  node.style.outline='2px dashed #bb9150';
-  node.title='Width: '+width+' mm';
- };
- const done=()=>{
-  window.removeEventListener('pointermove',track);
-  window.removeEventListener('pointerup',done);
-  window.removeEventListener('pointercancel',cancel);
-  if(width!==original.width_mm)apply({op:original.type==='image'?'set_image':'set_clipart',id:item.id,width_mm:width});
-  node.style.outline='';node.title='';
-  setTimeout(()=>{suppressPaperClick=false;suppressWordClick=false;},0);
- };
- const cancel=()=>{window.removeEventListener('pointermove',track);
-  window.removeEventListener('pointerup',done);window.removeEventListener('pointercancel',cancel);
-  node.style.outline='';suppressPaperClick=false;suppressWordClick=false;};
- window.addEventListener('pointermove',track);
- window.addEventListener('pointerup',done,{once:true});
- window.addEventListener('pointercancel',cancel,{once:true});
+ const isNested=original.type==='table'||original.type==='cartouche';
+ const reset=()=>{node.classList.remove('drag-preview');node.style.transform='';};
+ trackObjectPointer(e,{
+  node,
+  onMove:({dx,dy})=>{
+   node.classList.add('drag-preview');
+   node.style.transform='translate('+dx/zoom+'px,'+dy/zoom+'px)';
+  },
+  onCancel:reset,
+  onFinish:({moved,dx,dy,clientX,clientY})=>{
+   reset();
+   if(!moved){selectWord(placement.id);return;}
+   const deltaX=dx/unit,deltaY=dy/unit;
+   const hit=clipartDropIndex(page,clientX,clientY,placement.id);
+   const destination=hit?.page??page;
+   const margins=doc.margins_mm||{top:18,bottom:18};
+   const room=Math.max(0,destination.height-margins.top-margins.bottom-placement.height);
+   const proposedTop=placement.y+deltaY;
+   const yAlign=room?Math.max(0,Math.min(1,(proposedTop-margins.top)/room)):0;
+   let target=source,action;
+   if(isNested){
+    if(destination!==page||Math.abs(deltaX)>column.width*.45){
+     if(hit?.gap!=null)target=Math.max(0,Math.min(doc.items.length-1,
+      hit.gap-(source<hit.gap?1:0)));
+    }
+    const horizontalRoom=Math.max(0,column.width-placement.width_mm);
+    const logical=doc.direction==='rtl'?-deltaX:deltaX;
+    const xAlign=horizontalRoom?Math.max(0,Math.min(1,
+      (placement.x+deltaX-column.x)/horizontalRoom)):0;
+    const xOffset=Math.max(-2000,Math.min(2000,(original.x_offset_mm||0)+logical));
+    action={op:'relocate_nested',id:placement.id,index:target,
+      x_offset_mm:Math.round(xOffset*10)/10,
+      x_align:Math.round(xAlign*10000)/10000,
+      y_align:Math.round(yAlign*10000)/10000};
+   }else{
+    const desiredX=placement.x+deltaX;
+    const rawOffset=doc.direction==='rtl'
+      ?column.x+column.width-desiredX-placement.width_mm
+      :desiredX-column.x;
+    const maximalOffset=destination===page
+      ?(doc.surface==='papyrus'?2000:Math.max(0,page.width-margins.left-margins.right-placement.width_mm))
+      :0;
+    let xOffset=Math.round(Math.max(-2000,Math.min(2000,maximalOffset,rawOffset))*10)/10;
+    if(destination!==page){
+     if(hit?.gap!=null)target=Math.max(0,Math.min(doc.items.length-1,
+      hit.gap-(source<hit.gap?1:0)));
+     xOffset=0;
+    }
+    action={op:original.type==='image'?'relocate_image':'relocate_clipart',
+      id:placement.id,index:target,x_offset_mm:xOffset,
+      y_align:Math.round(yAlign*10000)/10000};
+   }
+   selectWord(placement.id);
+   void apply(action);
+  }
+ });
+}
+function beginObjectResize(e,placement,node,edge){
+ if(e.button!==0)return;
+ e.preventDefault();e.stopPropagation();
+ const original=objectById(placement.id);
+ if(!original)return;
+ selectWord(placement.id);
+ const initial=placement.width_mm;
+ const aspect=placement.width_mm/Math.max(.01,placement.height);
+ const isCartouche=original.type==='cartouche';
+ const isTable=original.type==='table';
+ const baseline=isCartouche?(original.enclosure_padding_mm||0)
+   :(original.width_mm??initial);
+ const ghost=document.createElement('div');
+ ghost.className='object-resize-ghost';
+ ghost.style.left=node.style.left;ghost.style.top=node.style.top;
+ ghost.style.width=mm(placement.width_mm);ghost.style.height=mm(placement.height);
+ ghost.setAttribute('aria-hidden','true');
+ node.parentElement.append(ghost);
+ let value=baseline;
+ const clear=()=>ghost.remove();
+ trackObjectPointer(e,{node,threshold:0,
+  onMove:({dx,dy})=>{
+   const factor=(edge.includes('left')?-1:edge.includes('right')?1:0);
+   const vfactor=(edge.includes('top')?-1:edge.includes('bottom')?1:0);
+   const changeX=dx/(zoom*pxmm)*factor;
+   const changeY=dy/(zoom*pxmm)*aspect*vfactor;
+   const delta=Math.abs(changeX)>=Math.abs(changeY)?changeX:changeY;
+   if(isCartouche){
+    value=Math.min(30,Math.max(0,Math.round((baseline+delta/2)*10)/10));
+   }else{
+    value=Math.min(isTable?500:300,Math.max(isTable?15:6,
+      Math.round((baseline+delta)*10)/10));
+   }
+   const width=isCartouche?Math.max(1,initial+2*(value-baseline)):value;
+   ghost.style.width=mm(width);
+   ghost.style.height=mm(placement.height*width/initial);
+   ghost.title=(isCartouche?'Enclosure padding: ':'Width: ')+value+' mm';
+  },
+  onCancel:clear,
+  onFinish:({moved})=>{
+   clear();
+   if(!moved||value===baseline)return;
+   let action;
+   if(isCartouche)action={op:'replace_cartouche',id:original.id,
+     object:{...structuredClone(original),enclosure_padding_mm:value}};
+   else if(isTable)action={op:'set_table_width',id:original.id,width_mm:value};
+   else action={op:original.type==='image'?'set_image':'set_clipart',
+     id:original.id,width_mm:value};
+   void apply(action);
+  }
+ });
 }
 $('font-decrease').onclick=()=>doc&&apply({op:'set_document',font_size_pt:Math.max(6,Number(doc.font_size_pt)-1)});
 $('font-increase').onclick=()=>doc&&apply({op:'set_document',font_size_pt:Math.min(72,Number(doc.font_size_pt)+1)});
