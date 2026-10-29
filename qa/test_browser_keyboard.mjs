@@ -136,6 +136,30 @@ try{
     null,{timeout:90000});
   assert.deepEqual(await page.locator('.word .glyph-ink-svg text').allTextContents(),
     ['𓇋','𓇋'],'Saved local document reopens with visible silhouettes');
+  // A real table must be readable on the writing surface and editable with
+  // one tap, without navigating to a separate spreadsheet-style screen.
+  await page.locator('#format-toggle').click();
+  await page.locator('#insert-table').click();
+  const table=page.locator('.table-object').first();
+  await table.waitFor({state:'visible',timeout:90000});
+  await page.locator('#table-controls').waitFor({state:'visible'});
+  assert.equal(await table.locator('.table-cell-view').count(),4);
+  const actualWidth=await table.evaluate(el=>el.getBoundingClientRect().width);
+  const inkColumnWidth=await page.locator('.word').first().evaluate(el=>el.getBoundingClientRect().width);
+  assert.ok(actualWidth>=inkColumnWidth*9,
+    'A default table must not be a miniature block beside one text column');
+  assert.equal(await page.locator('#table-width').isVisible(),true,
+    'The existing manual table width must remain accessible');
+  await page.locator('#table-cell-value').fill('𓅓𓏏');
+  await page.locator('#table-cell-save').click();
+  await page.waitForFunction(()=>document.querySelectorAll(
+    '.table-object .table-cell-word .glyph-ink-svg text').length>=2,
+    null,{timeout:90000});
+  await page.locator('#format-toggle').click();
+  await table.locator('.table-cell-view').nth(1).click();
+  await page.locator('#table-controls').waitFor({state:'visible'});
+  const selected=await page.locator('#table-grid-editor button.current').getAttribute('aria-label');
+  assert.equal(selected,'Edit B1','Tap must select a cell and open the existing inspector');
   assert.deepEqual(errors,[],'Browser page errors');
   console.log('PASS: mobile create → type → preview → insert → leave → reload → reopen');
 }catch(error){
