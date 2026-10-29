@@ -167,6 +167,50 @@ try{
   await page.locator('#table-controls').waitFor({state:'visible'});
   const selected=await page.locator('#table-grid-editor button.current').getAttribute('aria-label');
   assert.equal(selected,'Edit B1','Tap must select a cell and open the existing inspector');
+  // The four Insert screens are drafts. Cancel must never change the
+  // document, even after a valid Python layout preview is rendered.
+  await page.locator('#format-toggle').click();
+  await page.locator('#format-toggle').click();
+  await page.locator('#insert-clipart').click();
+  await page.locator('#insert-dialog-backdrop').waitFor({state:'visible'});
+  await page.locator('#artwork-grid .artwork-choice').first().waitFor({state:'visible'});
+  await page.locator('#artwork-grid .artwork-choice').first().click();
+  await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm').disabled,
+    null,{timeout:90000});
+  assert.ok(await page.locator('#insert-preview .paper').count(),
+    'Clip-art selection must produce Python-composed page preview');
+  await page.locator('#insert-sheet-cancel').click();
+  await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
+  assert.equal(await page.locator('.clipart-object').count(),0,
+    'Cancel leaves no clip art in the saved document');
+
+  await page.locator('#format-toggle').click();
+  await page.locator('#insert-cartouche').click();
+  await page.locator('input[name="insert-cartouche-direction"][value="horizontal"]').check();
+  await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm').disabled,
+    null,{timeout:90000});
+  await page.locator('#insert-sheet-confirm').click();
+  await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
+  await page.locator('.cartouche-object').first().waitFor({state:'visible',timeout:90000});
+  await page.locator('.cartouche-object').first().dblclick();
+  await page.locator('#insert-screen-cartouche').waitFor({state:'visible'});
+  assert.equal(await page.locator('input[name="insert-cartouche-direction"]:checked').inputValue(),
+    'horizontal','Existing cartouche reopens its same orientation editor');
+  await page.locator('#insert-sheet-cancel').click();
+
+  await page.locator('#format-toggle').click();
+  await page.locator('#insert-image').click();
+  await page.locator('#insert-screen-image').waitFor({state:'visible'});
+  await page.locator('#insert-image-file').setInputFiles({
+    name:'embedded.png',mimeType:'image/png',
+    buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAFUlEQVR4nGOUcOr9z4AEmBjQAGEBAHwtAe6/I+HPAAAAAElFTkSuQmCC','base64')
+  });
+  await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm').disabled,
+    null,{timeout:90000});
+  assert.equal(await page.locator('#insert-image-thumbnail').isVisible(),true);
+  await page.locator('#insert-sheet-cancel').click();
+  assert.equal(await page.locator('.clipart-object').count(),0,
+    'Cancelling image selection does not add a document object');
   assert.deepEqual(errors,[],'Browser page errors');
   console.log('PASS: mobile create → type → preview → insert → leave → reload → reopen');
 }catch(error){
