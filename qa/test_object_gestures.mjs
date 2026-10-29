@@ -68,8 +68,18 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
     }
     assert.ok((hit.classNames||'').includes('art-resize bottom-right')&&hit.id===obj.id,
       kind+' resize handle occluded or moved: '+JSON.stringify(hit));
-    console.log('GESTURE_START',JSON.stringify({engine:name,width,kind,original:previous,hit,rect}));
-    await page.mouse.move(x,y);await page.mouse.down();
+    // Playwright waits for a moving DOM target to become stable before
+    // hovering. A stale boundingBox from the previous Python reflow would
+    // otherwise start a text-object drag instead of grabbing the handle.
+    await handle.hover({timeout:30000});
+    const stabilized=await handle.boundingBox();
+    x=stabilized.x+stabilized.width/2;
+    y=stabilized.y+stabilized.height/2;
+    const actual=await page.evaluate(({x,y})=>document.elementFromPoint(x,y)?.getAttribute('class'),{x,y});
+    assert.ok((actual||'').includes('art-resize bottom-right'),
+      'Resize handle changed before pointer-down: '+actual);
+    console.log('GESTURE_START',JSON.stringify({engine:name,width,kind,original:previous,hit,rect:stabilized}));
+    await page.mouse.down();
     await page.mouse.move(x+32,y,{steps:7});await page.mouse.up();
     await page.waitForTimeout(350);
     console.log('GESTURE_END',JSON.stringify({
