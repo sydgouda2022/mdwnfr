@@ -351,96 +351,132 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         word_ink = []
 
     def finish_lane(overflow=False):
-        """Finish one lane by stretching symbol-row whitespace, not empty boxes."""
+        """Justify each uninterrupted text sector without crossing artwork.
+
+        An illustration may divide a single reading column into distinct
+        upper/lower sectors. Justifying the whole column with one shared
+        adjustment leaves those sectors loose whenever a glyph in any one
+        sector reaches the illustration. Each run instead uses its own legal
+        whitespace budget, preserving sign size and document order.
+        """
         nonlocal pending, slot, lane_cursor
         if not pending:
             return
         left = slot * width
         clearance = object_clearance_mm(width)
         nearby = [ob for ob in obstacles
-                  if ob[5]-clearance < left+width and ob[5]+ob[3]+clearance > left]
-        last = pending[-1][1]
-        last_gap = last.flexible_gaps[-1]
-        eligible = sum(len(q.signs) for _, q, _ in pending) - len(last.rows[-1])
-        original_bottom = pending[-1][2] + last.height
-        natural_height = sum(q.height for _,q,_ in pending)
-        available = max(0., bottom-(original_bottom if nearby else
-                                   lane_start+natural_height)+last_gap)
-        target = available/eligible if overflow and len(pending)>1 and eligible else 0.
+                  if ob[5] - clearance < left + width
+                  and ob[5] + ob[3] + clearance > left]
 
-        def project(share):
-            result = []
-            cursor = lane_start
-            for index, (item, quadrat, original_y) in enumerate(pending):
-                terminal = index == len(pending)-1
-                count = len(quadrat.signs) - (len(quadrat.rows[-1]) if terminal else 0)
-                extra = round(share*count - (last_gap if terminal else 0.), 10)
-                shape = (expand_to_ink_bottom(quadrat, extra) if terminal
-                         else expand_internal(quadrat, extra))
+        # A genuine jump in word origin represents artwork-separated sectors.
+        # Tiny (five-decimal) serialization differences do not create sectors.
+        sectors = []
+        for entry in pending:
+            if not sectors or entry[2] > (
+                    sectors[-1][-1][2] + sectors[-1][-1][1].height + .001):
+                sectors.append([entry])
+            else:
+                sectors[-1].append(entry)
+
+        def project_sector(entries, share):
+            positioned = []
+            cursor = entries[0][2]
+            final_gap = entries[-1][1].flexible_gaps[-1]
+            for index, (item, quadrat, original_y) in enumerate(entries):
+                terminal = index == len(entries) - 1
+                eligible = len(quadrat.signs) - (
+                    len(quadrat.rows[-1]) if terminal else 0)
+                correction = round(share * eligible -
+                                   (final_gap if terminal else 0.0), 10)
+                shape = (expand_to_ink_bottom(quadrat, correction)
+                         if terminal else expand_internal(quadrat, correction))
                 origin = max(original_y, cursor) if nearby else cursor
-                result.append((item, shape, origin, extra))
-                cursor = origin+shape.height
-            return result
+                positioned.append((item, shape, origin, correction))
+                cursor = origin + shape.height
+            return positioned
 
-        def safe(projected):
-            for item, shape, origin, _ in projected:
-                if origin+max(g.y+g.height for g in shape.signs)>bottom+1e-5:
+        def sector_safe(positioned, upper_bound):
+            for item, shape, origin, _ in positioned:
+                ink_bottom = origin + max(g.y + g.height for g in shape.signs)
+                if ink_bottom > upper_bound + 1e-5:
                     return False
-                allowed = free_word_starts(shape,column_left=left,top=top,
-                    bottom=bottom,clearance=clearance,obstacles=nearby,
-                    ink_expansion=(max(g.font_size for g in shape.signs)*.006
-                                   if item.get('bold',False) else 0.))
-                if not any(a-1e-5<=origin<=b+1e-5 for a,b in allowed):
-                    return False
+                if nearby:
+                    allowed = free_word_starts(shape, column_left=left,
+                        top=top, bottom=bottom, clearance=clearance,
+                        obstacles=nearby, ink_expansion=(
+                            max(g.font_size for g in shape.signs) * .006
+                            if item.get('bold', False) else 0.0))
+                    if not any(a - 1e-5 <= origin <= b + 1e-5
+                               for a, b in allowed):
+                        return False
             return True
 
-        share = target
-        if share>0 and nearby and not safe(project(share)):
-            # Binary-search only the legal expansion; a glyph must never
-            # move through the artwork's opaque 2D silhouette.
-            lo, hi = 0., share
-            for _ in range(20):
-                mid=(lo+hi)/2
-                if safe(project(mid)):lo=mid
-                else:hi=mid
-            share=lo
-        projected=project(share)
-        aligned=(share>0 and abs(projected[-1][2]+
-            max(g.y+g.height for g in projected[-1][1].signs)-bottom)<1e-3)
-        placements=[]
-        runs=[]
-        previous_end=None
-        for item,shape,origin,extra in projected:
+        projected = []
+        expanded = False
+        for index, entries in enumerate(sectors):
+            # No glyph in one sector may consume the next sector's origin.
+            bound = (sectors[index + 1][0][2] if index + 1 < len(sectors)
+                     else bottom)
+            final_quadrat = entries[-1][1]
+            final_ink = (entries[-1][2] + final_quadrat.height -
+                         final_quadrat.flexible_gaps[-1])
+            eligible = (sum(len(quadrat.signs) for _, quadrat, _ in entries) -
+                        len(final_quadrat.rows[-1]))
+            target = (max(0.0, bound - final_ink) / eligible
+                      if overflow and eligible > 0 else 0.0)
+            share = target
+            if share > 0 and not sector_safe(project_sector(entries, share), bound):
+                # Artwork collision can be nonuniform by height. Find the
+                # first legal limit without making the whole column rigid.
+                lo, hi = 0.0, share
+                for _ in range(24):
+                    mid = (lo + hi) / 2
+                    if sector_safe(project_sector(entries, mid), bound):
+                        lo = mid
+                    else:
+                        hi = mid
+                share = lo
+            if share > 1e-7:
+                expanded = True
+            projected.extend(project_sector(entries, share))
+
+        aligned = (expanded and abs(
+            projected[-1][2] +
+            max(g.y + g.height for g in projected[-1][1].signs) - bottom) < 1e-3)
+        placements = []
+        runs = []
+        previous_end = None
+        for item, shape, origin, correction in projected:
             if compact:
-                placements.append((item['id'],round(origin,5),
-                                   round(shape.height,5),round(extra,10)))
+                placements.append((item['id'], round(origin, 5),
+                                   round(shape.height, 5), round(correction, 10)))
             else:
-                placements.append({'id':item['id'],'type':'word',
-                    'signs':item['signs'],'color':item.get('color','#192433'),
-                    'bold':item.get('bold',False),'y':round(origin,5),
-                    'height':round(shape.height,5),
-                    'quadrat':_quadrat_object_payload(item,shape)})
-            ink_top=origin+min(g.y for g in shape.signs)
-            ink_bottom=origin+max(g.y+g.height for g in shape.signs)
-            if previous_end is None or ink_top>previous_end+1e-4:
-                runs.append([ink_top,ink_bottom])
+                placements.append({'id': item['id'], 'type': 'word',
+                    'signs': item['signs'], 'color': item.get('color', '#192433'),
+                    'bold': item.get('bold', False), 'y': round(origin, 5),
+                    'height': round(shape.height, 5),
+                    'quadrat': _quadrat_object_payload(item, shape)})
+            ink_top = origin + min(g.y for g in shape.signs)
+            ink_bottom = origin + max(g.y + g.height for g in shape.signs)
+            if previous_end is None or ink_top > previous_end + 1e-4:
+                runs.append([ink_top, ink_bottom])
             else:
-                runs[-1][1]=max(runs[-1][1],ink_bottom)
-            previous_end=origin+shape.height
+                runs[-1][1] = max(runs[-1][1], ink_bottom)
+            previous_end = origin + shape.height
             for glyph in shape.signs:
-                word_ink.append((left+glyph.x,origin+glyph.y,
-                                 glyph.width,glyph.height))
-        columns.append({'placements':placements,'kind':'words','span':1,
-            'text_top':round(projected[0][2],5),
-            'text_bottom':round(runs[-1][1],5),
-            'text_runs':[(round(a,5),round(b,5)) for a,b in runs],
-            'terminal_gap_removed':True,
-            **({'symbol_gap_justify':True} if share>1e-7 else {}),
-            **({'ink_bottom_aligned':True} if aligned else {})})
-        stats['computed_columns']+=1
-        pending=[]
-        lane_cursor=top
-        slot+=1
+                word_ink.append((left + glyph.x, origin + glyph.y,
+                                 glyph.width, glyph.height))
+        columns.append({'placements': placements, 'kind': 'words', 'span': 1,
+            'text_top': round(projected[0][2], 5),
+            'text_bottom': round(runs[-1][1], 5),
+            'text_runs': [(round(a, 5), round(b, 5)) for a, b in runs],
+            'terminal_gap_removed': True,
+            **({'symbol_gap_justify': True} if expanded else {}),
+            **({'ink_bottom_aligned': True} if aligned else {})})
+        stats['computed_columns'] += 1
+        pending = []
+        lane_cursor = top
+        slot += 1
 
     def advance_lane(overflow=False):
         nonlocal lane_start,lane_cursor
