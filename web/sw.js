@@ -24,8 +24,8 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
   const publication=await response.json();
   if(publication.format!=='mdwnfr-offline-publication-v1'||publication.complete!==true||!Array.isArray(publication.assets))
     throw Error('Unsupported offline publication');
-  // Never delete a previously installed cache if a repeated installation fails.
-  const previouslyInstalled=await caches.has(CACHE);
+  // build_static.py replaces CACHE with a release-specific fingerprint.
+  // A partial replacement must never write into the active release cache.
   const cache=await caches.open(CACHE);
   try {
     // Serial verification bounds transient memory, including on smaller iPhones.
@@ -34,13 +34,14 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
     await cache.put(MANIFEST,new Response(JSON.stringify(publication),{
       headers:{'Content-Type':'application/json'}}));
     await self.skipWaiting();
-  }catch(error){if(!previouslyInstalled)await caches.delete(CACHE);throw error;}
+  }catch(error){await caches.delete(CACHE);throw error;}
 })()));
 
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
-  // Only after successfully installing the new cache do we remove old revisions.
-  for(const key of await caches.keys())
-    if(key.startsWith(PREFIX)&&key!==CACHE)await caches.delete(key);
+  // Preserve one complete prior release for still-open tabs and rollback.
+  // Do not remove anything until this release finished staging and activating.
+  const previous=(await caches.keys()).filter(key=>key.startsWith(PREFIX)&&key!==CACHE);
+  for(const key of previous.slice(0,-1))await caches.delete(key);
   await self.clients.claim();
 })()));
 
