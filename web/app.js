@@ -1383,7 +1383,9 @@ function addObjectResizeHandles(node,placement){
 function beginObjectDrag(e,placement,column,page,node){
  if(e.button!==0||e.target.closest('.art-resize,.table-cell-view'))return;
  const original=objectById(placement.id);
- if(!original)return;
+ if(!original||insertDraft)return;
+ const draft=startExistingObjectPreview(original,node);
+ if(!draft)return;
  const source=itemIndexById.get(placement.id);
  const unit=zoom*pxmm;
  const isNested=original.type==='table'||original.type==='cartouche';
@@ -1393,11 +1395,28 @@ function beginObjectDrag(e,placement,column,page,node){
   onMove:({dx,dy})=>{
    node.classList.add('drag-preview');
    node.style.transform='translate('+dx/zoom+'px,'+dy/zoom+'px)';
+   const x=dx/unit,y=dy/unit;
+   const margins=doc.margins_mm||{top:18,bottom:18};
+   const room=Math.max(0,page.height-margins.top-margins.bottom-placement.height);
+   draft.object.y_align=Math.min(1,Math.max(0,
+    (original.y_align??.5)+(room?y/room:0)));
+   draft.object.x_offset_mm=Math.max(-2000,Math.min(2000,
+    Math.round(((original.x_offset_mm||0)+
+      (doc.direction==='rtl'?-x:x))*10)/10));
+   if(isNested){
+    const horizontalRoom=Math.max(0,column.width-placement.width_mm);
+    draft.object.x_align=horizontalRoom?Math.min(1,Math.max(0,
+     (placement.x+x-column.x)/horizontalRoom)):0;
+   }
+   if(performance.now()-(draft.lastReflow||0)>170){
+    draft.lastReflow=performance.now();requestInsertPreview();
+   }
   },
-  onCancel:reset,
+  onCancel:()=>{reset();finishExistingObjectPreview(draft,null);},
   onFinish:({moved,dx,dy,clientX,clientY})=>{
-   reset();
-   if(!moved){selectWord(placement.id);return;}
+   node.classList.remove('drag-preview');
+   if(!moved){reset();finishExistingObjectPreview(draft,null);
+    selectWord(placement.id);return;}
    const deltaX=dx/unit,deltaY=dy/unit;
    const hit=clipartDropIndex(page,clientX,clientY,placement.id);
    const destination=hit?.page??page;
@@ -1439,7 +1458,7 @@ function beginObjectDrag(e,placement,column,page,node){
       y_align:Math.round(yAlign*10000)/10000};
    }
    selectWord(placement.id);
-   void apply(action);
+   finishExistingObjectPreview(draft,action);
   }
  });
 }
