@@ -467,6 +467,33 @@ class ArtworkWordFlow(unittest.TestCase):
             self.assertFalse(col.get('symbol_gap_justify',False))
             self.assert_natural_ink(layout)
 
+    def test_artwork_sectors_justify_without_leaving_box_only_stretch(self):
+        from mdwnfr.document import new_document, word, clipart
+        from mdwnfr.layout import incremental_layout_document, expand_compact_layout
+        for direction in ('rtl','ltr'):
+            with self.subTest(direction=direction):
+                doc=new_document('Contour sector distribution',
+                                 direction=direction,surface='A3',font_size_pt=10)
+                artwork=clipart('horus-falcon-raster',60,'normal')
+                artwork['y_align']=.25
+                doc['items']=[artwork]+[word(['𓅓','𓏏','𓈖']) for _ in range(720)]
+                full=layout_document(doc)
+                affected=[c for page in full['pages'] for c in page['columns']
+                          if c['kind']=='words' and len(c.get('sector_terminal_ids',()))>1]
+                self.assertTrue(affected,
+                    'Text must retain separate upper/lower sectors along the falcon')
+                for col in affected:
+                    for word_id in col['sector_terminal_ids']:
+                        terminal=next(p for p in col['placements'] if p['id']==word_id)
+                        self.assertAlmostEqual(terminal['quadrat']['flexible_gaps'][-1],
+                                               0,places=6,
+                          msg='Every silhouette-separated sector ends on visible ink')
+                compact,_=incremental_layout_document(doc,compact=True)
+                detailed=expand_compact_layout(compact,
+                    {object_['id']:object_ for object_ in doc['items']})
+                self.assertEqual(detailed,full,
+                    'Compact browser projections must preserve every sector gap')
+
     def test_compact_wrapped_layout_matches_full_geometry(self):
         from mdwnfr.layout import incremental_layout_document,expand_compact_layout
         doc=self.document(offset=-22)
