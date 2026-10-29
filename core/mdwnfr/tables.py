@@ -177,7 +177,9 @@ def typeset_table(obj:dict, sign_width:float, width_mm:float, usable_height:floa
     if each-2*padding<=2:raise TableError('Table columns too narrow for signs')
     calculated=[];heights=[]
     for ri,row in enumerate(obj['rows']):
-        cells=[];row_height=max(sign_width*.75,6)
+        # A blank table row must still be a useful, finger-selectable area.
+        # Content-heavy rows expand naturally according to their quadrats.
+        cells=[];row_height=max(sign_width*2.5,12)
         for ci,entry in enumerate(row):
             words=[];formula_error=None
             if entry['mode']=='text':
