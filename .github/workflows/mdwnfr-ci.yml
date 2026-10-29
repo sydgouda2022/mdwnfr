@@ -1,5 +1,5 @@
 name: MdwNfr CI and pinned Hieroglyphic Keyboard verification
-# Release: verified dividers follow shared text columns below artwork.
+# Release: table cells receive usable dimensions and direct editing.
 on:
   push:
     branches: [main]
