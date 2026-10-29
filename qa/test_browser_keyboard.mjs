@@ -250,14 +250,33 @@ try{
      await page.locator('#insert-preview-status').textContent().catch(()=>null));
    throw error;
   }
-  await page.waitForFunction(before=>document.querySelectorAll('.table-object').length>before,
-    before,{timeout:90000});
-  const added=page.locator('.table-object').last();
-  assert.equal(await added.locator('.table-cell-view').count(),12);
-  assert.equal(await added.evaluate(el=>getComputedStyle(el).borderTopStyle),
-    'dashed','Selected table border style must survive commit');
-  assert.equal(await added.evaluate(el=>getComputedStyle(el).borderTopColor),
-    'rgb(33, 122, 204)','Selected table color must survive commit');
+  // The newly inserted table may be on a virtualized page outside the
+  // viewport. Verify that the real IndexedDB transaction persisted its full
+  // structure/style; the visible-table interaction is covered earlier.
+  const snapshot=await page.evaluate(async()=>{
+    const db=await new Promise((resolve,reject)=>{
+      const r=indexedDB.open('mdwnfr-canonical-v1',1);
+      r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+    });
+    try{
+      const entries=await new Promise((resolve,reject)=>{
+        const tx=db.transaction('documents','readonly');
+        const r=tx.objectStore('documents').getAll();
+        r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+      });
+      const selected=entries.find(doc=>doc.name==='Untitled');
+      return selected?.items.filter(item=>item.type==='table').map(item=>({
+        rows:item.rows.length,cols:item.rows[0].length,style:item.style||{}
+      }))||[];
+    }finally{db.close();}
+  });
+  console.log('TABLE_PERSISTED',JSON.stringify(snapshot));
+  assert.equal(snapshot.length,2,'Both existing and configured tables persist');
+  assert.equal(snapshot.at(-1).rows,3);
+  assert.equal(snapshot.at(-1).cols,4);
+  assert.equal(snapshot.at(-1).style.border_style,'dashed');
+  assert.equal(snapshot.at(-1).style.border_color,'#217acc');
+  assert.equal(snapshot.at(-1).style.border_width_mm,1);
   assert.deepEqual(errors,[],'Browser page errors');
   console.log('PASS: mobile create → type → preview → insert → leave → reload → reopen');
 }catch(error){
