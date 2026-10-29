@@ -1463,25 +1463,20 @@ function beginObjectDrag(e,placement,column,page,node){
  });
 }
 function beginObjectResize(e,placement,node,edge){
- if(e.button!==0)return;
+ if(e.button!==0||insertDraft)return;
  e.preventDefault();e.stopPropagation();
  const original=objectById(placement.id);
  if(!original)return;
  selectWord(placement.id);
+ const draft=startExistingObjectPreview(original,node);
+ if(!draft)return;
  const initial=placement.width_mm;
  const aspect=placement.width_mm/Math.max(.01,placement.height);
  const isCartouche=original.type==='cartouche';
  const isTable=original.type==='table';
  const baseline=isCartouche?(original.enclosure_padding_mm||0)
-   :(original.width_mm??initial);
- const ghost=document.createElement('div');
- ghost.className='object-resize-ghost';
- ghost.style.left=node.style.left;ghost.style.top=node.style.top;
- ghost.style.width=mm(placement.width_mm);ghost.style.height=mm(placement.height);
- ghost.setAttribute('aria-hidden','true');
- node.parentElement.append(ghost);
- let value=baseline;
- const clear=()=>ghost.remove();
+  :(original.width_mm??initial);
+ let value=baseline,lastReflow=0;
  trackObjectPointer(e,{node,threshold:0,
   onMove:({dx,dy})=>{
    const factor=(edge.includes('left')?-1:edge.includes('right')?1:0);
@@ -1491,26 +1486,32 @@ function beginObjectResize(e,placement,node,edge){
    const delta=Math.abs(changeX)>=Math.abs(changeY)?changeX:changeY;
    if(isCartouche){
     value=Math.min(30,Math.max(0,Math.round((baseline+delta/2)*10)/10));
+    draft.object.enclosure_padding_mm=value;
    }else{
     value=Math.min(isTable?500:300,Math.max(isTable?15:6,
       Math.round((baseline+delta)*10)/10));
+    draft.object.width_mm=value;
    }
+   // Resize the REAL object, not a placeholder rectangle. Authoritative
+   // Python compositions replace its internal cells, glyphs and text flow.
    const width=isCartouche?Math.max(1,initial+2*(value-baseline)):value;
-   ghost.style.width=mm(width);
-   ghost.style.height=mm(placement.height*width/initial);
-   ghost.title=(isCartouche?'Enclosure padding: ':'Width: ')+value+' mm';
+   node.style.width=mm(width);
+   node.style.height=mm(placement.height*width/initial);
+   if(performance.now()-lastReflow>170){
+    lastReflow=performance.now();
+    requestInsertPreview();
+   }
   },
-  onCancel:clear,
+  onCancel:()=>finishExistingObjectPreview(draft,null),
   onFinish:({moved})=>{
-   clear();
-   if(!moved||value===baseline)return;
+   if(!moved||value===baseline){finishExistingObjectPreview(draft,null);return;}
    let action;
    if(isCartouche)action={op:'replace_cartouche',id:original.id,
-     object:{...structuredClone(original),enclosure_padding_mm:value}};
+    object:{...structuredClone(original),enclosure_padding_mm:value}};
    else if(isTable)action={op:'set_table_width',id:original.id,width_mm:value};
    else action={op:original.type==='image'?'set_image':'set_clipart',
-     id:original.id,width_mm:value};
-   void apply(action);
+    id:original.id,width_mm:value};
+   finishExistingObjectPreview(draft,action);
   }
  });
 }
