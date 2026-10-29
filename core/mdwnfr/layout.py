@@ -226,17 +226,19 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
                       'x':_art_x(col['x'],col['width'],ow,owner,doc['direction'],col.get('float_offset')),
                       'y':oy,'flip':'normal'})
         dividers=[]
-        # A physical column can contain several silhouette-free sectors.
-        # Match neighboring slots, not consecutive seeds: upper/lower sectors
-        # are interleaved in reading order and need independent line segments.
+        # A divider separates two occupied physical writing columns, rather
+        # than only pairs of vertically overlapping glyph ink rectangles.
+        # Those ink rectangles are often staggered (especially after artwork
+        # wrapping), and their intersection can omit the bottommost rows even
+        # when BOTH neighboring columns visibly continue below the bird.
+        # First use each column's ink envelope; clip the resulting separator
+        # against the actual artwork silhouette and quarter-column clearance.
         word_slots = {}
         for col in positioned:
             if col['kind']!='words' or not col['placements']:continue
             index=round((col['x']-margins['left'])/width)
-            # A contour column may cross a bird/table silhouette: its upper
-            # and lower ink runs must not be joined by a divider through air.
-            word_slots.setdefault(index,[]).extend(col.get('text_runs',
-                [(col['text_top'],col['text_bottom'])]))
+            word_slots.setdefault(index,[]).append(
+                (col['text_top'],col['text_bottom']))
         # Shared typography metric, proportional to the universal font size.
         divider_thickness = divider_stroke_mm(doc['font_size_pt'])
         for index in sorted(word_slots):
