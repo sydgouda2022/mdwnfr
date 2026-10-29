@@ -1295,7 +1295,7 @@ function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5}){
  window.addEventListener('pointercancel',cancel,true);
  return true;
 }
-const OBJECT_EDGES=['top-left','top','top-right','right','bottom-right','bottom','bottom-left','left'];
+const OBJECT_EDGES=['bottom-right']; // one unambiguous finger-sized resize target
 function addObjectResizeHandles(node,placement){
  // The page itself is scaled to fit a phone. Cancel that scale on hit targets
  // so a 44px handle remains finger-sized in the actual viewport.
