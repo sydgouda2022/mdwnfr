@@ -50,7 +50,7 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
  };
  const readyPreview=async()=>{
   await wait(page,()=>!document.getElementById('insert-sheet-confirm')?.disabled,100000);
-  return page.locator('#insert-preview .paper').count();
+  return page.locator('#pages .draft-page-layer .draft-paper .draft-object').count();
  };
  const screenshot=async(name)=>{
   await page.screenshot({path:'/tmp/mdwnfr-audit-'+config.name+'-'+name+'.png',fullPage:false}).catch(()=>{});
@@ -122,6 +122,8 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
   const n=await readyPreview();
   if(!n)throw Error('No on-page clip art preview');
   const dims=await defaultHeight();
+  const noMini=await page.locator('#insert-preview').count();
+  if(noMini)throw Error('Separate miniature preview still exists');
   await screenshot('clipart');
   await closeDialog();
   const persisted=await page.locator('.clipart-object').count();
@@ -202,7 +204,7 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
   await enterSheet('clipart');
   await page.locator('#artwork-grid .artwork-choice').first().click();
   await readyPreview();
-  const box=await page.locator('.insert-preview-selection').boundingBox();
+  const box=await page.locator('#pages .draft-page-layer .draft-object').boundingBox();
   if(!box)throw Error('No drag target');
   await page.mouse.move(box.x+box.width*.5,box.y+box.height*.5);
   await page.mouse.down();
@@ -218,7 +220,7 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
   await page.locator('#artwork-grid .artwork-choice').first().click();
   await readyPreview();
   const original=Number(await page.locator('#insert-object-width').inputValue());
-  const box=await page.locator('.insert-preview-handle').boundingBox();
+  const box=await page.locator('#pages .draft-page-layer .draft-object .art-resize.bottom-right').boundingBox();
   if(!box)throw Error('No resize handle');
   await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
   await page.mouse.down();
