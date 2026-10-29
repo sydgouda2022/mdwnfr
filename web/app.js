@@ -1041,10 +1041,13 @@ $('insert-image-file').addEventListener('change',async e=>{
  finally{d.busy=false;}
 });
 $('insert-sheet-cancel').onclick=closeInsertSheet;
-$('insert-sheet-cancel-top').onclick=closeInsertSheet;
-$('insert-dialog-backdrop').addEventListener('pointerdown',e=>{
- if(e.target===$('insert-dialog-backdrop'))closeInsertSheet();
-});
+// A contextual inspector is not a modal dialog. Touching outside it and the
+// draft object dismisses the uncommitted draft, returning to the real page.
+document.addEventListener('pointerdown',e=>{
+ if(!insertDraft)return;
+ if(e.target.closest('#insert-sheet,.draft-object'))return;
+ closeInsertSheet();
+},true);
 document.addEventListener('keydown',e=>{
  if(e.key==='Escape'&&!$('insert-dialog-backdrop').hidden){
   e.preventDefault();e.stopImmediatePropagation();closeInsertSheet();
@@ -1515,6 +1518,7 @@ function showLibraryError(message=''){
  const el=$('library-error');el.hidden=!message;el.textContent=message;
 }
 function showLibrary(){
+ if(insertDraft)closeInsertSheet();
  ++layoutVersion;queuedLayout=null;repairedDetailRevisions.clear();libraryScreen.hidden=false;editorScreen.hidden=true;
  releaseLayoutWorker();
  for(const job of layoutPending.values())job.reject(new Error('Editor closed'));
@@ -1525,6 +1529,7 @@ function showLibrary(){
  document.title='MdwNfr — Documents';
 }
 function showEditor(){
+ if(insertDraft)closeInsertSheet();
  libraryScreen.hidden=true;editorScreen.hidden=false;closePanels();
  document.title='MdwNfr — '+doc.name;
 }
