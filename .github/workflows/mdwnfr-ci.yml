@@ -76,6 +76,7 @@ jobs:
           python tools/vendor_runtime.py
           python tools/build_static.py
           node qa/test_service_worker_cache.mjs
+          node qa/test_atomic_service_worker.mjs
           node qa/test_pages_overview.mjs
       - name: Install Wrangler only after explicit production cutover
         if: github.event_name != 'pull_request' && (vars.CUTOVER_ENABLED == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_now) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[deploy-cloudflare]')))
