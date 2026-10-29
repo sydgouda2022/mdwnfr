@@ -10,7 +10,7 @@ from copy import deepcopy
 from functools import lru_cache
 from math import ceil
 from .document import SURFACES, assert_document, DocumentError, artwork_catalog, validated_margins, symbol_ids_for_word
-from .quadrat import compose, expand_internal, expand_after_word, expand_to_ink_bottom, _shape_ratio
+from .quadrat import compose, expand_internal, expand_to_ink_bottom, _shape_ratio
 from .silhouette import free_sectors, free_word_starts, solid_object_mask, cartouche_object_mask, silhouettes_collide
 from .tables import typeset_table, paginate_table, TableError
 from .cartouches import typeset_cartouche, CartoucheError
@@ -188,7 +188,7 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
                                'kind':seed.get('kind','words'), 'span':span,
                                **({'ink_bottom_aligned':True} if seed.get('ink_bottom_aligned') else {}),
                                **({'terminal_gap_removed':True} if seed.get('terminal_gap_removed') else {}),
-                               **({'word_boundary_justify':True} if seed.get('word_boundary_justify') else {}),
+                               **({'symbol_gap_justify':True} if seed.get('symbol_gap_justify') else {}),
                                **({'table_fragment_index':seed['table_fragment_index']} if 'table_fragment_index' in seed else {}),
                                'x':round(x,5), 'width':col_width,'index':ci,
                                **({'slot_offset':seed['slot_offset'],'slot_width':used_slots}
@@ -351,55 +351,90 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         word_ink = []
 
     def finish_lane(overflow=False):
-        """Commit one reading column; only WORD columns advance the cursor."""
+        """Finish one lane by stretching symbol-row whitespace, not empty boxes."""
         nonlocal pending, slot, lane_cursor
         if not pending:
             return
-        # A silhouette does not invalidate justification in unrelated lanes.
-        left=slot*width
-        clearance=object_clearance_mm(width)
-        near=any(ob[5]-clearance<left+width and ob[5]+ob[3]+clearance>left
-                 for ob in obstacles)
-        adjustable = not near and overflow and len(pending)>1
-        last_gap=pending[-1][1].flexible_gaps[-1]
-        natural=sum(q.height for _,q,_ in pending)
-        extra=max(0.,bottom-lane_start-natural) if adjustable else 0.
-        shares=([((extra+last_gap)/(len(pending)-1))]*(len(pending)-1)+[-last_gap]
-                if adjustable else [0.]*(len(pending)-1)+[-last_gap])
-        cursor=lane_start
+        left = slot * width
+        clearance = object_clearance_mm(width)
+        nearby = [ob for ob in obstacles
+                  if ob[5]-clearance < left+width and ob[5]+ob[3]+clearance > left]
+        last = pending[-1][1]
+        last_gap = last.flexible_gaps[-1]
+        eligible = sum(len(q.signs) for _, q, _ in pending) - len(last.rows[-1])
+        original_bottom = pending[-1][2] + last.height
+        available = max(0., bottom-original_bottom+last_gap)
+        target = available/eligible if overflow and len(pending)>1 and eligible else 0.
+
+        def project(share):
+            result = []
+            cursor = lane_start
+            for index, (item, quadrat, original_y) in enumerate(pending):
+                terminal = index == len(pending)-1
+                count = len(quadrat.signs) - (len(quadrat.rows[-1]) if terminal else 0)
+                extra = share*count - (last_gap if terminal else 0.)
+                shape = (expand_to_ink_bottom(quadrat, extra) if terminal
+                         else expand_internal(quadrat, extra))
+                origin = max(original_y, cursor)
+                result.append((item, shape, origin, extra))
+                cursor = origin+shape.height
+            return result
+
+        def safe(projected):
+            for item, shape, origin, _ in projected:
+                if origin+max(g.y+g.height for g in shape.signs)>bottom+1e-5:
+                    return False
+                allowed = free_word_starts(shape,column_left=left,top=top,
+                    bottom=bottom,clearance=clearance,obstacles=nearby,
+                    ink_expansion=(max(g.font_size for g in shape.signs)*.006
+                                   if item.get('bold',False) else 0.))
+                if not any(a-1e-5<=origin<=b+1e-5 for a,b in allowed):
+                    return False
+            return True
+
+        share = target
+        if share>0 and nearby and not safe(project(share)):
+            # Binary-search only the legal expansion; a glyph must never
+            # move through the artwork's opaque 2D silhouette.
+            lo, hi = 0., share
+            for _ in range(20):
+                mid=(lo+hi)/2
+                if safe(project(mid)):lo=mid
+                else:hi=mid
+            share=lo
+        projected=project(share)
+        aligned=(share>0 and abs(projected[-1][2]+
+            max(g.y+g.height for g in projected[-1][1].signs)-bottom)<1e-3)
         placements=[]
         runs=[]
-        for i,(item,q,origin) in enumerate(pending):
-            if adjustable:
-                origin=cursor
-            shift=shares[i] if adjustable else (-last_gap if i==len(pending)-1 else 0.)
+        previous_end=None
+        for item,shape,origin,extra in projected:
             if compact:
                 placements.append((item['id'],round(origin,5),
-                                   round(q.height+shift,5),shift))
+                                   round(shape.height,5),round(extra,10)))
             else:
-                shape=(expand_to_ink_bottom(q,shift) if i==len(pending)-1
-                       else expand_after_word(q,shift) if adjustable else q)
                 placements.append({'id':item['id'],'type':'word',
                     'signs':item['signs'],'color':item.get('color','#192433'),
                     'bold':item.get('bold',False),'y':round(origin,5),
                     'height':round(shape.height,5),
                     'quadrat':_quadrat_object_payload(item,shape)})
-            if i==0 or origin>pending[i-1][2]+pending[i-1][1].height+1e-4:
-                runs.append([origin+min(g.y for g in q.signs),
-                             origin+max(g.y+g.height for g in q.signs)])
+            ink_top=origin+min(g.y for g in shape.signs)
+            ink_bottom=origin+max(g.y+g.height for g in shape.signs)
+            if previous_end is None or ink_top>previous_end+1e-4:
+                runs.append([ink_top,ink_bottom])
             else:
-                runs[-1][1]=origin+max(g.y+g.height for g in q.signs)
-            for glyph in q.signs:
-                word_ink.append((left+glyph.x,origin+glyph.y,glyph.width,glyph.height))
-            cursor=origin+q.height+(shares[i] if adjustable else 0.)
-
+                runs[-1][1]=max(runs[-1][1],ink_bottom)
+            previous_end=origin+shape.height
+            for glyph in shape.signs:
+                word_ink.append((left+glyph.x,origin+glyph.y,
+                                 glyph.width,glyph.height))
         columns.append({'placements':placements,'kind':'words','span':1,
-            'text_top':round(placements[0][1] if compact else placements[0]['y'],5),
+            'text_top':round(projected[0][2],5),
             'text_bottom':round(runs[-1][1],5),
             'text_runs':[(round(a,5),round(b,5)) for a,b in runs],
             'terminal_gap_removed':True,
-            **({'word_boundary_justify':True,'ink_bottom_aligned':True}
-                if adjustable else {})})
+            **({'symbol_gap_justify':True} if share>1e-7 else {}),
+            **({'ink_bottom_aligned':True} if aligned else {})})
         stats['computed_columns']+=1
         pending=[]
         lane_cursor=top
@@ -726,8 +761,6 @@ def expand_compact_page(page: dict, document_by_id: dict[str, dict],
             last_ink=(column.get('terminal_gap_removed')
                       and entry_index==len(column['placements'])-1)
             quadrat=(expand_to_ink_bottom(source,extra) if last_ink
-                     else expand_after_word(source,extra)
-                     if column.get('word_boundary_justify')
                      else expand_internal(source,extra))
             placements.append({'id': ident, 'type': 'word', 'signs': signs,
                                'color': obj.get('color', '#192433'),
