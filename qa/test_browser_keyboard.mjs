@@ -8,7 +8,6 @@ const context=await browser.newContext({
   hasTouch:true,locale:'en-US',serviceWorkers:'block'
 });
 const page=await context.newPage();
- page.on('console',msg=>{if(/^(TABLE_CONFIRM_|INSERT_CONFIRM_EVENT)/.test(msg.text()))console.log(msg.text());});
 const errors=[];
 page.on('pageerror',e=>errors.push(e.message));
 page.setDefaultTimeout(30000);
@@ -228,19 +227,7 @@ try{
   await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm').disabled,
     null,{timeout:90000});
   const before=await page.locator('.table-object').count();
-  console.log('TABLE_BEFORE_CLICK',JSON.stringify(await page.evaluate(()=>({
-   title:document.getElementById('insert-sheet-title').textContent,
-   enabled:!document.getElementById('insert-sheet-confirm').disabled,
-   visible:!document.getElementById('insert-dialog-backdrop').hidden,
-   status:document.getElementById('insert-preview-status').textContent
-  }))));
   await page.locator('#insert-sheet-confirm').click();
-  console.log('TABLE_AFTER_CLICK',JSON.stringify(await page.evaluate(()=>({
-   title:document.getElementById('insert-sheet-title').textContent,
-   enabled:!document.getElementById('insert-sheet-confirm').disabled,
-   visible:!document.getElementById('insert-dialog-backdrop').hidden,
-   status:document.getElementById('insert-preview-status').textContent
-  }))));
   try{
    await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden',timeout:30000});
   }catch(error){
