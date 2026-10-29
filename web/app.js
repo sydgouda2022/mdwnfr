@@ -996,6 +996,10 @@ document.addEventListener('keydown',e=>{
 },true);
 $('insert-sheet-confirm').onclick=async()=>{
  const d=insertDraft;
+ if(d?.kind==='table')console.info('TABLE_CONFIRM_TRACE',JSON.stringify({
+  object:!!d.object,valid:d.valid,busy:d.busy,
+  specRequested:d.specRequested,specApplied:d.specApplied,
+  revision:doc?.revision}));
  if(!d?.object||!d.valid||d.busy)return;
  if(d.kind==='table' && (d.specApplied||0)!==(d.specRequested||0)){
   $('insert-preview-status').textContent='Updating table settings; confirm when the latest preview is ready…';
@@ -1006,6 +1010,8 @@ $('insert-sheet-confirm').onclick=async()=>{
   delete_count:1,objects:[d.object],fresh_ids:false}:
   {op:'insert_existing',index:d.index,object:d.object};
  const success=await apply(action);
+ if(d.kind==='table')console.info('TABLE_CONFIRM_FINISHED',JSON.stringify({
+   success,draftStillActive:insertDraft===d,revision:doc?.revision}));
  if(insertDraft!==d)return;
  if(success){closeInsertSheet();clearSelection();
   caretIndex=Math.min(doc.items.length,d.index+1);
