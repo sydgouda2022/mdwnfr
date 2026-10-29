@@ -55,8 +55,8 @@ jobs:
       - name: Exercise Unicode keyboard, font metrics, touch and recovery in both engines
         run: |
           set -euo pipefail
+          node qa/test_object_gestures.mjs
           node qa/test_browser_keyboard.mjs
           node qa/test_font_bounds_browser.mjs
           node qa/test_touch_editing.mjs
-          node qa/test_object_gestures.mjs
           node qa/test_release_update.mjs
