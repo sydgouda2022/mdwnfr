@@ -339,7 +339,7 @@ function paintPageContent(slot,p,shell){
      box.setAttribute('role','button');box.tabIndex=0;
      box.setAttribute('aria-label',`Table cell ${String.fromCharCode(65+cell.column)}${cell.row+1}`);
      const choose=()=>selectTableCell(item.id,cell.row,cell.column);
-     box.addEventListener('click',e=>{e.stopPropagation();choose();});
+     box.addEventListener('click',e=>{e.stopPropagation();choose();if(activePanel!=='format')switchPanel('format');});
      box.addEventListener('dblclick',e=>{e.stopPropagation();choose();if(activePanel!=='format')switchPanel('format');});
      box.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();if(activePanel!=='format')switchPanel('format');}});
      if(selectedTableCell?.tableId===item.id&&selectedTableCell.row===cell.row&&selectedTableCell.column===cell.column)box.classList.add('active');
@@ -755,7 +755,7 @@ $('insert-table').onclick=async()=>{
  if(!doc)return;
  const range=selectedRange();const index=range?range.end:caretIndex;
  const ok=await apply({op:'insert_table',index,rows:2,columns:2});
- if(ok){const obj=doc.items[index];if(obj?.type==='table')selectTableCell(obj.id,0,0);}
+ if(ok){const obj=doc.items[index];if(obj?.type==='table'){selectTableCell(obj.id,0,0);if(activePanel!=='format')switchPanel('format');}}
 };
 function selectedTable(){
  const table=selectedItems();return table.length===1&&table[0]?.type==='table'?table[0]:null;
