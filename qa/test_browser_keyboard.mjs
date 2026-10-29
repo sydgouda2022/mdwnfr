@@ -211,6 +211,40 @@ try{
   await page.locator('#insert-sheet-cancel').click();
   assert.equal(await page.locator('.clipart-object').count(),0,
     'Cancelling image selection does not add a document object');
+  // Reproduce the production failure: configure a table in multiple
+  // rapid changes and ensure Confirm commits the final 3x4 border settings.
+  if(!await page.locator('#format-panel').isVisible())
+    await page.locator('#format-toggle').click();
+  await page.locator('#insert-table').click();
+  await page.locator('#insert-table-rows').fill('3');
+  await page.locator('#insert-table-rows').dispatchEvent('change');
+  await page.locator('#insert-table-columns').fill('4');
+  await page.locator('#insert-table-columns').dispatchEvent('change');
+  await page.locator('#insert-table-border').selectOption('dashed');
+  await page.locator('#insert-table-color').fill('#217acc');
+  await page.locator('#insert-table-line').fill('1');
+  await page.locator('#insert-table-line').dispatchEvent('change');
+  await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm').disabled,
+    null,{timeout:90000});
+  const before=await page.locator('.table-object').count();
+  await page.locator('#insert-sheet-confirm').click();
+  try{
+   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden',timeout:30000});
+  }catch(error){
+   console.error('Table confirm failure status:',
+     await page.locator('#state').textContent().catch(()=>null));
+   console.error('Table preview status:',
+     await page.locator('#insert-preview-status').textContent().catch(()=>null));
+   throw error;
+  }
+  await page.waitForFunction(before=>document.querySelectorAll('.table-object').length>before,
+    before,{timeout:90000});
+  const added=page.locator('.table-object').last();
+  assert.equal(await added.locator('.table-cell-view').count(),12);
+  assert.equal(await added.evaluate(el=>getComputedStyle(el).borderTopStyle),
+    'dashed','Selected table border style must survive commit');
+  assert.equal(await added.evaluate(el=>getComputedStyle(el).borderTopColor),
+    'rgb(33, 122, 204)','Selected table color must survive commit');
   assert.deepEqual(errors,[],'Browser page errors');
   console.log('PASS: mobile create → type → preview → insert → leave → reload → reopen');
 }catch(error){
