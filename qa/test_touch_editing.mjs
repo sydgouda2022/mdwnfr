@@ -32,7 +32,15 @@ for(const engineName of engines){
    },text);
    const closeFormat=async()=>{if(await page.locator('#format-panel').isVisible())await page.locator('#format-toggle').click();};
    const hold=async(locator)=>{
-    const box=await locator.boundingBox();assert.ok(box);
+    // Reflow swaps whole page nodes; a word can disappear momentarily
+    // between a style transaction and the next layout detail receipt.
+    let box=null;
+    for(let attempt=0;attempt<8&&!box;attempt++){
+     await locator.waitFor({state:'visible',timeout:90000});
+     box=await locator.boundingBox();
+     if(!box)await page.waitForTimeout(100);
+    }
+    assert.ok(box,'The selected word must become visible after reflow');
     const point={pointerId:71,pointerType:'touch',isPrimary:true,button:0,buttons:1,clientX:box.x+box.width/2,clientY:box.y+box.height/2};
     await locator.dispatchEvent('pointerdown',point);
     await page.locator('#edit-menu').waitFor({state:'visible'});
