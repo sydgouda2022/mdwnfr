@@ -47,6 +47,7 @@ Future improvements should prioritize the writing surface, familiar
 navigation and safe local editing over additional floating panels.
 
 Word selection remains quadrat-based rather than character-based. A tap selects
-one whole word; Shift+tap or the existing range handles extend the selection.
+one whole word without obscuring range handles; Shift+tap extends it to
+multiple words, where adjustable range handles appear.
 Edit opens the familiar glyph keyboard on that word, while the quick actions
 reuse the same revisioned style and clipboard commands as Format.
