@@ -730,6 +730,7 @@ async function beginInsertSheet(kind,existingId=null){
  insertDraft={token,kind,index,existingId,object:original?structuredClone(original):null,
               busy:false,valid:false};
  $('object-quick-actions').hidden=true;
+ $('word-quick-actions').hidden=true;
  $('insert-dialog-backdrop').hidden=false;
  $('insert-sheet-title').textContent=(original?'Edit ':'Insert ')+
   ({clipart:'Clip Art',image:'Image',table:'Table',cartouche:'Cartouche'}[kind]);
@@ -1327,6 +1328,7 @@ function startExistingObjectPreview(object,node){
   busy:false,valid:false};
  insertDraft=draft;
  $('object-quick-actions').hidden=true;
+ $('word-quick-actions').hidden=true;
  return draft;
 }
 function finishExistingObjectPreview(draft,action){
@@ -2341,6 +2343,7 @@ function showEditMenu(x,y,target,preserveSelection=false){
  }
  closePanels();updateFormatState();
  $('object-quick-actions').hidden=true;
+ $('word-quick-actions').hidden=true;
  const menu=$('edit-menu');menu.hidden=false;
  const vv=window.visualViewport;
  const left=vv?.offsetLeft||0,top=vv?.offsetTop||0;
@@ -2403,14 +2406,30 @@ function selectedEmbeddedObject(){
  const items=selectedItems();
  return items.length===1 && items[0]?.type!=='word' ? items[0] : null;
 }
+function selectedWholeWords(){
+ const items=selectedItems();
+ return items.length&&items.every(item=>item.type==='word')?items:[];
+}
 function updateObjectQuickActions(){
- const selected=doc&&!editorScreen.hidden&&!insertDraft&&!activePanel&&
-  $('edit-menu').hidden ? selectedEmbeddedObject():null;
+ const available=!!doc&&!editorScreen.hidden&&!insertDraft&&!activePanel&&
+  $('edit-menu').hidden;
+ const selected=available?selectedEmbeddedObject():null;
+ const words=available&&!editingId?selectedWholeWords():[];
  $('object-quick-actions').hidden=!selected;
+ $('word-quick-actions').hidden=!words.length;
  if(selected){
   const label={clipart:'illustration',image:'image',table:'table',
    cartouche:'cartouche'}[selected.type]||'object';
   $('object-action-edit').setAttribute('aria-label','Edit selected '+label);
+ }
+ if(words.length){
+  $('word-action-edit').hidden=words.length!==1;
+  $('word-action-bold').setAttribute('aria-pressed',
+   String(words.every(word=>word.bold)));
+  $('word-action-black').setAttribute('aria-pressed',
+   String(words.every(word=>word.color==='#192433')));
+  $('word-action-red').setAttribute('aria-pressed',
+   String(words.every(word=>word.color==='#ac2533')));
  }
 }
 $('object-action-edit').onclick=()=>{
@@ -2422,6 +2441,26 @@ $('object-action-copy').onclick=async()=>{
 };
 $('object-action-delete').onclick=async()=>{
  if(selectedEmbeddedObject()&&!insertDraft)await deleteSelection();
+};
+$('word-action-edit').onclick=()=>{
+ const words=selectedWholeWords();
+ if(words.length===1&&!insertDraft)openWord(words[0].id);
+};
+$('word-action-bold').onclick=()=>{
+ const words=selectedWholeWords();
+ if(words.length&&!insertDraft)void styleSelected({bold:!words.every(word=>word.bold)});
+};
+$('word-action-black').onclick=()=>{
+ if(selectedWholeWords().length&&!insertDraft)void styleSelected({color:'#192433'});
+};
+$('word-action-red').onclick=()=>{
+ if(selectedWholeWords().length&&!insertDraft)void styleSelected({color:'#ac2533'});
+};
+$('word-action-copy').onclick=async()=>{
+ if(selectedWholeWords().length&&!insertDraft)await copySelection();
+};
+$('word-action-delete').onclick=async()=>{
+ if(selectedWholeWords().length&&!insertDraft)await deleteSelection();
 };
 function updateSelection(){
  const range=selectedRange();
