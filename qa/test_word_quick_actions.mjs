@@ -67,9 +67,13 @@ for(const [label,engine,width,height] of [
    null,{timeout:90000});
 
   // Whole-word multi-select keeps formatting, but never edits a random word.
-  await page.locator('.word').first().click();
-  // At Fit Page, the next word's full container may overlap a neighbor.
-  // A real user taps visible ink, not an invisible DOM rectangle center.
+  // At Fit Page, DOM hitboxes overlap. Both range endpoints are selected
+  // by real taps at visible glyph centers, never container bounding boxes.
+  const firstInk=await page.locator('.word').first()
+   .locator('.glyph-ink-svg text').first().boundingBox();
+  assert.ok(firstInk&&firstInk.width&&firstInk.height,'First glyph needs visible ink');
+  await page.mouse.click(firstInk.x+firstInk.width/2,firstInk.y+firstInk.height/2);
+  assert.equal(await page.locator('#selection-summary').textContent(),'1 selected');
   const ink=await page.locator('.word').nth(1)
    .locator('.glyph-ink-svg text').first().boundingBox();
   assert.ok(ink&&ink.width&&ink.height,'Second quadrat needs visible ink');
