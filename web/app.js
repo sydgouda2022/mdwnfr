@@ -710,6 +710,7 @@ function closeInsertSheet(){
   void renderPageDetails(previous.pageIndex);
  $('insert-dialog-backdrop').hidden=true;
  $('insert-sheet-confirm').disabled=true;
+ updateObjectQuickActions();
 }
 function insertIndex(){
  const range=selectedRange();
@@ -1325,6 +1326,7 @@ function startExistingObjectPreview(object,node){
   firstPositionShown:true,savedStyle:node.style.cssText,
   busy:false,valid:false};
  insertDraft=draft;
+ $('object-quick-actions').hidden=true;
  return draft;
 }
 function finishExistingObjectPreview(draft,action){
