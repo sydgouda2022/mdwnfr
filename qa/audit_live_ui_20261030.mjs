@@ -204,8 +204,11 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
    if(!rect)throw Error('Cartouche is not visible for touch editing');
    const x=rect.x+rect.width/2,y=rect.y+rect.height/2;
    await page.touchscreen.tap(x,y);
+   await page.locator('#object-quick-actions').waitFor({state:'visible',timeout:15000});
    if(await page.locator('.range-handle').count())
     throw Error('Text-range handles are obscuring the cartouche');
+   if(await page.locator('#format-panel').isVisible())
+    throw Error('Selecting a cartouche unexpectedly opened Format');
    await page.touchscreen.tap(x,y);
   }else await cart.dblclick();
   await page.locator('#insert-screen-cartouche').waitFor({state:'visible',timeout:30000});
