@@ -1748,6 +1748,9 @@ function setUiFromDoc(){
   item.type==='cartouche'?item.items.length:0),0)+' words';
  $('revision').textContent='Revision '+doc.revision;
  updateFormatState();
+ // Python's committed style delta can change Bold / ink without changing
+ // which word is selected. Refresh the contextual strip from that revision.
+ updateObjectQuickActions();
 }
 async function initialize(){
  try {
