@@ -168,6 +168,8 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
  await check('table-cell-edit-open',async()=>{
   const table=page.locator('.table-object').first();
   await table.locator('.table-cell-view').first().click();
+  if(await visible('#format-panel'))throw Error('Table cell tap opened a panel over the page');
+  await page.locator('#format-toggle').click();
   await page.locator('#table-controls').waitFor({state:'visible',timeout:30000});
   await page.locator('#table-cell-value').fill('𓅓𓏏');
   await page.locator('#table-cell-save').click();
