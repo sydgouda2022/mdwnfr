@@ -40,6 +40,14 @@ for(const [label,browserType,width,height] of [
   assert.equal(await page.locator('#insert-dialog-backdrop').isVisible(),false);
   assert.equal(await page.locator('.range-handle').count(),0,
    'Text range handles must not block cartouche touch editing');
+  const afterFirst=await page.evaluate(({x,y})=>{
+   const node=document.elementFromPoint(x,y);
+   return {tag:node?.tagName,classes:node?.getAttribute('class'),
+    cartouche:node?.closest('.cartouche-object')?.dataset.id,
+    handle:node?.closest('.art-resize')?.getAttribute('class'),
+    panel:!!document.querySelector('#insert-screen-cartouche:not([hidden])')};
+  },{x:cx,y:cy});
+  console.log('CART_TOUCH_HIT',label,JSON.stringify({at,afterFirst}));
   // A second real finger tap must open the non-modal cartouche inspector.
   await page.touchscreen.tap(cx,cy);
   await page.locator('#insert-screen-cartouche').waitFor({state:'visible',timeout:15000});
