@@ -345,7 +345,10 @@ function paintPageContent(slot,p,shell){
      box.setAttribute('role','button');box.tabIndex=0;
      box.setAttribute('aria-label',`Table cell ${String.fromCharCode(65+cell.column)}${cell.row+1}`);
      const choose=()=>selectTableCell(item.id,cell.row,cell.column);
-     box.addEventListener('click',e=>{e.stopPropagation();choose();if(activePanel!=='format')switchPanel('format');});
+     // Selecting a cell must not slide the Format inspector over the next
+     // tap. On phones this previously swallowed a double-tap intended to
+     // reopen the table editor. Format remains available via its toolbar icon.
+     box.addEventListener('click',e=>{e.stopPropagation();choose();});
      box.addEventListener('dblclick',e=>{e.stopPropagation();choose();void beginInsertSheet('table',item.id);});
      box.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();if(activePanel!=='format')switchPanel('format');}});
      if(selectedTableCell?.tableId===item.id&&selectedTableCell.row===cell.row&&selectedTableCell.column===cell.column)box.classList.add('active');
