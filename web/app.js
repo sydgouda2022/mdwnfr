@@ -373,7 +373,10 @@ function paintPageContent(slot,p,shell){
     if(range&&itemIndex>=range.start&&itemIndex<range.end)node.classList.add('selected','in-range');
     node.setAttribute('role','button');node.tabIndex=0;node.setAttribute('aria-label','Hieroglyphic cartouche');
     node.addEventListener('click',e=>{e.stopPropagation();selectWord(item.id,e.shiftKey);});
-    node.addEventListener('dblclick',e=>{e.stopPropagation();void beginInsertSheet('cartouche',item.id);});
+    node.addEventListener('dblclick',e=>{e.stopPropagation();
+      if(performance.now()-lastCartoucheTouchOpen>700)
+       void beginInsertSheet('cartouche',item.id);
+    });
     node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectWord(item.id);if(activePanel!=='format')switchPanel('format');}});
     node.addEventListener('pointerdown',e=>beginObjectDrag(e,item,c,p,node));
     const geometry=item.cartouche;
@@ -1389,6 +1392,22 @@ function addObjectResizeHandles(node,placement){
   node.append(handle);
  }
 }
+// Native dblclick is not reliable for cartouches in small-screen iOS WebKit.
+// Touch double-tap is handled at the end of a stationary pointer gesture,
+// while mouse double-click and keyboard activation remain separate. Dragging
+// or resizing never counts as a tap and cannot open the editing inspector.
+let recentCartoucheTouch=null,lastCartoucheTouchOpen=-Infinity;
+function noteCartoucheTouch(id,x,y){
+ const now=performance.now();
+ const previous=recentCartoucheTouch;
+ const twice=previous?.id===id && now-previous.time<=520 &&
+  Math.hypot(x-previous.x,y-previous.y)<=30;
+ recentCartoucheTouch=twice?null:{id,x,y,time:now};
+ if(twice){
+  lastCartoucheTouchOpen=now;
+  void beginInsertSheet('cartouche',id);
+ }
+}
 function beginObjectDrag(e,placement,column,page,node){
  if(e.button!==0||e.target.closest('.art-resize,.table-cell-view'))return;
  const original=objectById(placement.id);
@@ -1421,11 +1440,19 @@ function beginObjectDrag(e,placement,column,page,node){
     draft.lastReflow=performance.now();requestInsertPreview();
    }
   },
-  onCancel:()=>{reset();finishExistingObjectPreview(draft,null);},
+  onCancel:()=>{recentCartoucheTouch=null;reset();finishExistingObjectPreview(draft,null);},
   onFinish:({moved,dx,dy,clientX,clientY})=>{
    node.classList.remove('drag-preview');
-   if(!moved){reset();finishExistingObjectPreview(draft,null);
-    selectWord(placement.id);return;}
+   if(!moved){
+    reset();finishExistingObjectPreview(draft,null);
+    selectWord(placement.id);
+    if(original.type==='cartouche' &&
+       (e.pointerType==='touch'||e.pointerType==='pen'))
+     noteCartoucheTouch(placement.id,clientX,clientY);
+    else recentCartoucheTouch=null;
+    return;
+   }
+   recentCartoucheTouch=null;
    const deltaX=dx/unit,deltaY=dy/unit;
    const hit=clipartDropIndex(page,clientX,clientY,placement.id);
    const destination=hit?.page??page;
@@ -2098,7 +2125,11 @@ function selectAll(){
 }
 function drawSelectionHandles(){
  const indices=selectedRange();
- if(!indices||!layoutCache){
+ // The handles adjust ranges of hieroglyphic words only. When attached
+ // to a cartouche or illustration they obscure the next tap/resize handle,
+ // particularly in the narrow WebKit phone viewport.
+ if(!indices||!layoutCache||
+    doc.items.slice(indices.start,indices.end).some(item=>item.type!=='word')){
   document.querySelectorAll('.range-handle').forEach(n=>n.remove());return;
  }
  const limits=[['start',doc.items[indices.start]?.id],['end',doc.items[indices.end-1]?.id]];
