@@ -40,6 +40,11 @@ for(const [label,browserType,width,height] of [
   assert.equal(await page.locator('#insert-dialog-backdrop').isVisible(),false);
   assert.equal(await page.locator('.range-handle').count(),0,
    'Text range handles must not block cartouche touch editing');
+  await page.locator('#object-quick-actions').waitFor({state:'visible'});
+  assert.equal(await page.locator('#object-action-edit').isVisible(),true,
+   'A selected object should have a direct Edit action, like a document editor');
+  assert.equal(await page.locator('#format-panel').isVisible(),false,
+   'Object selection must not force the full Format inspector open');
   const afterFirst=await page.evaluate(({x,y})=>{
    const node=document.elementFromPoint(x,y);
    return {tag:node?.tagName,classes:node?.getAttribute('class'),
@@ -58,6 +63,21 @@ for(const [label,browserType,width,height] of [
   await page.locator('#insert-sheet-cancel').click();
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
   assert.equal(await cart.count(),1,'Cancel must leave the existing cartouche intact');
+  // Select once, then use the contextual actions without a double-tap or
+  // a blocking desktop inspector. They share the document's undo history.
+  await page.locator('#object-quick-actions').waitFor({state:'visible'});
+  await page.locator('#object-action-edit').click();
+  await page.locator('#insert-screen-cartouche').waitFor({state:'visible',timeout:30000});
+  await page.locator('#insert-sheet-cancel').click();
+  await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
+  await page.locator('#object-action-copy').click();
+  await page.locator('#object-action-delete').click();
+  await page.waitForFunction(()=>document.querySelectorAll('.cartouche-object').length===0,
+   null,{timeout:90000});
+  assert.equal(await page.locator('#object-quick-actions').isVisible(),false,
+   'Deleting an object must dismiss its contextual actions');
+  await page.keyboard.press('Control+z');
+  await page.locator('.cartouche-object').first().waitFor({state:'visible',timeout:90000});
   assert.deepEqual(errors,[],'No uncaught browser errors');
   console.log('PASS:',label,'single touch selects, double touch reopens, cancel preserves object');
  } finally{
