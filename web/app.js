@@ -317,10 +317,48 @@ function drawQuadratInk(host,quadrat,color,bold){
  }
  host.append(svg);
 }
+// The compositor may pack non-overlapping GLYPH INK into overlapping word
+// rectangles. Select using the actual painted SVG glyphs instead of whichever
+// transparent full-column rectangle happened to be above the finger.
+// This is hit-testing only: no browser-generated text geometry is persisted.
+function closestRenderedWordInk(paper,x,y){
+ let chosen=null,distance=Infinity;
+ for(const wordNode of paper.querySelectorAll('.word')){
+  const box=wordNode.getBoundingClientRect();
+  if(x<box.left-44||x>box.right+44||y<box.top-44||y>box.bottom+44)
+   continue;
+  for(const glyph of wordNode.querySelectorAll('.glyph-ink-svg text')){
+   const r=glyph.getBoundingClientRect();
+   if(!r.width||!r.height)continue;
+   const dx=Math.max(r.left-x,0,x-r.right),dy=Math.max(r.top-y,0,y-r.bottom);
+   const score=dx*dx+dy*dy;
+   if(score<distance){distance=score;chosen=wordNode.dataset.id;}
+  }
+ }
+ return chosen;
+}
 function paintPageContent(slot,p,shell){
  const paper=document.createElement('div');paper.className='paper';
  paper.style.width=mm(p.width);paper.style.height=mm(p.height);paper.style.transform=`scale(${zoom})`;
  paper.addEventListener('click',e=>{if(!suppressPaperClick&&e.target===paper)placeCaretFromPoint(e,p);});
+ // Capture word taps before an overlapping neighboring hitbox can claim
+ // them. This also makes word selection consistent at Fit Page on iPhone.
+ paper.addEventListener('click',e=>{
+  if(!e.target.closest?.('.word'))return;
+  e.stopPropagation();
+  if(suppressWordClick)return;
+  const id=closestRenderedWordInk(paper,e.clientX,e.clientY)||
+   e.target.closest('.word')?.dataset.id;
+  if(id)selectWord(id,e.shiftKey);
+ },true);
+ paper.addEventListener('dblclick',e=>{
+  if(!e.target.closest?.('.word'))return;
+  e.stopPropagation();
+  if(suppressWordClick)return;
+  const id=closestRenderedWordInk(paper,e.clientX,e.clientY)||
+   e.target.closest('.word')?.dataset.id;
+  if(id)openWord(id);
+ },true);
  const range=selectedRange();
  for(const c of p.columns){
   for(const item of c.placements){
@@ -405,10 +443,11 @@ function paintPageContent(slot,p,shell){
    if(range&&itemIndex>=range.start&&itemIndex<range.end)node.classList.add('selected','in-range');
    node.setAttribute('role','button');node.setAttribute('tabindex','0');
    node.setAttribute('aria-label',isArt?(item.type==='image'?'Image '+(objectById(item.id)?.name||'Imported image'):'Clip art '+(artworkById.get(item.artwork_id)?.name||item.artwork_id)):'Word '+item.signs.join(''));
-   node.addEventListener('click',e=>{e.stopPropagation();if(!suppressWordClick)selectWord(item.id,e.shiftKey);});
+   if(isArt)node.addEventListener('click',e=>{e.stopPropagation();if(!suppressWordClick)selectWord(item.id,e.shiftKey);});
    if(isArt)node.addEventListener('pointerdown',e=>beginObjectDrag(e,item,c,p,node));
-   else node.addEventListener('pointerdown',e=>beginMouseRangeDrag(e,item.id));
-   node.addEventListener('dblclick',e=>{e.stopPropagation();if(!suppressWordClick){if(isArt)void beginInsertSheet(item.type,item.id);else openWord(item.id);}});
+   else node.addEventListener('pointerdown',e=>beginMouseRangeDrag(e,
+    closestRenderedWordInk(paper,e.clientX,e.clientY)||item.id));
+   if(isArt)node.addEventListener('dblclick',e=>{e.stopPropagation();if(!suppressWordClick)void beginInsertSheet(item.type,item.id);});
    node.addEventListener('keydown',e=>{
     if(e.key==='Enter'){if(isArt)void beginInsertSheet(item.type,item.id);else openWord(item.id);}
     if(e.key===' '){e.preventDefault();selectWord(item.id,e.shiftKey);}
