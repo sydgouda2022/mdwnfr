@@ -149,6 +149,9 @@ try{
   const table=page.locator('.table-object').first();
   await table.waitFor({state:'visible',timeout:90000});
   await table.locator('.table-cell-view').first().click();
+  assert.equal(await page.locator('#format-panel').isVisible(),false,
+    'Cell selection must not pop an inspector over the next touch');
+  await page.locator('#format-toggle').click();
   await page.locator('#table-controls').waitFor({state:'visible'});
   assert.equal(await table.locator('.table-cell-view').count(),4);
   const actualWidth=await table.evaluate(el=>el.getBoundingClientRect().width);
@@ -164,9 +167,10 @@ try{
     null,{timeout:90000});
   await page.locator('#format-toggle').click();
   await table.locator('.table-cell-view').nth(1).click();
+  await page.locator('#format-toggle').click();
   await page.locator('#table-controls').waitFor({state:'visible'});
   const selected=await page.locator('#table-grid-editor button.current').getAttribute('aria-label');
-  assert.equal(selected,'Edit B1','Tap must select a cell and open the existing inspector');
+  assert.equal(selected,'Edit B1','Tap selects a cell; explicit Format opens its inspector');
   // The four Insert screens are drafts. Cancel must never change the
   // document, even after a valid Python layout preview is rendered.
   await page.locator('#format-toggle').click();
