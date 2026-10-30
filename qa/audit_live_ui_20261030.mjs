@@ -175,8 +175,12 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
   return{cell_glyphs:await page.locator('.table-cell-word .glyph-ink-svg text').count()};
  });
  await check('table-reopen-editor',async()=>{
+  // Normal user journey: dismiss the Format inspector before reaching
+  // an object beneath it. The former audit clicked through the inspector
+  // and sometimes through the text-range handle at the table corner.
+  if(await visible('#format-panel'))await page.locator('#format-toggle').click();
   const table=page.locator('.table-object').first();
-  await table.dblclick({position:{x:15,y:15}});
+  await table.locator('.table-cell-view').last().dblclick();
   await page.locator('#insert-screen-table').waitFor({state:'visible',timeout:30000});
   const rows=await page.locator('#insert-table-rows').inputValue();
   const cols=await page.locator('#insert-table-columns').inputValue();
