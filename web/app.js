@@ -475,6 +475,7 @@ function switchPanel(name=null){
  }
  if(activePanel==='pages')renderPagesOverview();
  if(activePanel==='format')updateFormatState();
+ updateObjectQuickActions();
 }
 function closePanels(){if(activePanel)switchPanel(null);}
 // Switch icons own their clicks. Any click/tap outside the active panel closes it.
@@ -709,6 +710,7 @@ function closeInsertSheet(){
   void renderPageDetails(previous.pageIndex);
  $('insert-dialog-backdrop').hidden=true;
  $('insert-sheet-confirm').disabled=true;
+ updateObjectQuickActions();
 }
 function insertIndex(){
  const range=selectedRange();
@@ -727,6 +729,7 @@ async function beginInsertSheet(kind,existingId=null){
  const index=original?logicalIndexById.get(original.id):insertIndex();
  insertDraft={token,kind,index,existingId,object:original?structuredClone(original):null,
               busy:false,valid:false};
+ $('object-quick-actions').hidden=true;
  $('insert-dialog-backdrop').hidden=false;
  $('insert-sheet-title').textContent=(original?'Edit ':'Insert ')+
   ({clipart:'Clip Art',image:'Image',table:'Table',cartouche:'Cartouche'}[kind]);
@@ -1323,6 +1326,7 @@ function startExistingObjectPreview(object,node){
   firstPositionShown:true,savedStyle:node.style.cssText,
   busy:false,valid:false};
  insertDraft=draft;
+ $('object-quick-actions').hidden=true;
  return draft;
 }
 function finishExistingObjectPreview(draft,action){
@@ -2336,6 +2340,7 @@ function showEditMenu(x,y,target,preserveSelection=false){
   if(slot?.page)placeCaretFromPoint({clientX:x,clientY:y,currentTarget:paper},slot.page);
  }
  closePanels();updateFormatState();
+ $('object-quick-actions').hidden=true;
  const menu=$('edit-menu');menu.hidden=false;
  const vv=window.visualViewport;
  const left=vv?.offsetLeft||0,top=vv?.offsetTop||0;
@@ -2392,6 +2397,32 @@ if(!/Mac|iPhone|iPad/.test(navigator.platform||'')){
  for(const kbd of $('edit-menu').querySelectorAll('kbd'))kbd.textContent=kbd.textContent.replace('⌘','Ctrl+');
 }
 window.addEventListener('resize',()=>{cancelTouchEdit();hideEditMenu();});
+// A lightweight Google Docs-style selection strip. The actual editing,
+// clipboard, and deletion paths stay the same validated document commands.
+function selectedEmbeddedObject(){
+ const items=selectedItems();
+ return items.length===1 && items[0]?.type!=='word' ? items[0] : null;
+}
+function updateObjectQuickActions(){
+ const selected=doc&&!editorScreen.hidden&&!insertDraft&&!activePanel&&
+  $('edit-menu').hidden ? selectedEmbeddedObject():null;
+ $('object-quick-actions').hidden=!selected;
+ if(selected){
+  const label={clipart:'illustration',image:'image',table:'table',
+   cartouche:'cartouche'}[selected.type]||'object';
+  $('object-action-edit').setAttribute('aria-label','Edit selected '+label);
+ }
+}
+$('object-action-edit').onclick=()=>{
+ const selected=selectedEmbeddedObject();
+ if(selected&&!insertDraft)void beginInsertSheet(selected.type,selected.id);
+};
+$('object-action-copy').onclick=async()=>{
+ if(selectedEmbeddedObject()&&!insertDraft)await copySelection();
+};
+$('object-action-delete').onclick=async()=>{
+ if(selectedEmbeddedObject()&&!insertDraft)await deleteSelection();
+};
 function updateSelection(){
  const range=selectedRange();
  for(const el of $('pages').querySelectorAll('.selectable-item')){
@@ -2401,6 +2432,7 @@ function updateSelection(){
   el.classList.toggle('in-range',active);
  }
  drawInsertionCaret();drawSelectionHandles();updateFormatState();
+ updateObjectQuickActions();
 }
 function openWord(id){const target=objectById(id);if(!target||target.type!=='word')return;
  selectionAnchorId=id;selectionFocusId=id;selectedId=id;editingId=id;buffer=target.signs.slice();renderComposer();updateSelection();if(activePanel!=='keyboard')switchPanel('keyboard');}

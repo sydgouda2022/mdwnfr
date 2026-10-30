@@ -215,6 +215,13 @@
       </section>
     </div>
     <div id="selection-summary" class="visually-hidden" role="status" aria-live="polite">No selection</div>
+    <!-- Like a document editor: select an embedded object and act directly.
+         This compact strip shares the existing validated commands. -->
+    <nav id="object-quick-actions" class="object-quick-actions" aria-label="Selected object actions" hidden>
+      <button id="object-action-edit" type="button" aria-label="Edit selected object">Edit</button>
+      <button id="object-action-copy" type="button" aria-label="Copy selected object">Copy</button>
+      <button id="object-action-delete" type="button" aria-label="Delete selected object">Delete</button>
+    </nav>
     <div id="edit-menu" class="edit-menu" role="menu" aria-label="Edit selection" hidden>
       <button id="cut-selection" type="button" role="menuitem" aria-label="Cut" aria-keyshortcuts="Meta+X Control+X"><span>Cut</span><kbd>⌘X</kbd></button>
       <button id="copy-selection" type="button" role="menuitem" aria-label="Copy" aria-keyshortcuts="Meta+C Control+C"><span>Copy</span><kbd>⌘C</kbd></button>
