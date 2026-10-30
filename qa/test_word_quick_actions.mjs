@@ -76,7 +76,20 @@ for(const [label,engine,width,height] of [
   await page.keyboard.down('Shift');
   try{await page.mouse.click(ink.x+ink.width/2,ink.y+ink.height/2);}
   finally{await page.keyboard.up('Shift');}
-  await page.waitForFunction(()=>document.getElementById('selection-summary')?.textContent==='2 selected');
+  const selectionDiag=await page.evaluate(({x,y})=>({
+   selection:document.getElementById('selection-summary')?.textContent,
+   target:document.elementFromPoint(x,y)?.closest('.word')?.getAttribute('aria-label'),
+   selected:[...document.querySelectorAll('.word.selected')].map(el=>el.getAttribute('aria-label')),
+   glyphs:[...document.querySelectorAll('.word')].slice(0,3).map((word,i)=>({
+    index:i,label:word.getAttribute('aria-label'),
+    ink:[...word.querySelectorAll('.glyph-ink-svg text')].map(el=>{
+     const r=el.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height};
+    })
+   }))
+  }),{x:ink.x+ink.width/2,y:ink.y+ink.height/2});
+  console.log('WORD_RANGE_DIAGNOSTIC',label,JSON.stringify(selectionDiag));
+  assert.equal(selectionDiag.selection,'2 selected',
+   'Touching second glyph ink must extend the range to two words');
   await bar.waitFor({state:'visible'});
   assert.equal(await page.locator('.range-handle').count(),2,
    'An extended word range must retain both adjustable endpoints');
