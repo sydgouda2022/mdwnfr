@@ -1503,6 +1503,16 @@ function beginObjectResize(e,placement,node,edge){
  e.preventDefault();e.stopPropagation();
  const original=objectById(placement.id);
  if(!original)return;
+ // In fit-page view an empty cartouche may be smaller than the 44px
+ // accessible resize target. Its second tap therefore lands on the handle.
+ // Treat that stationary tap as the same edit gesture; a moved pointer still
+ // resizes normally. Do not shrink or hide the hit target to fix navigation.
+ const secondCartoucheTap=original.type==='cartouche' &&
+  (e.pointerType==='touch'||e.pointerType==='pen') &&
+  recentCartoucheTouch?.id===placement.id &&
+  performance.now()-recentCartoucheTouch.time<=520 &&
+  Math.hypot(e.clientX-recentCartoucheTouch.x,
+             e.clientY-recentCartoucheTouch.y)<=30;
  selectWord(placement.id);
  const draft=startExistingObjectPreview(original,node);
  if(!draft)return;
@@ -1538,9 +1548,16 @@ function beginObjectResize(e,placement,node,edge){
     requestInsertPreview();
    }
   },
-  onCancel:()=>finishExistingObjectPreview(draft,null),
-  onFinish:({moved})=>{
-   if(!moved||value===baseline){finishExistingObjectPreview(draft,null);return;}
+  onCancel:()=>{recentCartoucheTouch=null;finishExistingObjectPreview(draft,null);},
+  onFinish:({moved,clientX,clientY})=>{
+   if(!moved){
+    finishExistingObjectPreview(draft,null);
+    if(secondCartoucheTap)
+     noteCartoucheTouch(placement.id,clientX,clientY);
+    return;
+   }
+   recentCartoucheTouch=null;
+   if(value===baseline){finishExistingObjectPreview(draft,null);return;}
    let action;
    if(isCartouche)action={op:'replace_cartouche',id:original.id,
     object:{...structuredClone(original),enclosure_padding_mm:value}};
