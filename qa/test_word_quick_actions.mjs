@@ -74,6 +74,8 @@ for(const [label,engine,width,height] of [
   assert.ok(firstInk&&firstInk.width&&firstInk.height,'First glyph needs visible ink');
   await page.mouse.click(firstInk.x+firstInk.width/2,firstInk.y+firstInk.height/2);
   assert.equal(await page.locator('#selection-summary').textContent(),'1 selected');
+  assert.equal(await page.locator('.word').first().evaluate(n=>n.classList.contains('selected')),true,
+   'Painted first glyph must select the first logical quadrat');
   const ink=await page.locator('.word').nth(1)
    .locator('.glyph-ink-svg text').first().boundingBox();
   assert.ok(ink&&ink.width&&ink.height,'Second quadrat needs visible ink');
