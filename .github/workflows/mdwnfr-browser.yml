@@ -57,6 +57,7 @@ jobs:
           set -euo pipefail
           node qa/test_object_gestures.mjs
           node qa/test_insert_on_page.mjs
+          node qa/test_cartouche_touch.mjs
           node qa/test_browser_keyboard.mjs
           node qa/test_font_bounds_browser.mjs
           node qa/test_touch_editing.mjs

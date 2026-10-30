@@ -198,7 +198,16 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden',timeout:90000});
   const cart=page.locator('.cartouche-object').first();
   await cart.waitFor({state:'visible',timeout:90000});
-  await cart.dblclick();
+  if(config.mobile){
+   // iPhone/iPad must use two real touch taps, not a desktop mouse dblclick.
+   const rect=await cart.boundingBox();
+   if(!rect)throw Error('Cartouche is not visible for touch editing');
+   const x=rect.x+rect.width/2,y=rect.y+rect.height/2;
+   await page.touchscreen.tap(x,y);
+   if(await page.locator('.range-handle').count())
+    throw Error('Text-range handles are obscuring the cartouche');
+   await page.touchscreen.tap(x,y);
+  }else await cart.dblclick();
   await page.locator('#insert-screen-cartouche').waitFor({state:'visible',timeout:30000});
   const direction=await page.locator('input[name="insert-cartouche-direction"]:checked').inputValue();
   await screenshot('cartouche');

@@ -8,8 +8,9 @@ Native hieroglyphic predictive input and its lexicon are imported
 exclusively from `sydgouda2022/hieroglyphic-keyboard`, with exact
 source commit and SHA-256 checksum in `keyboard-lock.json`.
 Neither MdwNfr nor Renpet edits the keyboard's source database.
-Production Cloudflare deployment remains with the original
-repository until an explicit migration cutover.
+Production Cloudflare deployment is owned by this repository. Automatic
+publication from the old `aaa` repository is disabled. Releasing a verified
+`main` build to the public URL requires an explicit deployment gate.
 
 ## Headless keyboard API
 
@@ -44,7 +45,7 @@ The PWA and source now contain a single pinned prediction implementation: the in
 - Pages show bounded miniatures derived from actual Python layout coordinates. The v2 unified compositor recomposes changed streams from persistent IDs; identical inputs reuse geometry. No separate wrap-before/after-object algorithms remain.
 - The isolated Pyodide layout worker is started on demand and released after 45 seconds idle. Returning to Documents releases it immediately. Detail requests restore authoritative layout when needed.
 - The inspector exposes page margins, while its sole bundled font is displayed as a label rather than a nonfunctional menu.
-- CI verifies native formatting, recovery transactions, pinned keyboard source, Chromium/WebKit touch workflows and offline startup. Production cutover remains explicitly gated.
+- CI verifies native formatting, recovery transactions, pinned keyboard source, Chromium/WebKit touch workflows and offline startup. Production deployment remains explicitly gated and is separate from CI.
 
 
 ## Layout Engine 2 — one stream, one compositor
