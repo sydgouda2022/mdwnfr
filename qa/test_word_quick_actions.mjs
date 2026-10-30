@@ -38,6 +38,8 @@ for(const [label,engine,width,height] of [
   await page.locator('.word').first().click();
   const bar=page.locator('#word-quick-actions');
   await bar.waitFor({state:'visible'});
+  assert.equal(await page.locator('.range-handle').count(),0,
+   'A 44px range handle must not cover a single selected quadrat');
   assert.equal(await page.locator('#object-quick-actions').isVisible(),false,
    'No object-toolbar duplication for words');
   assert.equal(await page.locator('#format-panel').isVisible(),false,
@@ -69,6 +71,8 @@ for(const [label,engine,width,height] of [
   await page.locator('.word').nth(1).click({modifiers:['Shift']});
   await page.waitForFunction(()=>document.getElementById('selection-summary')?.textContent==='2 selected');
   await bar.waitFor({state:'visible'});
+  assert.equal(await page.locator('.range-handle').count(),2,
+   'An extended word range must retain both adjustable endpoints');
   assert.equal(await page.locator('#word-action-edit').isVisible(),false);
   await page.locator('#word-action-copy').click();
   await page.locator('#word-action-delete').click();
