@@ -1,7 +1,20 @@
-# Protect the live application while migrating
+# MdwNfr Cloudflare production ownership
 
-The original aaa repository continues deploying the live MdwNfr.
-This bootstrap only imports source and tests it; it does not deploy.
-Before cutover, configure new-repository Cloudflare secrets, verify
-WebKit and offline PWA acceptance, disable original deployment and
-perform a controlled one-owner deploy to the SAME existing URL.
+Cutover completed on October 30, 2026.
+
+- The authoritative application source is `sydgouda2022/mdwnfr`, branch `main`.
+- The verified `main` release commit `26b82a9d` was published by the
+  `MdwNfr CI and pinned Hieroglyphic Keyboard verification` workflow to
+  `https://mdwnfr.sydgouda.workers.dev/`.
+- GitHub Actions deploys only when explicitly enabled by the repository
+  `CUTOVER_ENABLED` variable, manual `deploy_now` dispatch, or a
+  `[deploy-cloudflare]` token in a push commit message. A normal merge does
+  not deploy.
+- The legacy `sydgouda2022/aaa` auto-deployment path for MdwNfr was
+  disabled in commit `c1a95460`; its manual dispatch remains available
+  for emergency recovery only.
+- The installed offline PWA may retain cached files after a release. Always
+  distinguish a successful deploy from a device's installed service-worker
+  version; a fresh browser session and the read-only live audit can help.
+
+Do not enable two automatic publishers for the same Cloudflare worker.
