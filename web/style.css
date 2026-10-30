@@ -351,6 +351,30 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .object-inspector .clipart-note{display:none}
 .object-inspector .table-buttons button{min-width:44px;min-height:44px}
 .object-inspector .artwork-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* Contextual document actions: close to the writing surface, never a
+   blocking dialog. Avoid the keyboard launcher at the phone's lower-left. */
+.object-quick-actions{
+ position:fixed;left:50%;bottom:calc(65px + env(safe-area-inset-bottom,0px));
+ transform:translateX(-50%);z-index:46;display:flex;align-items:center;
+ gap:4px;padding:5px;max-width:calc(100vw - 100px);
+ background:rgba(255,253,249,.97);border:1px solid #cdd8e1;
+ border-radius:14px;box-shadow:0 5px 22px #102d512b;
+ backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)
+}
+.object-quick-actions[hidden]{display:none}
+.object-quick-actions button{
+ border:0;border-radius:9px;background:transparent;color:#163b62;
+ min-width:64px;min-height:44px;padding:8px 12px;
+ font:600 14px system-ui;white-space:nowrap;touch-action:manipulation
+}
+.object-quick-actions button:hover,.object-quick-actions button:focus-visible{
+ background:#e8f1f9;outline:2px solid #5f96bb;outline-offset:-2px
+}
+.object-quick-actions #object-action-delete{color:#a12b37}
+@media(max-width:390px){
+ .object-quick-actions{left:auto;right:12px;transform:none;gap:0}
+ .object-quick-actions button{padding:6px 9px;min-width:58px}
+}
 .edit-menu{position:fixed;z-index:90;width:210px;max-width:calc(100vw - 24px);padding:5px;background:rgba(255,255,255,.98);border:1px solid #cfdae4;border-radius:14px;box-shadow:0 8px 30px #102d5133;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .edit-menu button{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:44px;border:0;border-bottom:1px solid #e8edf2;border-radius:6px;background:transparent;padding:10px 12px;text-align:left;font:16px system-ui;color:#153d66;touch-action:manipulation}
 .edit-menu button:last-child{border-bottom:0;color:#a72d38}
