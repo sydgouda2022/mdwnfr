@@ -68,7 +68,14 @@ for(const [label,engine,width,height] of [
 
   // Whole-word multi-select keeps formatting, but never edits a random word.
   await page.locator('.word').first().click();
-  await page.locator('.word').nth(1).click({modifiers:['Shift']});
+  // At Fit Page, the next word's full container may overlap a neighbor.
+  // A real user taps visible ink, not an invisible DOM rectangle center.
+  const ink=await page.locator('.word').nth(1)
+   .locator('.glyph-ink-svg text').first().boundingBox();
+  assert.ok(ink&&ink.width&&ink.height,'Second quadrat needs visible ink');
+  await page.keyboard.down('Shift');
+  try{await page.mouse.click(ink.x+ink.width/2,ink.y+ink.height/2);}
+  finally{await page.keyboard.up('Shift');}
   await page.waitForFunction(()=>document.getElementById('selection-summary')?.textContent==='2 selected');
   await bar.waitFor({state:'visible'});
   assert.equal(await page.locator('.range-handle').count(),2,
