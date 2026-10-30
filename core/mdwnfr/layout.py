@@ -31,6 +31,24 @@ def object_clearance_mm(column_width: float) -> float:
     return column_width / 4.0
 
 
+def divider_ink_runs(runs, bridge_mm: float) -> list[tuple[float, float]]:
+    """Merge measured text-ink spans only across ordinary short word gaps.
+
+    A divider is a derived decoration, not a second layout system. No line
+    may be invented across a gap wider than half a writing column; this leaves
+    object/empty lanes unruled without changing the text compositor.
+    """
+    merged = []
+    for top, bottom in sorted(runs):
+        if bottom <= top:
+            continue
+        if merged and top <= merged[-1][1] + bridge_mm + 1e-8:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], bottom))
+        else:
+            merged.append((top, bottom))
+    return merged
+
+
 def proportional_extra(heights: list[float], remainder: float) -> list[float]:
     """One universal allocation law for page and object-bounded text sectors.
 
@@ -226,43 +244,48 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
                       'x':_art_x(col['x'],col['width'],ow,owner,doc['direction'],col.get('float_offset')),
                       'y':oy,'flip':'normal'})
         dividers=[]
-        # A divider separates two occupied physical writing columns, rather
-        # than only pairs of vertically overlapping glyph ink rectangles.
-        # Those ink rectangles are often staggered (especially after artwork
-        # wrapping), and their intersection can omit the bottommost rows even
-        # when BOTH neighboring columns visibly continue below the bird.
-        # First use each column's ink envelope; clip the resulting separator
-        # against the actual artwork silhouette and quarter-column clearance.
+        # Dividers decorate ACTUAL shared writing, not empty columns.
+        # Each word's measured ink is already represented by text_runs.
+        # Bridge only short normal inter-quadrat gaps, never a long
+        # illustration-caused gap or unused lower part of a column.
         word_slots = {}
         for col in positioned:
-            if col['kind']!='words' or not col['placements']:continue
-            index=round((col['x']-margins['left'])/width)
-            word_slots.setdefault(index,[]).append(
-                (col['text_top'],col['text_bottom']))
-        # Shared typography metric, proportional to the universal font size.
+            if col['kind'] != 'words' or not col['placements']:
+                continue
+            index = round((col['x']-margins['left'])/width)
+            word_slots.setdefault(index, []).extend(col.get('text_runs', ()))
         divider_thickness = divider_stroke_mm(doc['font_size_pt'])
+        clearance = object_clearance_mm(width)
         for index in sorted(word_slots):
-            if index+1 not in word_slots:continue
-            x=margins['left']+(index+1)*width
-            overlaps=sorted((max(a,c),min(b,d))
-                for a,b in word_slots[index] for c,d in word_slots[index+1]
+            if index+1 not in word_slots:
+                continue
+            x = margins['left']+(index+1)*width
+            left_ink = divider_ink_runs(word_slots[index], width/2)
+            right_ink = divider_ink_runs(word_slots[index+1], width/2)
+            overlaps = sorted((max(a,c), min(b,d))
+                for a,b in left_ink for c,d in right_ink
                 if min(b,d)>max(a,c)+1e-8)
-            spans=[]
-            for top,bottom in overlaps:
-                if spans and top<=spans[-1][1]+1e-8:
-                    spans[-1]=(spans[-1][0],max(spans[-1][1],bottom))
-                else:spans.append((top,bottom))
+            spans = divider_ink_runs(overlaps, 0)
             for art in artworks:
-                remaining=[]
+                # An embedded object is its OWN separator. Do not draw a
+                # redundant line through its rectangular visual presence,
+                # even when the underlying silhouette has transparent holes.
+                # This affects decoration only: the layout engine still fits
+                # words against precise 2D ink masks and preserves clearance.
+                if (x+divider_thickness/2+clearance <= art['x'] or
+                    x-divider_thickness/2-clearance >= art['x']+art['width_mm']):
+                    continue
+                upper = art['y']-clearance
+                lower = art['y']+art['height']+clearance
+                remaining = []
                 for top,bottom in spans:
-                    clear=free_sectors(art.get('artwork_id'), bands=art.get('bands'), mask=art.get('mask'), image_width=art['width_mm'],
-                         image_height=art['height'],x_offset=art['x'],
-                         slot_left=x-divider_thickness/2,slot_right=x+divider_thickness/2,
-                         top=top,bottom=bottom,clearance=object_clearance_mm(width),
-                         flip=art['flip'],image_top=art['y'])
-                    remaining.extend(clear)
-                spans=remaining
-                if not spans:break
+                    if top < upper-1e-8:
+                        remaining.append((top, min(bottom,upper)))
+                    if bottom > lower+1e-8:
+                        remaining.append((max(top,lower),bottom))
+                spans = remaining
+                if not spans:
+                    break
             for top,bottom in spans:
                 if bottom>top+1e-6:
                     dividers.append({'x':round(x,5),'y1':round(top,5),
