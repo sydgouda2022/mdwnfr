@@ -2151,10 +2151,11 @@ function selectAll(){
 }
 function drawSelectionHandles(){
  const indices=selectedRange();
- // The handles adjust ranges of hieroglyphic words only. When attached
- // to a cartouche or illustration they obscure the next tap/resize handle,
- // particularly in the narrow WebKit phone viewport.
- if(!indices||!layoutCache||
+ // Handles are for an EXTENDED whole-word selection, never a single
+ // quadrat. At Fit Page zoom a 44px handle can completely cover a glyph and
+ // block re-selection or double tap. Single selection uses the highlight and
+ // contextual actions instead; ranges of two or more words keep handles.
+ if(!indices||!layoutCache||indices.end-indices.start<2||
     doc.items.slice(indices.start,indices.end).some(item=>item.type!=='word')){
   document.querySelectorAll('.range-handle').forEach(n=>n.remove());return;
  }
