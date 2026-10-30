@@ -1,3 +1,4 @@
+# Live verification after table-cell touch release cb31a846.
 # Production verification following ink-bounded divider release 26b82a9d.
 name: MdwNfr Live User Journey Audit (read-only)
 on:
