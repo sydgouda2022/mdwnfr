@@ -24,6 +24,10 @@ for(const [label,engine,width,height] of [
    null,{timeout:90000});
   await page.locator('#insert-sheet-confirm').click();
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
+  const cartoucheCount=await page.locator('.cartouche-word').count();
+  console.log('NESTED_CARTOUCHE_DIAGNOSTICS',label,JSON.stringify({
+   wordCount:cartoucheCount,cartoucheCount:await page.locator('.cartouche-object').count(),
+   pageCount:await page.locator('.paper').count()}));
   await page.locator('.cartouche-word').first().waitFor({state:'visible',timeout:90000});
   assert.equal(await page.locator('.cartouche-word').count(),2);
   await page.locator('#format-toggle').click();
@@ -56,7 +60,16 @@ for(const [label,engine,width,height] of [
   await page.locator('.table-cell-view').first().dblclick();
   await page.locator('#insert-table-cell-input').waitFor({state:'visible'});
   assert.equal(await page.locator('#insert-table-cell-input').inputValue(),'𓅓𓏏');
-  await page.locator('#insert-sheet-cancel').click();
+  // A different cell can be selected without overwriting the first cell.
+  await page.locator('#insert-table-cell-grid button[aria-label="Edit cell B2"]').click();
+  assert.equal(await page.locator('#insert-table-cell-input').inputValue(),'');
+  await page.locator('#insert-table-cell-input').fill('𓈖');
+  await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm')?.disabled,
+   null,{timeout:90000});
+  await page.locator('#insert-sheet-confirm').click();
+  await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
+  await page.waitForFunction(()=>document.querySelectorAll('.table-cell-word').length>=2,
+   null,{timeout:90000});
   assert.deepEqual(errors,[]);
   console.log('PASS',label,'nested table and cartouche text entry');
  }finally{await context.close();await browser.close();}
