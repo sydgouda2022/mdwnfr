@@ -1466,6 +1466,11 @@ function addObjectResizeHandles(node,placement,column,page){
  const tinyWidth=placement.width_mm*pxmm*zoom<44;
  const tinyHeight=placement.height*pxmm*zoom<44;
  if(tinyWidth&&tinyHeight){
+  // Avoid unsupported CSS length multiplication in Safari: compute the
+  // scaled pixel offsets once from the view's existing zoom factor.
+  const outside=44/Math.max(.1,zoom);
+  node.style.setProperty('--move-grip-left',(-outside-22)+'px');
+  node.style.setProperty('--move-grip-right',(outside-22)+'px');
   node.classList.add('compact-object-handles');
   // Respect both writing directions: choose whichever physical page side
   // has room, never assume that RTL artwork is on the left.
