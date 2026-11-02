@@ -46,7 +46,11 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
     await node.waitFor({state:'visible',timeout:90000});
     if(kind==='table')await node.locator('.table-cell-view').first().click();
     else await node.click();
-    // Format floats over the page; dismiss it before direct manipulation.
+    // Tapping nested text now opens the keyboard, by design.
+    // Dismiss that floating panel before testing the independent move/
+    // resize grip; otherwise its controls can cover the handle on iPad.
+    if(await page.locator('#keyboard-panel').isVisible())
+     await page.locator('#keyboard-toggle').click();
     if(await page.locator('#format-panel').isVisible())
      await page.locator('#format-toggle').click();
     const handle=node.locator('.art-resize.bottom-right');
