@@ -327,30 +327,22 @@ function drawQuadratInk(host,quadrat,color,bold){
 // This is hit-testing only: no browser-generated text geometry is persisted.
 function closestRenderedWordInk(paper,x,y,maxDistance=Infinity){
  let chosen=null,distance=Infinity;
+ const rtl=reverseVisualQuadrat(doc?.direction||'ltr');
  for(const wordNode of paper.querySelectorAll('.word')){
   const bounds=wordNode.getBoundingClientRect();
   if(x<bounds.left-44||x>bounds.right+44||y<bounds.top-44||y>bounds.bottom+44)
    continue;
   const quadrat=renderedWordInk.get(wordNode);
-  const matrix=wordNode.querySelector('.hieroglyph-direction-layer')?.getScreenCTM();
-  if(!quadrat?.signs?.length||!matrix)continue;
-  // SVG text.getBoundingClientRect() reports font metrics, NOT glyph ink.
-  // Flat signs can have font rectangles several times taller than their ink;
-  // selecting their apparent centers then picks the wrong adjacent word.
-  // The Python compositor already owns the exact painted ink rectangles.
-  // Transform those rectangles through the real SVG CTM (including RTL,
-  // paper zoom, and the browser's viewBox scaling), never remeasure the font.
+  if(!quadrat?.signs?.length||!quadrat.width||!quadrat.height)continue;
+  // The compositor's glyph bounds are ink, not SVG text em-boxes.
+  // Map those bounds through the *rendered word* rectangle. WebKit's
+  // getScreenCTM() on a reflected SVG group may disagree with the actual
+  // CSS-transformed paper; the word box already incorporates page zoom.
+  const sx=bounds.width/quadrat.width,sy=bounds.height/quadrat.height;
   for(const glyph of quadrat.signs){
-   const corners=[
-    [glyph.x,glyph.y],[glyph.x+glyph.width,glyph.y],
-    [glyph.x,glyph.y+glyph.height],
-    [glyph.x+glyph.width,glyph.y+glyph.height]
-   ].map(([gx,gy])=>[matrix.a*gx+matrix.c*gy+matrix.e,
-                     matrix.b*gx+matrix.d*gy+matrix.f]);
-   const left=Math.min(...corners.map(p=>p[0]));
-   const right=Math.max(...corners.map(p=>p[0]));
-   const top=Math.min(...corners.map(p=>p[1]));
-   const bottom=Math.max(...corners.map(p=>p[1]));
+   const visibleX=rtl?quadrat.width-glyph.x-glyph.width:glyph.x;
+   const left=bounds.left+visibleX*sx,right=left+glyph.width*sx;
+   const top=bounds.top+glyph.y*sy,bottom=top+glyph.height*sy;
    const dx=Math.max(left-x,0,x-right),dy=Math.max(top-y,0,y-bottom);
    const cx=(left+right)/2,cy=(top+bottom)/2;
    const score=dx*dx+dy*dy+.01*((cx-x)**2+(cy-y)**2);
