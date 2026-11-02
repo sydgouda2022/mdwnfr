@@ -8,7 +8,8 @@ import random
 import unittest
 from copy import deepcopy
 
-from mdwnfr.document import new_document, word, clipart
+from mdwnfr.document import new_document, word, clipart, cartouche
+from mdwnfr.tables import table
 from mdwnfr.layout import (
     _anchor_word_ink, _intersect_ink_runs, divider_ink_runs,
     layout_document, incremental_layout_document, expand_compact_layout,
@@ -81,6 +82,10 @@ class SpatialIndexParity(unittest.TestCase):
                 art = ('horus-falcon-raster', 'bennu', 'amun-ra')
                 items = []
                 for i in range(720):
+                    if i == 200:
+                        items.append(table(2, 2))
+                    if i == 550:
+                        items.append(cartouche('horizontal', [['𓅓', '𓏏'], ['𓈖']]))
                     if i in (25, 130, 245, 355, 480, 620):
                         obj = clipart(art[(i // 100) % len(art)], 35 + i % 30, 'normal')
                         obj['y_align'] = (i % 7) / 7
