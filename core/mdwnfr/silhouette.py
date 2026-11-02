@@ -118,6 +118,36 @@ def cartouche_object_mask(width_mm: float, height_mm: float, orientation: str,
     return base64.b64encode(b''.join(rows)).decode('ascii')
 
 
+@lru_cache(maxsize=8192)
+def _occupied_mask_row_runs(encoded: str, x0: int, x1: int,
+                            flip: str) -> tuple[tuple[int, int], ...]:
+    """Project exact occupied pixels onto Y, retaining transparent gaps.
+
+    The same 256-bit silhouettes are authoritative. Cached intervals are
+    discrete row indices; actual physical Y and clearance are applied later,
+    so the cache cannot confuse paper sizes, font widths or image scaling.
+    """
+    rows = _mask_rows(encoded)
+    mask = ((1 << (x1 - x0)) - 1) << (SIZE - x1)
+    mirror = ((1 << (x1 - x0)) - 1) << x0
+    if flip == 'mirror':
+        mask = mirror
+    elif flip == 'auto':
+        mask |= mirror
+    spans = []
+    begin = None
+    for row_number, bits in enumerate(rows):
+        if bits & mask:
+            if begin is None:
+                begin = row_number
+        elif begin is not None:
+            spans.append((begin, row_number))
+            begin = None
+    if begin is not None:
+        spans.append((begin, SIZE))
+    return tuple(spans)
+
+
 def free_sectors(artwork_id, *, image_width, image_height, x_offset,
                  slot_left, slot_right, top, bottom, clearance, flip='normal',
                  image_top=None, bands=None, mask=None):
@@ -134,7 +164,6 @@ def free_sectors(artwork_id, *, image_width, image_height, x_offset,
         mask=_profiles()[artwork_id]['mask']
     blocked=[]
     if mask is not None:
-        rows=_mask_rows(mask)
         # Packed columns are rounded to 5 decimals of a millimeter. Treat
         # genuinely touching clearance boundaries as free, rather than
         # exposing a phantom occupied pixel due to that rounding. The epsilon
@@ -143,16 +172,9 @@ def free_sectors(artwork_id, *, image_width, image_height, x_offset,
         x0=max(0,min(SIZE,floor((slot_left-clearance-x_offset+epsilon)/image_width*SIZE)))
         x1=max(0,min(SIZE,ceil((slot_right+clearance-x_offset-epsilon)/image_width*SIZE)))
         if x1<=x0:return [(top,bottom)]
-        def intersects(row,lo,hi):
-            return bool((row >> (SIZE-hi)) & ((1 << (hi-lo))-1))
-        for j,occupied in enumerate(rows):
-            if not occupied:continue
-            overlaps=(intersects(occupied,x0,x1) if flip!='mirror' else
-                      intersects(occupied,SIZE-x1,SIZE-x0))
-            if flip=='auto':overlaps=overlaps or intersects(occupied,SIZE-x1,SIZE-x0)
-            if not overlaps:continue
-            lo=max(top,image_top+image_height*j/SIZE-clearance)
-            hi=min(bottom,image_top+image_height*(j+1)/SIZE+clearance)
+        for first,stop in _occupied_mask_row_runs(mask,x0,x1,flip):
+            lo=max(top,image_top+image_height*first/SIZE-clearance)
+            hi=min(bottom,image_top+image_height*stop/SIZE+clearance)
             if hi>lo:blocked.append((lo,hi))
         return _free_from_blocks(blocked,top,bottom)
     # Legacy imported documents: row-envelope fallback, until reopened and
