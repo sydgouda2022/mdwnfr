@@ -43,11 +43,13 @@ def main():
     parser.add_argument('--words',type=int,default=2000)
     parser.add_argument('--artworks',type=int,default=8)
     parser.add_argument('--direction',choices=['rtl','ltr'],default='rtl')
-    parser.add_argument('--surface',choices=['A4','A3','A2'],default='A3')
+    parser.add_argument('--surface',choices=['A4','A3','A2','papyrus'],default='A3')
     parser.add_argument('--font-size',type=int,default=10)
     parser.add_argument('--edit-at',type=float,default=.5,
                         help='Fraction of stream preceding the insertion, 0.0-1.0')
-    parser.add_argument('--require-page-reuse',action='store_true',
+    parser.add_argument('--edit-kind',choices=['insert','color'],default='insert')
+    parser.add_argument('--require-style-reuse',action='store_true')
+    parser.add_argument('--require-page-reuse',action='store_true'
                         help='Fail when the fixture cannot reuse a verified page prefix')
     options=parser.parse_args()
     if not 1<=options.words<=100000 or not 0<=options.artworks<=min(200,options.words):
@@ -58,12 +60,21 @@ def main():
                        options.surface,options.font_size)
     original,base=timed('full_initial',lambda:layout_document(doc))
     edited=deepcopy(doc)
-    edited['items'].insert(int(len(edited['items'])*options.edit_at),word(['𓅓','𓇋']))
+    target_index=int(len(edited['items'])*options.edit_at)
+    if options.edit_kind=='insert':
+        edited['items'].insert(target_index,word(['𓅓','𓇋']))
+    else:
+        word_indices=[i for i, obj in enumerate(edited['items'])
+                      if obj['type']=='word']
+        target=min(word_indices,key=lambda index:abs(index-target_index))
+        edited['items'][target]['color']='#ac2533'
     edited['revision']+=1
     updated,edit=timed('insert_middle',lambda:incremental_layout_document(
         edited,doc,original))
     if options.require_page_reuse and updated[1]['mode']!='complete_page_prefix':
         raise AssertionError('Benchmark did not exercise completed-page reuse')
+    if options.require_style_reuse and updated[1]['mode']!='style_only':
+        raise AssertionError('Benchmark did not exercise style-only geometry reuse')
     full,full_parity=timed('full_parity',lambda:layout_document(edited))
     if updated[0]!=full:
         raise AssertionError('Incremental reflow diverged from full compositor')
@@ -76,6 +87,7 @@ def main():
         'words':options.words,'artworks':options.artworks,
         'direction':options.direction,'surface':doc['surface'],
         'font_size_pt':options.font_size,'edit_at':options.edit_at,
+        'edit_kind':options.edit_kind,
         'pages':len(updated[0]['pages']),
         'objects':len(edited['items']),
         'layout_mode':updated[1]['mode'],
