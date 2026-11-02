@@ -460,6 +460,19 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .insert-primary{background:#133b67;border-color:#133b67;color:white}
 .insert-sheet-footer{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:sticky;bottom:-12px;padding:8px 0 0;background:#fbfaf5}
 .insert-placement{display:none!important} /* Position and size are direct on-page gestures. */
+.insert-content-editor{display:grid;gap:6px;border-top:1px solid #d9e3eb;padding-top:8px}
+.insert-screen textarea{width:100%;min-height:62px;resize:vertical;border:1px solid #b8cad9;border-radius:10px;padding:8px;color:#142f4f;background:#fff;font:21px/1.5 var(--gfont);box-sizing:border-box}
+.insert-table-cell-grid{display:grid;grid-template-columns:repeat(var(--draft-cols,2),minmax(0,1fr));gap:3px;max-height:125px;overflow:auto}
+.insert-table-cell-grid button{min-width:0;min-height:38px;border:1px solid #c2d2df;border-radius:7px;background:#fff;color:#173c62;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:13px var(--gfont)}
+.insert-table-cell-grid button[aria-pressed=true]{background:#dbebf9;border:2px solid #2e7cb0}
+.insert-glyph-keyboard{display:grid;gap:5px;border-top:1px solid #dde5ed;padding-top:7px}
+.insert-glyph-keyboard[hidden]{display:none}
+.insert-glyph-tabs{display:flex;gap:4px}
+.insert-glyph-tabs button,.insert-glyph-actions button{flex:1;min-width:0;min-height:36px;background:#eef3f7;border:1px solid #cad5df;border-radius:8px;color:#1c446a;font:600 12px system-ui}
+.insert-glyph-tabs button[aria-pressed=true]{background:#193e67;color:#fff}
+.insert-glyph-keys{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;max-height:120px;overflow-y:auto}
+.insert-glyph-keys button{min-width:0;min-height:40px;border:1px solid #c8d8e4;border-radius:7px;background:#fff;color:#173d64;font:25px var(--gfont)}
+.insert-glyph-actions{display:flex;gap:5px}
 .insert-screen .artwork-picker{display:grid;gap:8px}
 .insert-screen .artwork-grid{max-height:170px;overflow-y:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .insert-screen .artwork-choice{min-width:0}
