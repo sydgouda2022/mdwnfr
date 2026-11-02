@@ -126,7 +126,46 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
      kind+' pointercancel must not change object geometry or identity');
     assert.equal(await page.locator('.draft-page-layer').count(),0,
      kind+' pointercancel must remove any transient preview');
-    console.log('PASS:',name,width,kind,'resize persisted and touch cancellation reverted');
+    // Every embedded object has a deliberate, finger-sized moving grip.
+    // This matters for tables: editable cells cover the entire object body,
+    // so grabbing the word cells must not be the only way to move the table.
+    const mover=page.locator('[data-id="'+obj.id+'"] .art-move').first();
+    await mover.waitFor({state:'visible',timeout:90000});
+    const moveTarget=await mover.boundingBox();
+    assert.ok(moveTarget?.width>=43.9&&moveTarget?.height>=43.9,
+     kind+' move grip must be at least 44 CSS pixels');
+    await mover.hover({timeout:30000});
+    const grip=await mover.boundingBox();
+    const mx=grip.x+grip.width/2,my=grip.y+grip.height/2;
+    const moveHit=await page.evaluate(({x,y})=>{
+     const h=document.elementFromPoint(x,y);
+     return {cls:h?.getAttribute('class'),
+      id:h?.closest('[data-id]')?.dataset.id};
+    },{x:mx,y:my});
+    assert.ok((moveHit.cls||'').includes('art-move')&&moveHit.id===obj.id,
+     kind+' move grip is hidden by text, panel or resize handle: '+
+      JSON.stringify(moveHit));
+    const beforeMove=await saved();
+    const moving=beforeMove.items.find(o=>o.id===obj.id);
+    await page.mouse.move(mx,my);await page.mouse.down();
+    await page.mouse.move(mx,my+30,{steps:8});await page.mouse.up();
+    const afterMove=await waitPersist(d=>{
+     const o=d.items.find(v=>v.id===obj.id);
+     return d.revision>beforeMove.revision&&
+      Math.abs((o?.y_align??0)-(moving.y_align??0))>.001;
+    });
+    const moved=afterMove.items.find(o=>o.id===obj.id);
+    assert.equal(moved.x_offset_mm,moving.x_offset_mm,
+     kind+' vertical-only drag must preserve original x offset');
+    assert.equal(moved.x_align,moving.x_align,
+     kind+' vertical-only drag must preserve original horizontal alignment');
+    assert.equal(afterMove.revision,beforeMove.revision+1,
+     kind+' one pointer gesture must produce one undoable transaction');
+    assert.equal(await page.locator('.draft-page-layer').count(),0,
+     kind+' committed move must clear the temporary Python preview');
+    console.log('PASS:',name,width,kind,
+     'resize, cancellation, and axis-preserving move committed');
+
    }
    assert.deepEqual(errors,[]);
   }catch(e){
