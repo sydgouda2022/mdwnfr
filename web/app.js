@@ -1161,7 +1161,7 @@ async function runInsertPreview(d,version){
  }
  function scheduleDraftText(){
   const d=insertDraft;if(!d?.object||!['table','cartouche'].includes(d.kind))return;
-  ++d.textVersion;
+  d.textVersion=(d.textVersion||0)+1;
   // Invalidate a running preview; it may not re-enable Done for stale text.
   ++insertPreviewVersion;
   if(insertPreviewTimer!==null){clearTimeout(insertPreviewTimer);insertPreviewTimer=null;}
