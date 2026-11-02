@@ -1361,22 +1361,24 @@ $('clipart-float').onchange=e=>{
 };
 // Hit-test already-computed layout geometry. This is interaction mapping, not
 // quadrat composition or visual-page layout. The Python engine owns the result.
-function clipartDropIndex(page,clientX,clientY,excludeId){
- let targetPage=page;
- for(const slot of pageSlots){
-  const candidate=slot.page, surface=slot.shell.querySelector('.paper');
-  if(!candidate||!surface)continue;
-  const r=surface.getBoundingClientRect();
-  if(clientX>=r.left&&clientX<=r.right&&clientY>=r.top&&clientY<=r.bottom){
-   targetPage=candidate;break;
-  }
- }
- const paper=pageSlots[targetPage.index]?.shell.querySelector('.paper');
+async function clipartDropIndex(clientX,clientY,excludeId){
+ // The viewport can contain an unloaded page shell. Hit-test the shell
+ // before asking for its canonical Python placements; otherwise dropping on
+ // a virtualized page silently relocates against the source page instead.
+ const slot=pageSlots.find(entry=>{
+  const r=entry.shell.getBoundingClientRect();
+  return clientX>=r.left&&clientX<=r.right&&clientY>=r.top&&clientY<=r.bottom;
+ });
+ if(!slot)return null; // Dropping outside a writing page cancels the gesture.
+ const pageIndex=slot.summary.index;
+ if(!slot.page)await renderPageDetails(pageIndex);
+ if(pageSlots[pageIndex]!==slot||!slot.page)return null;
+ const paper=slot.shell.querySelector(':scope > .paper:not(.draft-paper)');
  if(!paper)return null;
  const bounds=paper.getBoundingClientRect();
  const x=(clientX-bounds.left)/(pxmm*zoom),y=(clientY-bounds.top)/(pxmm*zoom);
  const candidates=[];
- for(const col of targetPage.columns)for(const pos of col.placements){
+ for(const col of slot.page.columns)for(const pos of col.placements){
   if(pos.id===excludeId)continue;
   const idx=itemIndexById.get(pos.id);
   if(idx===undefined)continue;
@@ -1386,7 +1388,8 @@ function clipartDropIndex(page,clientX,clientY,excludeId){
   candidates.push({gap,score:dx*dx*5+dy*dy});
  }
  candidates.sort((a,b)=>a.score-b.score||a.gap-b.gap);
- return {gap:candidates.length?candidates[0].gap:null,page:targetPage,paper};
+ return {gap:candidates.length?candidates[0].gap:slot.summary.start_index,
+         page:slot.page,paper};
 }
 
 // One pointer lifecycle for EVERY embedded object and the temporary Insert
@@ -1563,7 +1566,7 @@ function beginObjectDrag(e,placement,column,page,node){
    }
   },
   onCancel:()=>{recentCartoucheTouch=null;reset();finishExistingObjectPreview(draft,null);},
-  onFinish:({moved,dx,dy,clientX,clientY})=>{
+  onFinish:async ({moved,dx,dy,clientX,clientY})=>{
    node.classList.remove('drag-preview');
    if(!moved){
     reset();finishExistingObjectPreview(draft,null);
@@ -1576,8 +1579,17 @@ function beginObjectDrag(e,placement,column,page,node){
    }
    recentCartoucheTouch=null;
    const deltaX=dx/unit,deltaY=dy/unit;
-   const hit=clipartDropIndex(page,clientX,clientY,placement.id);
-   const destination=hit?.page??page;
+   // A cross-page drop may need to load an offscreen, virtualized page.
+   // Snapshot the active revision before the await so a late response can
+   // never commit an action to a document the user has since changed.
+   const gestureRevision=doc.revision,gestureDocumentId=doc.id;
+   let hit;
+   try{hit=await clipartDropIndex(clientX,clientY,placement.id);}
+   catch(error){status('Could not resolve the drop page: '+error.message,true);}
+   if(insertDraft!==draft||!doc||doc.id!==gestureDocumentId||
+      doc.revision!==gestureRevision)return;
+   if(!hit){reset();finishExistingObjectPreview(draft,null);return;}
+   const destination=hit.page;
    const margins=doc.margins_mm||{top:18,bottom:18};
    const room=Math.max(0,destination.height-margins.top-margins.bottom-placement.height);
    const proposedTop=placement.y+deltaY;
