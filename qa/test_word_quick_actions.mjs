@@ -87,7 +87,7 @@ for(const [label,engine,width,height] of [
   if(selectedAfterTap!=='2 selected'){
    const hitAudit=await page.evaluate(({first,second})=>{
     const glyphs=[...document.querySelectorAll('.word')].map((word,index)=>({
-     index,id:word.dataset.id,selected:word.classList.contains('selected'),
+     index,logicalIndex:word.dataset.index,id:word.dataset.id,selected:word.classList.contains('selected'),
      box:word.getBoundingClientRect().toJSON(),
      ink:[...word.querySelectorAll('.glyph-ink-svg text')].map(t=>({
       glyph:t.textContent,box:t.getBoundingClientRect().toJSON()
