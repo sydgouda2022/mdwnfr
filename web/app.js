@@ -1419,10 +1419,37 @@ function finishExistingObjectPreview(draft,action){
  });
  else closeInsertSheet();
 }
-function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5}){
+function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5,autoScroll=false}){
  if(e.button!==0||!e.isPrimary)return false;
  const pointer=e.pointerId,startX=e.clientX,startY=e.clientY;
  let lastX=startX,lastY=startY,moved=false,ended=false;
+ const scrollArea=$('canvas-area');
+ const initialScrollTop=scrollArea.scrollTop,initialScrollLeft=scrollArea.scrollLeft;
+ let scrollFrame=null;
+ const displacement=()=>({
+  dx:lastX-startX+(autoScroll?scrollArea.scrollLeft-initialScrollLeft:0),
+  dy:lastY-startY+(autoScroll?scrollArea.scrollTop-initialScrollTop:0),
+  clientX:lastX,clientY:lastY
+ });
+ // Auto-scroll only while MOVE gestures are active (never resizing). The
+ // compositor still owns the resulting position; scrolling changes neither
+ // document IDs nor saved page coordinates.
+ const scrollAtEdge=()=>{
+  if(ended||!moved||!autoScroll)return;
+  const box=scrollArea.getBoundingClientRect();
+  const edge=54;
+  const velocity=(position,lo,hi)=>{
+   if(position<lo+edge)return -Math.min(12,(lo+edge-position)*12/edge);
+   if(position>hi-edge)return Math.min(12,(position-(hi-edge))*12/edge);
+   return 0;
+  };
+  const beforeX=scrollArea.scrollLeft,beforeY=scrollArea.scrollTop;
+  scrollArea.scrollTop+=velocity(lastY,box.top,box.bottom);
+  scrollArea.scrollLeft+=velocity(lastX,box.left,box.right);
+  if(scrollArea.scrollLeft!==beforeX||scrollArea.scrollTop!==beforeY)
+   onMove?.({...displacement(),event:null});
+  scrollFrame=requestAnimationFrame(scrollAtEdge);
+ };
  const source=e.currentTarget;
  e.stopPropagation();
  if(source instanceof Element&&source.setPointerCapture){
@@ -1433,6 +1460,8 @@ function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5}){
   window.removeEventListener('pointermove',move,true);
   window.removeEventListener('pointerup',finish,true);
   window.removeEventListener('pointercancel',cancel,true);
+  if(scrollFrame!==null)cancelAnimationFrame(scrollFrame);
+  scrollFrame=null;
   try{if(source?.hasPointerCapture?.(pointer))source.releasePointerCapture(pointer);}catch(_){}
   return true;
  };
@@ -1441,14 +1470,15 @@ function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5}){
   lastX=ev.clientX;lastY=ev.clientY;
   const distance=Math.hypot(lastX-startX,lastY-startY);
   if(!moved&&distance<threshold)return;
+  if(!moved&&autoScroll)scrollFrame=requestAnimationFrame(scrollAtEdge);
   moved=true;
   suppressWordClick=true;suppressPaperClick=true;
   if(ev.cancelable)ev.preventDefault();
-  onMove?.({dx:lastX-startX,dy:lastY-startY,clientX:lastX,clientY:lastY,event:ev});
+  onMove?.({...displacement(),event:ev});
  };
  const finish=ev=>{
   if(ev.pointerId!==pointer||!release())return;
-  try{onFinish?.({moved,dx:lastX-startX,dy:lastY-startY,clientX:lastX,clientY:lastY});}
+  try{onFinish?.({moved,...displacement()});}
   finally{if(moved)setTimeout(()=>{suppressWordClick=false;suppressPaperClick=false;},0);}
  };
  const cancel=ev=>{
@@ -1545,7 +1575,7 @@ function beginObjectDrag(e,placement,column,page,node){
  const isNested=original.type==='table'||original.type==='cartouche';
  const reset=()=>{node.classList.remove('drag-preview');node.style.transform='';};
  trackObjectPointer(e,{
-  node,
+  node,autoScroll:true,
   onMove:({dx,dy})=>{
    node.classList.add('drag-preview');
    node.style.transform='translate('+dx/zoom+'px,'+dy/zoom+'px)';
