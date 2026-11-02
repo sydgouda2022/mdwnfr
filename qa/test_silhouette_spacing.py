@@ -504,28 +504,28 @@ class ArtworkWordFlow(unittest.TestCase):
 
     def test_artwork_is_the_separator_at_its_visual_extent(self):
         from mdwnfr.layout import object_clearance_mm
+        from mdwnfr.silhouette import free_sectors
         layout = layout_document(self.document(offset=42))
-        width = layout['column_width_mm']
-        clearance = object_clearance_mm(width)
+        clearance = object_clearance_mm(layout['column_width_mm'])
         checked = 0
         for page in layout['pages']:
-            art = next((p for col in page['columns']
-                        if col['kind'] == 'clipart'
-                        for p in col['placements']), None)
-            if art is None:
-                continue
+            art = next((p for col in page['columns'] if col['kind']=='clipart'
+                        for p in col['placements']),None)
+            if art is None:continue
             for line in page['dividers']:
-                checked += 1
-                horizontal = (art['x']-clearance
-                    < line['x']+line['thickness_mm']/2
-                    and line['x']-line['thickness_mm']/2
-                    < art['x']+art['width_mm']+clearance)
-                if horizontal:
-                    self.assertTrue(
-                        line['y2'] <= art['y']-clearance+1e-4 or
-                        line['y1'] >= art['y']+art['height']+clearance-1e-4,
-                        'An illustration replaces the redundant dividing line')
-        self.assertGreater(checked, 0)
+                checked+=1
+                # Translucent/empty image pixels are not obstacles.
+                allowed=free_sectors(art['artwork_id'],
+                    image_width=art['width_mm'],image_height=art['height'],
+                    x_offset=art['x'],image_top=art['y'],
+                    slot_left=line['x']-line['thickness_mm']/2,
+                    slot_right=line['x']+line['thickness_mm']/2,
+                    top=0,bottom=page['height'],clearance=clearance,
+                    flip=art['resolved_flip'])
+                self.assertTrue(any(a<=line['y1']+1e-4 and
+                    b>=line['y2']-1e-4 for a,b in allowed),
+                    'A divider may cross the transparent frame, not the bird')
+        self.assertGreater(checked,0)
 
     def test_dividers_terminate_within_both_adjacent_text_envelopes(self):
         from mdwnfr.layout import object_clearance_mm
@@ -578,12 +578,16 @@ class ArtworkWordFlow(unittest.TestCase):
                     for line in page['dividers']:
                         if line['y1'] >= art['y']+art['height']+clearance-1e-4:
                             below+=1
-                        if (art['x']-clearance < line['x']+line['thickness_mm']/2
-                            and line['x']-line['thickness_mm']/2
-                            < art['x']+art['width_mm']+clearance):
-                            self.assertTrue(
-                                line['y2'] <= art['y']-clearance+1e-4 or
-                                line['y1'] >= art['y']+art['height']+clearance-1e-4)
+                        from mdwnfr.silhouette import free_sectors
+                        allowed=free_sectors(art['artwork_id'],
+                            image_width=art['width_mm'],image_height=art['height'],
+                            x_offset=art['x'],image_top=art['y'],
+                            slot_left=line['x']-line['thickness_mm']/2,
+                            slot_right=line['x']+line['thickness_mm']/2,
+                            top=0,bottom=page['height'],clearance=clearance,
+                            flip=art['resolved_flip'])
+                        self.assertTrue(any(a<=line['y1']+1e-4 and
+                            b>=line['y2']-1e-4 for a,b in allowed))
                 self.assertGreater(below,0,'Lower text still has dividers')
 
     def test_contour_reclaims_below_bird_before_next_columns(self):
