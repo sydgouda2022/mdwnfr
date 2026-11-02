@@ -821,10 +821,10 @@ def _recompose_after_complete_pages(doc: dict, old_doc: dict,
                                     old_metrics: dict, compact: bool):
     """Reuse a proven finished-page prefix; run the SAME compositor on the rest.
 
-    A page is an independent restart only when the preceding page consumed
-    its complete writing grid AND the next page begins with an unchanged word
-    at the first writing slot. Floating objects/table continuations crossing
-    that boundary disqualify it. This deliberately never speculates about an
+    A page is an independent restart only when recomposing the original
+    remaining stream reproduces its old page geometry exactly. A strict
+    source-order boundary and unchanged prefix are mandatory. This verifies
+    early breaks around floating artwork and never speculates about an
     incomplete lane or a still-pending silhouette.
     """
     if (doc['surface'] == 'papyrus'
@@ -864,12 +864,8 @@ def _recompose_after_complete_pages(doc: dict, old_doc: dict,
                 names.append(ident)
                 last_page[ident] = page_number
         page_ids.append(names)
-    capacity, _ = fixed_page_column_grid(
-        pages[0]['width'] - old_layout['margins_mm']['left']
-        - old_layout['margins_mm']['right'],
-        column_width_mm(doc['font_size_pt']))
     prefix = set()
-    chosen = None
+    boundaries = []
     for boundary in range(1, len(pages)):
         prefix.update(page_ids[boundary - 1])
         split = len(prefix)
@@ -879,33 +875,29 @@ def _recompose_after_complete_pages(doc: dict, old_doc: dict,
                 or any(last_page[ident] >= boundary for ident in prefix)
                 or prefix != {item['id'] for item in old_items[:split]}):
             continue
-        prev_page = pages[boundary - 1]
-        if sum(col.get('span', 1) for col in prev_page['columns']) != capacity:
-            continue
-        next_page = pages[boundary]
-        if not next_page['columns']:
-            continue
-        first = next_page['columns'][0]
-        if (first.get('kind') != 'words' or first.get('span', 1) != 1
-                or not first['placements'] or old_items[split]['type'] != 'word'):
-            continue
-        first_ident = (first['placements'][0]['id'] if not compact
-                       else first['placements'][0][0])
-        expected_x = (old_layout['margins_mm']['left'] if doc['direction'] == 'ltr'
-                      else next_page['width'] - old_layout['margins_mm']['right']
-                      - old_layout['column_width_mm'])
-        if (first_ident != old_items[split]['id']
-                or abs(first['x'] - expected_x) > 1e-4):
-            continue
-        chosen = boundary, split
+        boundaries.append((boundary, split))
+    if not boundaries:
+        return None
+    # A partly filled page may end early to make room for artwork. Rather
+    # than infer why it ended, *prove* that the old tail starts at an
+    # independent compositor boundary by recomposing the unchanged old
+    # suffix and comparing all of its exact page geometry.
+    chosen = None
+    for boundary, split in reversed(boundaries):
+        reference_doc = {**old_doc, 'items': old_items[split:]}
+        reference, _ = _layout(reference_doc, metrics, None, compact=compact)
+        expected_pages = [{**page, 'index': i}
+                          for i, page in enumerate(pages[boundary:])]
+        if reference['pages'] == expected_pages:
+            chosen = boundary, split
+            break
     if chosen is None:
         return None
     boundary, split = chosen
-    # A cached prefix may contain unchanged but invalid persisted content.
-    # Retain the full compositor's public validation contract.
+    # Cached prefix or not, the public API validates the entire new source.
     assert_document(doc)
-    # No alternate wrapping algorithm: restart the original _layout at a
-    # confirmed clean page boundary with the unchanged document properties.
+    # No alternate wrapping algorithm: restart the existing _layout on only
+    # the changed suffix after its independent boundary has been verified.
     suffix_doc = {**doc, 'items': items[split:]}
     tail, stats = _layout(suffix_doc, metrics, None, compact=compact)
     tail['pages'] = [*deepcopy(pages[:boundary]), *(
