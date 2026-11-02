@@ -1460,6 +1460,18 @@ function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5}){
 }
 const OBJECT_EDGES=['bottom-right']; // one unambiguous finger-sized resize target
 function addObjectResizeHandles(node,placement,column,page){
+ // A cartouche can be smaller than either 44px touch target on a fitted
+ // iPhone page. Place its move grip BESIDE the object rather than allowing
+ // the move hit region to cover the independently tappable resize grip.
+ const tinyWidth=placement.width_mm*pxmm*zoom<44;
+ const tinyHeight=placement.height*pxmm*zoom<44;
+ if(tinyWidth&&tinyHeight){
+  node.classList.add('compact-object-handles');
+  // Respect both writing directions: choose whichever physical page side
+  // has room, never assume that RTL artwork is on the left.
+  if(placement.x*pxmm*zoom<52)
+   node.classList.add('move-handle-right');
+ }
  // Tables are covered by individually editable cells. A selected object
  // needs a dedicated move target so dragging never steals a cell tap.
  // All four object kinds use the same direct-manipulation gesture.
