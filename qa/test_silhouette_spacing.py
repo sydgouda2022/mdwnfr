@@ -569,15 +569,22 @@ class ArtworkWordFlow(unittest.TestCase):
                     for i in range(900)]
                 layout=layout_document(doc)
                 clearance=object_clearance_mm(layout['column_width_mm'])
-                below=0
+                continuing=0
                 for page in layout['pages']:
                     art=next((p for col in page['columns']
                         if col['kind']=='clipart'
                         for p in col['placements']),None)
                     if not art:continue
                     for line in page['dividers']:
-                        if line['y1'] >= art['y']+art['height']+clearance-1e-4:
-                            below+=1
+                        # Unlike the old rectangular clipping policy, the
+                        # line is allowed to continue WITHIN the transparent
+                        # artwork frame when no painted silhouette blocks it.
+                        if (art['x']-clearance < line['x']+line['thickness_mm']/2
+                            and line['x']-line['thickness_mm']/2
+                                < art['x']+art['width_mm']+clearance
+                            and line['y1'] < art['y']+art['height']
+                            and line['y2'] > art['y']):
+                            continuing+=1
                         from mdwnfr.silhouette import free_sectors
                         allowed=free_sectors(art['artwork_id'],
                             image_width=art['width_mm'],image_height=art['height'],
@@ -588,7 +595,8 @@ class ArtworkWordFlow(unittest.TestCase):
                             flip=art['resolved_flip'])
                         self.assertTrue(any(a<=line['y1']+1e-4 and
                             b>=line['y2']-1e-4 for a,b in allowed))
-                self.assertGreater(below,0,'Lower text still has dividers')
+                self.assertGreater(continuing,0,
+                    'Divider must use visible transparent sectors inside image frame')
 
     def test_contour_reclaims_below_bird_before_next_columns(self):
         from mdwnfr.document import new_document,word,clipart
