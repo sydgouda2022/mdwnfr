@@ -11,6 +11,20 @@ for(const [label,engine,width,height] of [
  const context=await browser.newContext({viewport:{width,height},isMobile:true,hasTouch:true,
   deviceScaleFactor:2,serviceWorkers:'block'});
  const page=await context.newPage();page.setDefaultTimeout(60000);
+ await page.addInitScript(()=>{
+  const original=Worker.prototype.postMessage;
+  Worker.prototype.postMessage=function(payload,...args){
+   if(['transact','layout','session_edit'].includes(payload?.method)){
+    const doc=payload.payload?.document;
+    (window.__nestedRpc||=[]).push({
+     method:payload.method,action:payload.payload?.action,
+     items:doc?.items?.map(o=>({type:o.type,cartoucheWords:o.items?.length,
+      tableText:o.type==='table'?o.rows?.map(r=>r.map(c=>c.items?.map(w=>w.signs.join('')))):undefined}))
+    });
+   }
+   return original.call(this,payload,...args);
+  };
+ });
  const errors=[];page.on('pageerror',err=>errors.push(err.message));
  try{
   await page.goto('http://127.0.0.1:8123/',{waitUntil:'domcontentloaded'});
@@ -20,8 +34,21 @@ for(const [label,engine,width,height] of [
   await page.locator('#format-toggle').click();
   await page.locator('#insert-cartouche').click();
   await page.locator('#insert-cartouche-words').fill('𓅓 𓏏');
-  await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm')?.disabled,
-   null,{timeout:90000});
+  try{
+   await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm')?.disabled,
+    null,{timeout:18000});
+  }catch(error){
+   const detail=await page.evaluate(()=>({
+    sheet:document.getElementById('insert-dialog-backdrop')?.hidden,
+    input:document.getElementById('insert-cartouche-words')?.value,
+    inputDisabled:document.getElementById('insert-cartouche-words')?.disabled,
+    buttonDisabled:document.getElementById('insert-sheet-confirm')?.disabled,
+    status:document.getElementById('insert-preview-status')?.textContent,
+    rpc:window.__nestedRpc
+   }));
+   console.log('NESTED_CARTOUCHE_WRITE_FAILURE',label,JSON.stringify(detail));
+   throw error;
+  }
   await page.locator('#insert-sheet-confirm').click();
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
   const cartoucheCount=await page.locator('.cartouche-word').count();
