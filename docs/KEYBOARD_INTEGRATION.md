@@ -4,4 +4,4 @@ MdwNfr consumes the separately maintained headless Hieroglyphic Keyboard API. Th
 
 The browser editor uses `createKeyboardFromData()` for sign keys and runs `createHieroglyphicKeyboard()` in a dedicated prediction worker. The lexicon is pinned with `keyboard-release-pin.json`; upgrade API modules and the associated dictionary lock together and run Chromium/WebKit acceptance before deploying.
 
-MdwNfr documents can be exported as `.mdwnfr.json` files from the document library and re-imported after Python validation. The importer intentionally refuses an ID that already exists, rather than overwriting it. Browser IndexedDB and snapshots are not independent backups.
+The Documents library deliberately provides no general Import or Export commands. An emergency **Export unsaved** download appears only after an autosave problem. The current UI cannot re-import this file; preserving a downloaded copy is not a substitute for a supported restore procedure. Documents and internal snapshots are local to browser IndexedDB and cannot recover from cleared site data or device loss.
