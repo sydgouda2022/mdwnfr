@@ -7,6 +7,20 @@ from mdwnfr.quadrat import compose,expand_internal,expand_after_word,expand_to_i
 from mdwnfr.layout import fixed_page_column_grid, layout_document, column_width_mm
 from mdwnfr.typography import DIVIDER_TO_STEM_RATIO, glyph_reference_stroke_mm, divider_stroke_mm
 
+from mdwnfr.silhouette import free_sectors
+
+def divider_clear_of_silhouette(line,art,clearance):
+    """No divider may touch actual occupied illustration pixels plus clearance."""
+    permitted=free_sectors(art.get('artwork_id'),
+        image_width=art['width_mm'],image_height=art['height'],
+        x_offset=art['x'],image_top=art['y'],
+        flip=art['resolved_flip'],
+        slot_left=line['x']-line['thickness_mm']/2,
+        slot_right=line['x']+line['thickness_mm']/2,
+        top=line['y1'],bottom=line['y2'],clearance=clearance)
+    return any(lo <= line['y1']+1e-4 and hi >= line['y2']-1e-4
+               for lo,hi in permitted)
+
 C=20.0
 def near(test,left,right):
     test.assertTrue(math.isclose(left,right,rel_tol=1e-8,abs_tol=1e-8),
@@ -516,15 +530,10 @@ class ArtworkWordFlow(unittest.TestCase):
                 continue
             for line in page['dividers']:
                 checked += 1
-                horizontal = (art['x']-clearance
-                    < line['x']+line['thickness_mm']/2
-                    and line['x']-line['thickness_mm']/2
-                    < art['x']+art['width_mm']+clearance)
-                if horizontal:
-                    self.assertTrue(
-                        line['y2'] <= art['y']-clearance+1e-4 or
-                        line['y1'] >= art['y']+art['height']+clearance-1e-4,
-                        'An illustration replaces the redundant dividing line')
+                self.assertTrue(
+                    divider_clear_of_silhouette(line,art,clearance),
+                    'Divider cannot intersect painted artwork, but may pass '
+                    'through transparent portions of its rectangular frame')
         self.assertGreater(checked, 0)
 
     def test_dividers_terminate_within_both_adjacent_text_envelopes(self):
@@ -578,12 +587,10 @@ class ArtworkWordFlow(unittest.TestCase):
                     for line in page['dividers']:
                         if line['y1'] >= art['y']+art['height']+clearance-1e-4:
                             below+=1
-                        if (art['x']-clearance < line['x']+line['thickness_mm']/2
-                            and line['x']-line['thickness_mm']/2
-                            < art['x']+art['width_mm']+clearance):
-                            self.assertTrue(
-                                line['y2'] <= art['y']-clearance+1e-4 or
-                                line['y1'] >= art['y']+art['height']+clearance-1e-4)
+                        self.assertTrue(
+                            divider_clear_of_silhouette(line,art,clearance),
+                            'Dividers stop at the actual bird silhouette, '
+                            'not the transparent edges of its image frame')
                 self.assertGreater(below,0,'Lower text still has dividers')
 
     def test_contour_reclaims_below_bird_before_next_columns(self):
