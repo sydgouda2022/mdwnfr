@@ -359,6 +359,21 @@ function closestRenderedWordInk(paper,x,y,maxDistance=Infinity){
  }
  return distance<=maxDistance*maxDistance?chosen:null;
 }
+// A thin quadrat's painted ink may extend beyond its own word rectangle.
+// If the browser actually targeted that small word, do not let a nearby
+// taller word's broad ink rectangle steal its direct tap (WebKit/iPad).
+// For the opposite case (a tall transparent word obscures a small sign),
+// preserve the compositor's ink hit instead of blindly trusting DOM stacking.
+function resolveRenderedWordHit(paper,target,x,y,maxDistance){
+ const ink=closestRenderedWordInk(paper,x,y,maxDistance);
+ if(!target||!ink||target.dataset.id===ink)return ink||target?.dataset.id||null;
+ const box=target.getBoundingClientRect();
+ const competing=[...paper.querySelectorAll('.word')].find(n=>n.dataset.id===ink);
+ if(competing&&x>=box.left&&x<=box.right&&y>=box.top&&y<=box.bottom&&
+    box.height<competing.getBoundingClientRect().height)
+  return target.dataset.id;
+ return ink;
+}
 function paintPageContent(slot,p,shell){
  const paper=document.createElement('div');paper.className='paper';
  paper.style.width=mm(p.width);paper.style.height=mm(p.height);paper.style.transform=`scale(${zoom})`;
@@ -369,8 +384,7 @@ function paintPageContent(slot,p,shell){
   const target=e.target.closest?.('.word');
   if(!target&&e.target!==paper)return;
   if(suppressWordClick||suppressPaperClick)return;
-  const id=closestRenderedWordInk(paper,e.clientX,e.clientY,target?Infinity:12)||
-   target?.dataset.id;
+  const id=resolveRenderedWordHit(paper,target,e.clientX,e.clientY,target?Infinity:12);
   if(id){e.stopPropagation();selectWord(id,e.shiftKey);}
   else if(e.target===paper)placeCaretFromPoint(e,p);
  },true);
@@ -378,8 +392,7 @@ function paintPageContent(slot,p,shell){
   const target=e.target.closest?.('.word');
   if(!target&&e.target!==paper)return;
   if(suppressWordClick||suppressPaperClick)return;
-  const id=closestRenderedWordInk(paper,e.clientX,e.clientY,target?Infinity:12)||
-   target?.dataset.id;
+  const id=resolveRenderedWordHit(paper,target,e.clientX,e.clientY,target?Infinity:12);
   if(id){e.stopPropagation();openWord(id);}
  },true);
  const range=selectedRange();
