@@ -41,9 +41,9 @@ for(const [name,engine,width,height,direction] of [
      const req=docs.getAll();
      req.onsuccess=()=>{
       const document=req.result[0];
-      document.surface='A3';
+      document.surface='A4';
       document.direction=direction;
-      document.font_size_pt=12;
+      document.font_size_pt=22;
       const spellings=[['𓅓','𓏏'],['𓈖'],['𓇋','𓏏'],['𓏺']];
       const items=[];
       let count=0;
