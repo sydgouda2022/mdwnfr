@@ -13,6 +13,7 @@ from copy import deepcopy
 
 from mdwnfr.document import new_document, word, clipart
 from mdwnfr.layout import layout_document, incremental_layout_document
+from mdwnfr.silhouette import _occupied_mask_row_runs
 
 
 def build_document(words, artworks, direction, surface='A3', font_size=10):
@@ -92,6 +93,11 @@ def main():
         'objects':len(edited['items']),
         'layout_mode':updated[1]['mode'],
         'reused_prefix_columns':updated[1]['reused_prefix_columns'],
+        'mask_projection_cache':{
+            'hits':_occupied_mask_row_runs.cache_info().hits,
+            'misses':_occupied_mask_row_runs.cache_info().misses,
+            'entries':_occupied_mask_row_runs.cache_info().currsize
+        },
         'sample_timings':records
     }
     print(json.dumps(report,indent=2))
