@@ -11,7 +11,7 @@ import json
 import time
 from copy import deepcopy
 
-from mdwnfr.document import new_document, word, clipart, transaction
+from mdwnfr.document import new_document, word, clipart
 from mdwnfr.layout import layout_document, incremental_layout_document
 
 
@@ -21,8 +21,9 @@ def build_document(words, artworks, direction):
     corpus=['𓅓𓏏','𓈖','𓇋𓏏','𓂋𓈖','𓏺','𓅓𓈖']
     assets=['bennu','horus-falcon-raster','amun-ra']
     items=[]
+    anchors={words*(j+1)//(artworks+1) for j in range(artworks)}
     for i in range(words):
-        if artworks and i in {words*(j+1)//(artworks+1) for j in range(artworks)}:
+        if i in anchors:
             obj=clipart(assets[i%len(assets)],35+i%31,'normal')
             obj['y_align']=(i%7)/7
             items.append(obj)
@@ -43,8 +44,8 @@ def main():
     parser.add_argument('--artworks',type=int,default=8)
     parser.add_argument('--direction',choices=['rtl','ltr'],default='rtl')
     options=parser.parse_args()
-    if not 1<=options.words<=100000 or not 0<=options.artworks<=200:
-        parser.error('Use 1-100000 words and 0-200 artworks')
+    if not 1<=options.words<=100000 or not 0<=options.artworks<=min(200,options.words):
+        parser.error('Use 1-100000 words and 0-200 artworks (not more artworks than words)')
     doc=build_document(options.words,options.artworks,options.direction)
     original,base=timed('full_initial',lambda:layout_document(doc))
     edited=deepcopy(doc)
@@ -52,14 +53,14 @@ def main():
     edited['revision']+=1
     updated,edit=timed('insert_middle',lambda:incremental_layout_document(
         edited,doc,original))
-    full,_=timed('full_parity',lambda:layout_document(edited))
+    full,full_parity=timed('full_parity',lambda:layout_document(edited))
     if updated[0]!=full:
         raise AssertionError('Incremental reflow diverged from full compositor')
     compact,project=timed('compact_projection',lambda:incremental_layout_document(
         edited,compact=True))
     if compact[0]['document_id']!=doc['id']:
         raise AssertionError('Compact projection has wrong document ID')
-    records=[base,edit,project]
+    records=[base,edit,full_parity,project]
     report={
         'words':options.words,'artworks':options.artworks,
         'direction':options.direction,'surface':doc['surface'],
