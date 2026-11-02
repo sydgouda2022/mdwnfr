@@ -1729,8 +1729,7 @@ function beginObjectResize(e,placement,node,edge){
   onFinish:({moved,clientX,clientY})=>{
    if(!moved){
     finishExistingObjectPreview(draft,null);
-    if(secondCartoucheTap)
-     noteCartoucheTouch(placement.id,clientX,clientY);
+    if(isCartouche)openNestedKeyboard();
     return;
    }
    recentCartoucheTouch=null;
@@ -2704,6 +2703,7 @@ function renderComposer(){
  const table=selectedTable();
  $('composer-title').textContent=table&&selectedTableCell?.tableId===table.id
   ? `Compose table cell ${String.fromCharCode(65+selectedTableCell.column)}${selectedTableCell.row+1}`
+  : selectedCartoucheObject()?'Compose cartouche word'
   : editingId?'Edit selected word':'Compose a word';
  const area=$('composer');area.replaceChildren();
  const preview=$('quadrat-preview');preview.hidden=true;preview.replaceChildren();
