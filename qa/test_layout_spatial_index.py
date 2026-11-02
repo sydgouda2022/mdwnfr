@@ -19,14 +19,13 @@ class SpatialIndexParity(unittest.TestCase):
     def test_divider_sweep_matches_cartesian_reference(self):
         rng = random.Random(811)
         for _ in range(350):
-            a = divider_ink_runs([
-                (rng.uniform(0, 180), rng.uniform(181, 360))
-                for _ in range(rng.randrange(0, 22))
-            ], 0)
-            b = divider_ink_runs([
-                (rng.uniform(0, 180), rng.uniform(181, 360))
-                for _ in range(rng.randrange(0, 22))
-            ], 0)
+            def generate():
+                spans=[]
+                for _ in range(rng.randrange(0, 24)):
+                    top=rng.uniform(0, 360)
+                    spans.append((top, top + rng.uniform(.01, 35)))
+                return divider_ink_runs(spans, 0)
+            a, b = generate(), generate()
             original = divider_ink_runs(sorted(
                 (max(u, w), min(v, z))
                 for u, v in a for w, z in b
@@ -58,6 +57,20 @@ class SpatialIndexParity(unittest.TestCase):
             optimized = [ink for ink in _anchor_word_ink(
                 index, x, artwork_width, clearance, width) if overlaps(ink)]
             self.assertEqual(sorted(optimized), sorted(expected))
+
+    def test_reused_origins_do_not_recompute_each_identical_word(self):
+        from unittest.mock import patch
+        from mdwnfr.layout import free_word_starts
+        doc=new_document('Cached legal origins',surface='A3',font_size_pt=10)
+        doc['items']=[word(['𓅓','𓏏']) for _ in range(480)]
+        with patch('mdwnfr.layout.free_word_starts',
+                   wraps=free_word_starts) as query:
+            result=layout_document(doc)
+        count=sum(1 for p in result['pages'] for c in p['columns']
+                  for _ in c['placements'])
+        self.assertEqual(count,480)
+        self.assertLess(query.call_count,480//4,
+                        'Repeated words must not rescan unchanged obstacles')
 
     def test_dense_mixed_stream_retains_ids_and_compact_parity(self):
         for direction in ('rtl', 'ltr'):
