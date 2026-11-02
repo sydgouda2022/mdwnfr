@@ -424,6 +424,14 @@ function paintPageContent(slot,p,shell){
      // reopen the table editor. Format remains available via its toolbar icon.
      box.addEventListener('click',e=>{e.stopPropagation();choose();});
      box.addEventListener('dblclick',e=>{e.stopPropagation();choose();void beginInsertSheet('table',item.id);});
+     box.addEventListener('pointerup',e=>{
+      if(!['touch','pen'].includes(e.pointerType))return;
+      const now=performance.now(),last=box._tap;
+      box._tap={time:now,x:e.clientX,y:e.clientY};
+      if(last&&now-last.time<=520&&Math.hypot(e.clientX-last.x,e.clientY-last.y)<=30){
+       box._tap=null;choose();void beginInsertSheet('table',item.id);
+      }
+     });
      box.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();if(activePanel!=='format')switchPanel('format');}});
      if(selectedTableCell?.tableId===item.id&&selectedTableCell.row===cell.row&&selectedTableCell.column===cell.column)box.classList.add('active');
      for(const w of cell.words){
@@ -781,6 +789,7 @@ function closeInsertSheet(){
  // A newly opened page may have been virtualized before the first detail
  // paint. The temporary page is still visible, but Cancel must explicitly
  // restore the normal Python-rendered page instead of leaving empty paper.
+ if(previous?.textTimer!==undefined)clearTimeout(previous.textTimer);
  if(previous&&!previous.basePaper&&Number.isInteger(previous.pageIndex))
   void renderPageDetails(previous.pageIndex);
  $('insert-dialog-backdrop').hidden=true;
@@ -812,6 +821,8 @@ async function beginInsertSheet(kind,existingId=null){
  $('insert-sheet-confirm').textContent='Done';
  for(const name of ['clipart','image','table','cartouche'])
   $('insert-screen-'+name).hidden=name!==kind;
+ $('insert-glyph-keyboard').hidden=!['table','cartouche'].includes(kind);
+ if(['table','cartouche'].includes(kind))drawInsertGlyphs();
  // Prevent edits until the initial Python draft has been constructed.
  // Otherwise a late default can silently overwrite the user's choices.
  const initializing=!original&&(kind==='table'||kind==='cartouche');
@@ -855,6 +866,7 @@ async function beginInsertSheet(kind,existingId=null){
      'input[value="'+insertDraft.object.orientation+'"]').checked=true;
    }
   }
+   showDraftContents(insertDraft);
   if(insertDraft?.token!==token)return;
   for(const id of ['insert-table-rows','insert-table-columns',
                    'insert-table-border','insert-table-color',
@@ -1043,6 +1055,128 @@ async function runInsertPreview(d,version){
 // One requested table specification per user event, queued in order.
 // The Python transaction replaces dimensions and styling in one operation;
 // later user input wins, and preview never shows an earlier stale request.
+
+ // Edit object contents inside the insert sheet, before saving the object.
+ let draftGlyphTab='unilaterals';
+ function draftCellString(d,row,col){
+  const c=d.object.rows[row]?.[col];
+  return c?.mode==='formula'?c.formula:(c?.items||[]).map(w=>w.signs.join('')).join(' ');
+ }
+ function drawDraftCells(d){
+  if(d.kind!=='table')return;
+  const rows=d.object.rows,ncols=rows[0].length;
+  if(!d.cell||!rows[d.cell.row]?.[d.cell.col])d.cell={row:0,col:0};
+  const grid=$('insert-table-cell-grid');grid.replaceChildren();
+  grid.style.setProperty('--draft-cols',ncols);
+  for(let row=0;row<rows.length;row++)for(let col=0;col<ncols;col++){
+   const btn=document.createElement('button');btn.type='button';
+   const name=String.fromCharCode(65+col)+(row+1);
+   btn.textContent=name+' '+draftCellString(d,row,col);
+   btn.setAttribute('aria-label','Edit cell '+name);
+   btn.setAttribute('aria-pressed',String(d.cell.row===row&&d.cell.col===col));
+   btn.onclick=()=>{
+    void writeDraftText(d);
+    d.cell={row,col};$('insert-table-cell-input').value=draftCellString(d,row,col);
+    drawDraftCells(d);$('insert-table-cell-input').focus({preventScroll:true});
+   };
+   grid.append(btn);
+  }
+ }
+ function showDraftContents(d){
+  if(!d?.object)return;
+  if(d.kind==='table'){
+   drawDraftCells(d);
+   $('insert-table-cell-input').value=draftCellString(d,d.cell.row,d.cell.col);
+  }else if(d.kind==='cartouche')
+   $('insert-cartouche-words').value=d.object.items.map(w=>w.signs.join('')).join(' ');
+ }
+ function draftInput(d){
+  return d.kind==='table'?$('insert-table-cell-input'):$('insert-cartouche-words');
+ }
+ function draftTextAction(d){
+  if(!d?.object||!['table','cartouche'].includes(d.kind))return null;
+  const raw=draftInput(d).value.trim();
+  const words=raw?raw.split(/\s+/u).map(w=>Array.from(w)):[];
+  const valid=c=>c.codePointAt(0)>=0x13000&&c.codePointAt(0)<=0x1342f;
+  if(d.kind==='cartouche'){
+   if(words.length>48||words.some(w=>w.some(c=>!valid(c))))
+    throw Error('Use up to 48 hieroglyphic words');
+   return raw===d.object.items.map(w=>w.signs.join('')).join(' ')?null:
+    {op:'set_cartouche_words',id:d.object.id,words};
+  }
+  const {row,col}=d.cell;
+  if(raw===draftCellString(d,row,col))return null;
+  const action={op:'set_table_cell',id:d.object.id,row,column:col};
+  if(raw.startsWith('=')){action.mode='formula';action.formula=raw;}
+  else{
+   if(words.some(w=>w.some(c=>!valid(c))))throw Error('Use hieroglyphs or =formula');
+   action.mode='text';action.words=words;
+  }
+  return action;
+ }
+ function writeDraftText(d){
+  if(d!==insertDraft)return Promise.resolve();
+  if(d.textTimer!==undefined){clearTimeout(d.textTimer);d.textTimer=undefined;}
+  let action;
+  try{action=draftTextAction(d);}
+  catch(error){
+   d.valid=false;$('insert-sheet-confirm').disabled=true;
+   $('insert-preview-status').textContent=error.message;return Promise.resolve();
+  }
+  if(!action)return d.textQueue||Promise.resolve();
+  d.valid=false;$('insert-sheet-confirm').disabled=true;
+  d.textQueue=(d.textQueue||Promise.resolve()).catch(()=>{}).then(async()=>{
+   if(d!==insertDraft)return;
+   const snapshot={...doc,items:[d.object]};
+   const response=await rpc('transact',{document:snapshot,action});
+   if(d!==insertDraft)return;
+   d.object=response.document.items[0];
+   if(d.kind==='table')drawDraftCells(d);
+   requestInsertPreview();
+  }).catch(error=>{
+   if(d===insertDraft){
+    d.valid=false;$('insert-sheet-confirm').disabled=true;
+    $('insert-preview-status').textContent='Writing error: '+error.message;
+   }
+  });
+  return d.textQueue;
+ }
+ function scheduleDraftText(){
+  const d=insertDraft;if(!d||!['table','cartouche'].includes(d.kind))return;
+  if(d.textTimer!==undefined)clearTimeout(d.textTimer);
+  d.valid=false;$('insert-sheet-confirm').disabled=true;
+  d.textTimer=setTimeout(()=>writeDraftText(d),220);
+ }
+ $('insert-cartouche-words').oninput=scheduleDraftText;
+ $('insert-table-cell-input').oninput=scheduleDraftText;
+ function typeDraftGlyph(value,backspace=false){
+  const d=insertDraft;if(!d||!['table','cartouche'].includes(d.kind))return;
+  const input=draftInput(d),start=input.selectionStart??input.value.length,
+   end=input.selectionEnd??input.value.length;
+  const prev=start>=2&&input.value.codePointAt(start-2)>=0x13000?start-2:Math.max(0,start-1);
+  input.setRangeText(backspace?'':value,backspace&&start===end?prev:start,end,'end');
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+  input.focus({preventScroll:true});
+ }
+ function drawInsertGlyphs(){
+  const tabs=$('insert-glyph-tabs');tabs.replaceChildren();
+  for(const [key,title] of [['unilaterals','Uni'],['bilaterals','Bi'],['trilaterals','Tri'],['numerals','123']]){
+   const b=document.createElement('button');b.type='button';b.textContent=title;
+   b.setAttribute('aria-pressed',String(key===draftGlyphTab));
+   b.onclick=()=>{draftGlyphTab=key;drawInsertGlyphs();};tabs.append(b);
+  }
+  const keys=$('insert-glyph-keys');keys.replaceChildren();
+  const signs=draftGlyphTab==='numerals'?numerals.map(n=>({glyph:n.sign,name:n.value})):
+   glyphGroups[draftGlyphTab];
+  for(const sign of signs){
+   const b=document.createElement('button');b.type='button';
+   b.textContent=sign.glyph;b.setAttribute('aria-label',sign.name||sign.code||'Sign');
+   b.onclick=()=>typeDraftGlyph(sign.glyph);keys.append(b);
+  }
+ }
+ $('insert-glyph-space').onclick=()=>typeDraftGlyph(' ');
+ $('insert-glyph-backspace').onclick=()=>typeDraftGlyph('',true);
+
 function scheduleInsertTableSpec(){
  const d=insertDraft;
  if(!d||d.kind!=='table'||!d.object)return;
@@ -1071,7 +1205,7 @@ function scheduleInsertTableSpec(){
   $('insert-preview-status').textContent='Choose a valid table size and style';
   return;
  }
- const previous=d.specQueue||Promise.resolve();
+ const previous=Promise.all([d.specQueue||Promise.resolve(),d.textQueue||Promise.resolve()]);
  d.specQueue=previous.catch(()=>{}).then(async()=>{
   if(insertDraft!==d||version!==d.specRequested)return;
   const sandbox={...doc,items:[d.object]};
@@ -1081,6 +1215,7 @@ function scheduleInsertTableSpec(){
    if(insertDraft!==d||version!==d.specRequested)return;
    d.object=response.document.items[0];
    d.specApplied=version;
+   showDraftContents(d);
    requestInsertPreview();
   }catch(err){
    if(insertDraft===d&&version===d.specRequested){
@@ -1156,7 +1291,10 @@ document.addEventListener('keydown',e=>{
 },true);
 $('insert-sheet-confirm').onclick=async()=>{
  const d=insertDraft;
- if(!d?.object||!d.valid||d.busy)return;
+ if(!d?.object||d.busy)return;
+ if(d.textTimer!==undefined){await writeDraftText(d);return;}
+ if(d.textQueue)await d.textQueue;
+ if(d!==insertDraft||!d.valid)return;
  if(d.kind==='table' && (d.specApplied||0)!==(d.specRequested||0)){
   $('insert-preview-status').textContent='Updating table settings; confirm when the latest preview is ready…';
   return;
