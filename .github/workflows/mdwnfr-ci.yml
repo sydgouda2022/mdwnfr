@@ -77,6 +77,9 @@ jobs:
           node qa/test_hieroglyph_facing.mjs
           node tools/test_layout_detail_guard.mjs
           node tools/test_recovery_storage.mjs
+      - name: Profile mixed-document layout throughput (PR diagnostics)
+        if: github.event_name == 'pull_request'
+        run: PYTHONPATH=core python tools/benchmark_layout_v2.py --words 1000 --artworks 6
       - name: Verify reproducible offline browser assets
         run: |
           set -euo pipefail
