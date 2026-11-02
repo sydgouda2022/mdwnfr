@@ -1572,6 +1572,7 @@ function beginObjectDrag(e,placement,column,page,node){
  if(!draft)return;
  const source=itemIndexById.get(placement.id);
  const unit=zoom*pxmm;
+ const grabY=(e.clientY-node.getBoundingClientRect().top)/unit;
  const isNested=original.type==='table'||original.type==='cartouche';
  const reset=()=>{node.classList.remove('drag-preview');node.style.transform='';};
  trackObjectPointer(e,{
@@ -1622,7 +1623,10 @@ function beginObjectDrag(e,placement,column,page,node){
    const destination=hit.page;
    const margins=doc.margins_mm||{top:18,bottom:18};
    const room=Math.max(0,destination.height-margins.top-margins.bottom-placement.height);
-   const proposedTop=placement.y+deltaY;
+   // A drop on another page is positioned from that page's surface and
+   // the original grab point, not from the source page's old Y coordinate.
+   const proposedTop=destination===page?placement.y+deltaY:
+    (clientY-hit.paper.getBoundingClientRect().top)/unit-grabY;
    const yAlign=room?Math.max(0,Math.min(1,(proposedTop-margins.top)/room)):0;
    let target=source,action;
    // A purely vertical gesture must not silently rewrite horizontal
@@ -1638,9 +1642,10 @@ function beginObjectDrag(e,placement,column,page,node){
       hit.gap-(source<hit.gap?1:0)));
     }
     action={op:'relocate_nested',id:placement.id,index:target};
-    if(horizontal)Object.assign(action,
+    if(destination!==page)action.x_offset_mm=0;
+    else if(horizontal)Object.assign(action,
      nestedDragHorizontalPosition(original,placement,column,deltaX,doc.direction));
-    if(vertical)action.y_align=Math.round(yAlign*10000)/10000;
+    if(vertical||destination!==page)action.y_align=Math.round(yAlign*10000)/10000;
    }else{
     const desiredX=placement.x+deltaX;
     const rawOffset=doc.direction==='rtl'
@@ -1657,8 +1662,9 @@ function beginObjectDrag(e,placement,column,page,node){
     }
     action={op:original.type==='image'?'relocate_image':'relocate_clipart',
       id:placement.id,index:target};
-    if(horizontal)action.x_offset_mm=xOffset;
-    if(vertical)action.y_align=Math.round(yAlign*10000)/10000;
+    if(horizontal||destination!==page)action.x_offset_mm=xOffset;
+    if(vertical||destination!==page)
+     action.y_align=Math.round(yAlign*10000)/10000;
    }
    selectWord(placement.id);
    finishExistingObjectPreview(draft,action);
