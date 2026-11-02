@@ -36,6 +36,11 @@ jobs:
         with: {python-version: '3.12'}
       - uses: actions/setup-node@v5
         with: {node-version: '24'}
+      - name: Restore validated hieroglyph font cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/mdwnfr-font.ttf
+          key: mdwnfr-noto-hieroglyphs-b792accc6207ca9c
       - name: Verify pinned Hieroglyphic Keyboard dependency
         env:
           EVENT: ${{ github.event_name }}
@@ -47,7 +52,9 @@ jobs:
           set -euo pipefail
           python -m pip install --disable-pip-version-check 'fonttools[woff]==4.67.0' 'brotli==1.2.1' 'Pillow==13.0.0'
           mkdir -p web/assets/fonts
-          curl -fLsS --retry 3 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansegyptianhieroglyphs/NotoSansEgyptianHieroglyphs-Regular.ttf' -o /tmp/mdwnfr-font.ttf
+          if ! echo 'b792accc6207ca9caa59fc67f53926b6985a99d255dd432d7c68b68a6dfd62f8  /tmp/mdwnfr-font.ttf' | sha256sum -c - >/dev/null 2>&1; then
+            curl -fLsS --retry 3 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansegyptianhieroglyphs/NotoSansEgyptianHieroglyphs-Regular.ttf' -o /tmp/mdwnfr-font.ttf
+          fi
           echo 'b792accc6207ca9caa59fc67f53926b6985a99d255dd432d7c68b68a6dfd62f8  /tmp/mdwnfr-font.ttf' | sha256sum -c -
           python tools/generate_glyph_ink.py /tmp/mdwnfr-font.ttf core/mdwnfr/data/glyph_geometry.json
           python - <<'PY'
