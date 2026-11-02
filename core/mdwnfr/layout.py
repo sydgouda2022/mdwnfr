@@ -68,7 +68,15 @@ def _intersect_ink_runs(left: list[tuple[float, float]],
             i += 1
         if d <= b:
             j += 1
-    return divider_ink_runs(overlaps, 0)
+    # Overlaps are already in ascending origin order. Merge inline to avoid
+    # the original helper's unnecessary second O(k log k) sorting pass.
+    merged = []
+    for top, bottom in overlaps:
+        if merged and top <= merged[-1][1] + 1e-8:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], bottom))
+        else:
+            merged.append((top, bottom))
+    return merged
 
 
 def _anchor_word_ink(index: dict[int, list[tuple[float, float, float, float]]],
