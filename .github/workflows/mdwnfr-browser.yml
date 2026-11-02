@@ -63,6 +63,7 @@ jobs:
         run: |
           set -euo pipefail
           node qa/test_object_gestures.mjs
+          node qa/test_bird_visual_browser.mjs
           node qa/test_cross_page_drop.mjs
           node qa/test_insert_on_page.mjs
           node qa/test_cartouche_touch.mjs
@@ -71,3 +72,9 @@ jobs:
           node qa/test_font_bounds_browser.mjs
           node qa/test_touch_editing.mjs
           node qa/test_release_update.mjs
+      - uses: actions/upload-artifact@v4
+        if: always() && github.event_name == 'pull_request'
+        with:
+          name: mdwnfr-horus-bennu-screen-captures
+          path: /tmp/mdwnfr-ink-*.png
+          if-no-files-found: ignore
