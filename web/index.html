@@ -222,6 +222,16 @@
       <button id="object-action-copy" type="button" aria-label="Copy selected object">Copy</button>
       <button id="object-action-delete" type="button" aria-label="Delete selected object">Delete</button>
     </nav>
+    <!-- Whole-quadrat text selection uses the same native document commands
+         as Format; the page is always the editor, not a miniature preview. -->
+    <nav id="word-quick-actions" class="object-quick-actions word-quick-actions" aria-label="Selected hieroglyphic word actions" hidden>
+      <button id="word-action-edit" type="button" aria-label="Edit selected word">Edit</button>
+      <button id="word-action-bold" type="button" aria-label="Bold selected words" aria-pressed="false"><strong>B</strong></button>
+      <button id="word-action-black" type="button" aria-label="Set selected words to black"><span class="word-ink-dot word-ink-black" aria-hidden="true"></span></button>
+      <button id="word-action-red" type="button" aria-label="Set selected words to red"><span class="word-ink-dot word-ink-red" aria-hidden="true"></span></button>
+      <button id="word-action-copy" type="button" aria-label="Copy selected words">Copy</button>
+      <button id="word-action-delete" type="button" aria-label="Delete selected words">Delete</button>
+    </nav>
     <div id="edit-menu" class="edit-menu" role="menu" aria-label="Edit selection" hidden>
       <button id="cut-selection" type="button" role="menuitem" aria-label="Cut" aria-keyshortcuts="Meta+X Control+X"><span>Cut</span><kbd>⌘X</kbd></button>
       <button id="copy-selection" type="button" role="menuitem" aria-label="Copy" aria-keyshortcuts="Meta+C Control+C"><span>Copy</span><kbd>⌘C</kbd></button>

@@ -283,7 +283,11 @@ async function renderPapyrusWindow(){
 }
 // One verified font determines exact glyph ink and SVG baseline coordinates.
 // Single SVG rendering path for ordinary, table, cartouche and preview glyphs.
+const renderedWordInk = new WeakMap();
 function drawQuadratInk(host,quadrat,color,bold){
+ // Attach the compositor's temporary geometry to the rendered word only.
+ // It is a view projection, never saved document data.
+ if(host.classList.contains('word'))renderedWordInk.set(host,quadrat);
  const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
  svg.classList.add('glyph-ink-svg');
  svg.setAttribute('viewBox',`0 0 ${quadrat.width} ${quadrat.height}`);
@@ -317,10 +321,80 @@ function drawQuadratInk(host,quadrat,color,bold){
  }
  host.append(svg);
 }
+// The compositor may pack non-overlapping GLYPH INK into overlapping word
+// rectangles. Select using the actual painted SVG glyphs instead of whichever
+// transparent full-column rectangle happened to be above the finger.
+// This is hit-testing only: no browser-generated text geometry is persisted.
+function closestRenderedWordInk(paper,x,y,maxDistance=Infinity){
+ let chosen=null,distance=Infinity;
+ for(const wordNode of paper.querySelectorAll('.word')){
+  const bounds=wordNode.getBoundingClientRect();
+  if(x<bounds.left-44||x>bounds.right+44||y<bounds.top-44||y>bounds.bottom+44)
+   continue;
+  const quadrat=renderedWordInk.get(wordNode);
+  const matrix=wordNode.querySelector('.hieroglyph-direction-layer')?.getScreenCTM();
+  if(!quadrat?.signs?.length||!matrix)continue;
+  // SVG text.getBoundingClientRect() reports font metrics, NOT glyph ink.
+  // Flat signs can have font rectangles several times taller than their ink;
+  // selecting their apparent centers then picks the wrong adjacent word.
+  // The Python compositor already owns the exact painted ink rectangles.
+  // Transform those rectangles through the real SVG CTM (including RTL,
+  // paper zoom, and the browser's viewBox scaling), never remeasure the font.
+  for(const glyph of quadrat.signs){
+   const corners=[
+    [glyph.x,glyph.y],[glyph.x+glyph.width,glyph.y],
+    [glyph.x,glyph.y+glyph.height],
+    [glyph.x+glyph.width,glyph.y+glyph.height]
+   ].map(([gx,gy])=>[matrix.a*gx+matrix.c*gy+matrix.e,
+                     matrix.b*gx+matrix.d*gy+matrix.f]);
+   const left=Math.min(...corners.map(p=>p[0]));
+   const right=Math.max(...corners.map(p=>p[0]));
+   const top=Math.min(...corners.map(p=>p[1]));
+   const bottom=Math.max(...corners.map(p=>p[1]));
+   const dx=Math.max(left-x,0,x-right),dy=Math.max(top-y,0,y-bottom);
+   const cx=(left+right)/2,cy=(top+bottom)/2;
+   const score=dx*dx+dy*dy+.01*((cx-x)**2+(cy-y)**2);
+   if(score<distance){distance=score;chosen=wordNode.dataset.id;}
+  }
+ }
+ return distance<=maxDistance*maxDistance?chosen:null;
+}
+// A thin quadrat's painted ink may extend beyond its own word rectangle.
+// If the browser actually targeted that small word, do not let a nearby
+// taller word's broad ink rectangle steal its direct tap (WebKit/iPad).
+// For the opposite case (a tall transparent word obscures a small sign),
+// preserve the compositor's ink hit instead of blindly trusting DOM stacking.
+function resolveRenderedWordHit(paper,target,x,y,maxDistance){
+ const ink=closestRenderedWordInk(paper,x,y,maxDistance);
+ if(!target||!ink||target.dataset.id===ink)return ink||target?.dataset.id||null;
+ const box=target.getBoundingClientRect();
+ const competing=[...paper.querySelectorAll('.word')].find(n=>n.dataset.id===ink);
+ if(competing&&x>=box.left&&x<=box.right&&y>=box.top&&y<=box.bottom&&
+    box.height<competing.getBoundingClientRect().height)
+  return target.dataset.id;
+ return ink;
+}
 function paintPageContent(slot,p,shell){
  const paper=document.createElement('div');paper.className='paper';
  paper.style.width=mm(p.width);paper.style.height=mm(p.height);paper.style.transform=`scale(${zoom})`;
- paper.addEventListener('click',e=>{if(!suppressPaperClick&&e.target===paper)placeCaretFromPoint(e,p);});
+ // A tiny quadrat may have visible SVG ink OUTSIDE the hit rectangle:
+ // a paper tap within 12 CSS px of painted glyph ink selects that word.
+ // Farther-away paper taps still place the ordinary insertion caret.
+ paper.addEventListener('click',e=>{
+  const target=e.target.closest?.('.word');
+  if(!target&&e.target!==paper)return;
+  if(suppressWordClick||suppressPaperClick)return;
+  const id=resolveRenderedWordHit(paper,target,e.clientX,e.clientY,target?Infinity:12);
+  if(id){e.stopPropagation();selectWord(id,e.shiftKey);}
+  else if(e.target===paper)placeCaretFromPoint(e,p);
+ },true);
+ paper.addEventListener('dblclick',e=>{
+  const target=e.target.closest?.('.word');
+  if(!target&&e.target!==paper)return;
+  if(suppressWordClick||suppressPaperClick)return;
+  const id=resolveRenderedWordHit(paper,target,e.clientX,e.clientY,target?Infinity:12);
+  if(id){e.stopPropagation();openWord(id);}
+ },true);
  const range=selectedRange();
  for(const c of p.columns){
   for(const item of c.placements){
@@ -405,10 +479,11 @@ function paintPageContent(slot,p,shell){
    if(range&&itemIndex>=range.start&&itemIndex<range.end)node.classList.add('selected','in-range');
    node.setAttribute('role','button');node.setAttribute('tabindex','0');
    node.setAttribute('aria-label',isArt?(item.type==='image'?'Image '+(objectById(item.id)?.name||'Imported image'):'Clip art '+(artworkById.get(item.artwork_id)?.name||item.artwork_id)):'Word '+item.signs.join(''));
-   node.addEventListener('click',e=>{e.stopPropagation();if(!suppressWordClick)selectWord(item.id,e.shiftKey);});
+   if(isArt)node.addEventListener('click',e=>{e.stopPropagation();if(!suppressWordClick)selectWord(item.id,e.shiftKey);});
    if(isArt)node.addEventListener('pointerdown',e=>beginObjectDrag(e,item,c,p,node));
-   else node.addEventListener('pointerdown',e=>beginMouseRangeDrag(e,item.id));
-   node.addEventListener('dblclick',e=>{e.stopPropagation();if(!suppressWordClick){if(isArt)void beginInsertSheet(item.type,item.id);else openWord(item.id);}});
+   else node.addEventListener('pointerdown',e=>beginMouseRangeDrag(e,
+    closestRenderedWordInk(paper,e.clientX,e.clientY)||item.id));
+   if(isArt)node.addEventListener('dblclick',e=>{e.stopPropagation();if(!suppressWordClick)void beginInsertSheet(item.type,item.id);});
    node.addEventListener('keydown',e=>{
     if(e.key==='Enter'){if(isArt)void beginInsertSheet(item.type,item.id);else openWord(item.id);}
     if(e.key===' '){e.preventDefault();selectWord(item.id,e.shiftKey);}
@@ -730,6 +805,7 @@ async function beginInsertSheet(kind,existingId=null){
  insertDraft={token,kind,index,existingId,object:original?structuredClone(original):null,
               busy:false,valid:false};
  $('object-quick-actions').hidden=true;
+ $('word-quick-actions').hidden=true;
  $('insert-dialog-backdrop').hidden=false;
  $('insert-sheet-title').textContent=(original?'Edit ':'Insert ')+
   ({clipart:'Clip Art',image:'Image',table:'Table',cartouche:'Cartouche'}[kind]);
@@ -1327,6 +1403,7 @@ function startExistingObjectPreview(object,node){
   busy:false,valid:false};
  insertDraft=draft;
  $('object-quick-actions').hidden=true;
+ $('word-quick-actions').hidden=true;
  return draft;
 }
 function finishExistingObjectPreview(draft,action){
@@ -1746,6 +1823,9 @@ function setUiFromDoc(){
   item.type==='cartouche'?item.items.length:0),0)+' words';
  $('revision').textContent='Revision '+doc.revision;
  updateFormatState();
+ // Python's committed style delta can change Bold / ink without changing
+ // which word is selected. Refresh the contextual strip from that revision.
+ updateObjectQuickActions();
 }
 async function initialize(){
  try {
@@ -2146,10 +2226,11 @@ function selectAll(){
 }
 function drawSelectionHandles(){
  const indices=selectedRange();
- // The handles adjust ranges of hieroglyphic words only. When attached
- // to a cartouche or illustration they obscure the next tap/resize handle,
- // particularly in the narrow WebKit phone viewport.
- if(!indices||!layoutCache||
+ // Handles are for an EXTENDED whole-word selection, never a single
+ // quadrat. At Fit Page zoom a 44px handle can completely cover a glyph and
+ // block re-selection or double tap. Single selection uses the highlight and
+ // contextual actions instead; ranges of two or more words keep handles.
+ if(!indices||!layoutCache||indices.end-indices.start<2||
     doc.items.slice(indices.start,indices.end).some(item=>item.type!=='word')){
   document.querySelectorAll('.range-handle').forEach(n=>n.remove());return;
  }
@@ -2324,7 +2405,7 @@ for(const [id,action] of [['copy-selection',copySelection],['cut-selection',cutS
  $(id).onclick=()=>{hideEditMenu();action();};
 }
 // Touch-and-hold and a contextual menu share the canonical clipboard commands.
-let touchEditGesture=null,ignoreDocumentClickUntil=0;
+let touchEditGesture=null,ignoreDocumentClickUntil=0,ignoreContextMenuUntil=0;
 function hideEditMenu(){
  $('edit-menu').hidden=true;
 }
@@ -2341,6 +2422,7 @@ function showEditMenu(x,y,target,preserveSelection=false){
  }
  closePanels();updateFormatState();
  $('object-quick-actions').hidden=true;
+ $('word-quick-actions').hidden=true;
  const menu=$('edit-menu');menu.hidden=false;
  const vv=window.visualViewport;
  const left=vv?.offsetLeft||0,top=vv?.offsetTop||0;
@@ -2366,6 +2448,20 @@ $('pages').addEventListener('pointerdown',e=>{
  gesture.timer=setTimeout(()=>{
   if(touchEditGesture!==gesture)return;
   ignoreDocumentClickUntil=performance.now()+1000;
+  const word=target.closest('.word');
+  const paper=word?.closest('.paper');
+  const index=word?Number(word.dataset.index):-1;
+  // A second long press extends the existing selection without requiring
+  // a desktop Shift key. This runs after the 550 ms stationary-touch hold.
+  // An ordinary initial long press still opens the familiar edit menu.
+  if(paper&&selectionAnchorId&&Number.isInteger(index)&&!isIndexSelected(index)){
+   const id=resolveRenderedWordHit(paper,word,gesture.x,gesture.y,Infinity);
+   if(id&&id!==selectionAnchorId){
+    selectWord(id,true);hideEditMenu();closePanels();
+    ignoreContextMenuUntil=performance.now()+1000;
+    return;
+   }
+  }
   showEditMenu(gesture.x,gesture.y,target,Boolean(target.closest('.range-handle')));
  },550);
  touchEditGesture=gesture;
@@ -2379,6 +2475,7 @@ $('pages').addEventListener('click',e=>{
  if(performance.now()<ignoreDocumentClickUntil){e.preventDefault();e.stopImmediatePropagation();}
 },true);
 $('pages').addEventListener('contextmenu',e=>{
+ if(performance.now()<ignoreContextMenuUntil){e.preventDefault();return;}
  if(e.target.closest('input,textarea'))return;
  e.preventDefault();cancelTouchEdit();
  showEditMenu(e.clientX,e.clientY,e.target);
@@ -2403,14 +2500,30 @@ function selectedEmbeddedObject(){
  const items=selectedItems();
  return items.length===1 && items[0]?.type!=='word' ? items[0] : null;
 }
+function selectedWholeWords(){
+ const items=selectedItems();
+ return items.length&&items.every(item=>item.type==='word')?items:[];
+}
 function updateObjectQuickActions(){
- const selected=doc&&!editorScreen.hidden&&!insertDraft&&!activePanel&&
-  $('edit-menu').hidden ? selectedEmbeddedObject():null;
+ const available=!!doc&&!editorScreen.hidden&&!insertDraft&&!activePanel&&
+  $('edit-menu').hidden;
+ const selected=available?selectedEmbeddedObject():null;
+ const words=available&&!editingId?selectedWholeWords():[];
  $('object-quick-actions').hidden=!selected;
+ $('word-quick-actions').hidden=!words.length;
  if(selected){
   const label={clipart:'illustration',image:'image',table:'table',
    cartouche:'cartouche'}[selected.type]||'object';
   $('object-action-edit').setAttribute('aria-label','Edit selected '+label);
+ }
+ if(words.length){
+  $('word-action-edit').hidden=words.length!==1;
+  $('word-action-bold').setAttribute('aria-pressed',
+   String(words.every(word=>word.bold)));
+  $('word-action-black').setAttribute('aria-pressed',
+   String(words.every(word=>word.color==='#192433')));
+  $('word-action-red').setAttribute('aria-pressed',
+   String(words.every(word=>word.color==='#ac2533')));
  }
 }
 $('object-action-edit').onclick=()=>{
@@ -2422,6 +2535,26 @@ $('object-action-copy').onclick=async()=>{
 };
 $('object-action-delete').onclick=async()=>{
  if(selectedEmbeddedObject()&&!insertDraft)await deleteSelection();
+};
+$('word-action-edit').onclick=()=>{
+ const words=selectedWholeWords();
+ if(words.length===1&&!insertDraft)openWord(words[0].id);
+};
+$('word-action-bold').onclick=()=>{
+ const words=selectedWholeWords();
+ if(words.length&&!insertDraft)void styleSelected({bold:!words.every(word=>word.bold)});
+};
+$('word-action-black').onclick=()=>{
+ if(selectedWholeWords().length&&!insertDraft)void styleSelected({color:'#192433'});
+};
+$('word-action-red').onclick=()=>{
+ if(selectedWholeWords().length&&!insertDraft)void styleSelected({color:'#ac2533'});
+};
+$('word-action-copy').onclick=async()=>{
+ if(selectedWholeWords().length&&!insertDraft)await copySelection();
+};
+$('word-action-delete').onclick=async()=>{
+ if(selectedWholeWords().length&&!insertDraft)await deleteSelection();
 };
 function updateSelection(){
  const range=selectedRange();

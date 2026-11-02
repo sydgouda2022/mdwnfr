@@ -375,6 +375,28 @@ button:disabled{opacity:.42;cursor:not-allowed}
  .object-quick-actions{left:auto;right:12px;transform:none;gap:0}
  .object-quick-actions button{padding:6px 9px;min-width:58px}
 }
+/* Google Docs-style whole-word formatting, kept off the writing area.
+   Six compact finger-sized actions use the existing transactions rather than
+   duplicating formatting or editing state. */
+.word-quick-actions{
+ width:max-content;max-width:calc(100vw - 24px);gap:2px;
+ bottom:calc(78px + env(safe-area-inset-bottom,0px))
+}
+.word-quick-actions button{min-width:44px;min-height:44px;padding:8px 6px;font-size:12px}
+.word-quick-actions .word-ink-dot{
+ display:inline-block;width:17px;height:17px;border-radius:50%;
+ border:2px solid #fff;outline:1px solid #9dabba;vertical-align:middle
+}
+.word-ink-black{background:#192433}
+.word-ink-red{background:#ac2533}
+.word-quick-actions button[aria-pressed="true"]{background:#dceaf6;color:#0f4f85}
+@media(max-width:390px){
+ .word-quick-actions{
+  left:50%;right:auto;transform:translateX(-50%);gap:1px;
+  bottom:calc(82px + env(safe-area-inset-bottom,0px))
+ }
+ .word-quick-actions button{min-width:44px;padding:7px 4px}
+}
 .edit-menu{position:fixed;z-index:90;width:210px;max-width:calc(100vw - 24px);padding:5px;background:rgba(255,255,255,.98);border:1px solid #cfdae4;border-radius:14px;box-shadow:0 8px 30px #102d5133;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .edit-menu button{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:44px;border:0;border-bottom:1px solid #e8edf2;border-radius:6px;background:transparent;padding:10px 12px;text-align:left;font:16px system-ui;color:#153d66;touch-action:manipulation}
 .edit-menu button:last-child{border-bottom:0;color:#a72d38}

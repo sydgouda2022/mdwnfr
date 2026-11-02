@@ -11,7 +11,9 @@ not a copy of Google branding, cloud collaboration, or rich-text internals.
    a second intentional action edits it. Never obscure the document
    with a second miniature page preview.
 2. **Contextual before global.** A selected illustration, image, table or
-   cartouche gets a compact Edit / Copy / Delete strip. The full Format
+   cartouche gets a compact Edit / Copy / Delete strip. Selecting whole
+   hieroglyphic words shows Edit, Bold, black/red ink, Copy and Delete; for
+   multi-word selection the singular Edit action disappears. The full Format
    inspector is optional. Empty-space taps dismiss transient UI.
 3. **Touch is first-class.** Resize handles are at least 44 CSS pixels
    regardless of the page zoom. A stationary tap is not a resize,
@@ -43,3 +45,9 @@ not a copy of Google branding, cloud collaboration, or rich-text internals.
 
 Future improvements should prioritize the writing surface, familiar
 navigation and safe local editing over additional floating panels.
+
+Word selection remains quadrat-based rather than character-based. A tap selects
+one whole word without obscuring range handles; Shift+tap extends it to
+multiple words, where adjustable range handles appear.
+Edit opens the familiar glyph keyboard on that word, while the quick actions
+reuse the same revisioned style and clipboard commands as Format.
