@@ -219,7 +219,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 
 /* Nested tables are passive geometry: dimensions and all word positions are
    supplied by Python; browser CSS only paints borders and selection. */
-.table-object{position:absolute;border:1px solid #936f36;box-sizing:border-box;background:#fffdf9;overflow:hidden;cursor:pointer}
+.table-object{position:absolute;border:1px solid #936f36;box-sizing:border-box;background:#fffdf9;overflow:visible;cursor:pointer}
 .table-object.selected{outline:2px solid #3188c4}
 .table-cell-view{position:absolute;box-sizing:border-box;border:1px solid #bba477;overflow:hidden}
 .table-cell-view.active{background:#c8e7f552;box-shadow:inset 0 0 0 2px #3284be}
@@ -482,6 +482,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .paper .table-object.drag-preview,.paper .cartouche-object.drag-preview,.paper .clipart-object.drag-preview{cursor:grabbing;outline:2px dashed #b68b40;z-index:8}
 .paper .table-object.selected .art-resize,.paper .cartouche-object.selected .art-resize,.paper .clipart-object.selected .art-resize{display:block}
 .paper .art-resize{transform:scale(var(--resize-inverse,1));transform-origin:center;touch-action:none}
+.paper .art-move{transform:scale(var(--resize-inverse,1));transform-origin:center;touch-action:none}
 .paper .art-resize:focus-visible{outline:2px solid #277eb6}
 
 /* Keep the phone inspector away from the initial RTL writing column and its
