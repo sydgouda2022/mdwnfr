@@ -83,6 +83,7 @@ jobs:
           PYTHONPATH=core python tools/benchmark_layout_v2.py --words 1000 --artworks 6
           PYTHONPATH=core python tools/benchmark_layout_v2.py --surface A4 --font-size 18 --words 1000 --artworks 4 --edit-at 0.9 --require-page-reuse
           PYTHONPATH=core python tools/benchmark_layout_v2.py --surface papyrus --words 900 --artworks 6 --edit-at 0.6 --edit-kind color --require-style-reuse
+          PYTHONPATH=core python tools/benchmark_layout_v2.py --surface papyrus --words 900 --artworks 6 --edit-at 0.6 --edit-kind insert
       - name: Verify reproducible offline browser assets
         run: |
           set -euo pipefail
