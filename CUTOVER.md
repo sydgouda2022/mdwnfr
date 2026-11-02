@@ -3,9 +3,13 @@
 Cutover completed on October 30, 2026.
 
 - The authoritative application source is `sydgouda2022/mdwnfr`, branch `main`.
-- The verified `main` release commit `26b82a9d` was published by the
-  `MdwNfr CI and pinned Hieroglyphic Keyboard verification` workflow to
-  `https://mdwnfr.sydgouda.workers.dev/`.
+- Initial published cutover release: `26b82a9d`. A later verified deployment
+  of commit `528ea3ee` succeeded on October 30, 2026. Commit `516ce103` was
+  subsequently checked by CI and the read-only live audit, but the audit-only
+  commit was **not** itself published.
+- The production URL is `https://mdwnfr.sydgouda.workers.dev/`. Check the
+  actual installed build metadata after any release; a green CI run alone is
+  not proof of deployment.
 - GitHub Actions deploys only when explicitly enabled by the repository
   `CUTOVER_ENABLED` variable, manual `deploy_now` dispatch, or a
   `[deploy-cloudflare]` token in a push commit message. A normal merge does
