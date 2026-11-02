@@ -668,17 +668,9 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                 scan=range(slot,(capacity-span+1) if capacity is not None
                            else slot+max(span,32)+ceil(abs(requested)/width)+2)
                 clearance=object_clearance_mm(width)
-                # A word's ink stays inside its own writing slot. Only
-                # neighboring slots can meet the artwork footprint plus
-                # quarter-column clearance, even for a large floating object.
-                first_slot=max(0,int((x-clearance)//width)-1)
-                last_slot=int((x+iw+clearance)//width)+2
-                preceding=[ink for slot_index in range(first_slot,last_slot)
-                           for ink in word_ink_by_slot.get(slot_index,())]
-                for source,quadr,_y in pending:
-                    for glyph in quadr.signs:
-                        preceding.append((slot*width+glyph.x,_y+glyph.y,
-                                          glyph.width,glyph.height))
+                pending_ink=[(slot*width+glyph.x, _y+glyph.y,
+                              glyph.width,glyph.height)
+                             for _,quadr,_y in pending for glyph in quadr.signs]
                 for candidate in scan:
                     free_band=span*width-iw
                     align=item.get('x_align',0. if item['type'] in ('table','cartouche') else .5)
@@ -688,6 +680,14 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                     x=candidate*width+delta
                     if x < -1e-7 or (capacity is not None and x+iw>capacity*width+1e-7):
                         continue
+                    # Only the candidate footprint can intersect completed
+                    # word ink. Inspect its reading slots, then run the
+                    # unchanged exact collision test on those actual glyphs.
+                    first_slot=max(0,int((x-clearance)//width)-1)
+                    last_slot=int((x+iw+clearance)//width)+2
+                    preceding=[ink for slot_index in range(first_slot,last_slot)
+                               for ink in word_ink_by_slot.get(slot_index,())]
+                    preceding.extend(pending_ink)
                     facing=(_logical_auto_flip(item,x,iw,page_width,margins,
                                                doc['direction'],papyrus)
                             if item['type'] in ('clipart','image') else
