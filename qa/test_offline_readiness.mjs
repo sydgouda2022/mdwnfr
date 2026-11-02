@@ -25,6 +25,7 @@ async function inspect({entries=full,cached=full,controller=true,complete=true,
   fetch:async path=>{assert.equal(path,'/runtime-status.json');
    return{ok:true,json:async()=>({offline_ready:offlineReady})};},
   navigator:{serviceWorker:controller?{controller:{}}:{controller:null}},
+  window:{caches:{}},
   caches:{keys:async()=>['mdwnfr-offline-1234567890abcdef'],
    open:async name=>{assert.match(name,/^mdwnfr-offline-/);return cache;}},
   URL
