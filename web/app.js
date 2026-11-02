@@ -334,15 +334,22 @@ function closestRenderedWordInk(paper,x,y,maxDistance=Infinity){
    continue;
   const quadrat=renderedWordInk.get(wordNode);
   if(!quadrat?.signs?.length||!quadrat.width||!quadrat.height)continue;
-  // The compositor's glyph bounds are ink, not SVG text em-boxes.
-  // Map those bounds through the *rendered word* rectangle. WebKit's
-  // getScreenCTM() on a reflected SVG group may disagree with the actual
-  // CSS-transformed paper; the word box already incorporates page zoom.
-  const sx=bounds.width/quadrat.width,sy=bounds.height/quadrat.height;
+  // SVG defaults to xMidYMid meet: glyph geometry uses the compositor's
+  // viewBox, whose aspect ratio must not be stretched to the word rectangle.
+  // Preserve uniform scaling and include the viewBox's centered letterbox.
+  // This avoids browser-specific group CTM behavior and font em-boxes alike.
+  const svg=wordNode.querySelector('.glyph-ink-svg');
+  if(!svg)continue;
+  const viewport=svg.getBoundingClientRect();
+  const scale=Math.min(viewport.width/quadrat.width,
+                       viewport.height/quadrat.height);
+  if(!Number.isFinite(scale)||scale<=0)continue;
+  const ox=viewport.left+(viewport.width-quadrat.width*scale)/2;
+  const oy=viewport.top+(viewport.height-quadrat.height*scale)/2;
   for(const glyph of quadrat.signs){
    const visibleX=rtl?quadrat.width-glyph.x-glyph.width:glyph.x;
-   const left=bounds.left+visibleX*sx,right=left+glyph.width*sx;
-   const top=bounds.top+glyph.y*sy,bottom=top+glyph.height*sy;
+   const left=ox+visibleX*scale,right=left+glyph.width*scale;
+   const top=oy+glyph.y*scale,bottom=top+glyph.height*scale;
    const dx=Math.max(left-x,0,x-right),dy=Math.max(top-y,0,y-bottom);
    const cx=(left+right)/2,cy=(top+bottom)/2;
    const score=dx*dx+dy*dy+.01*((cx-x)**2+(cy-y)**2);
