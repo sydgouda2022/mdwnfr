@@ -816,6 +816,102 @@ def layout_document(doc: dict, glyph_metrics: dict | None = None) -> dict:
     return _layout(doc, glyph_metrics, None)[0]
 
 
+def _recompose_after_complete_pages(doc: dict, old_doc: dict,
+                                    old_layout: dict, metrics: dict,
+                                    old_metrics: dict, compact: bool):
+    """Reuse a proven finished-page prefix; run the SAME compositor on the rest.
+
+    A page is an independent restart only when recomposing the original
+    remaining stream reproduces its old page geometry exactly. A strict
+    source-order boundary and unchanged prefix are mandatory. This verifies
+    early breaks around floating artwork and never speculates about an
+    incomplete lane or a still-pending silhouette.
+    """
+    if (doc['surface'] == 'papyrus'
+            or doc['id'] != old_doc.get('id')
+            or old_layout.get('document_id') != doc['id']
+            or old_layout.get('revision') != old_doc.get('revision')
+            or old_layout.get('surface') != doc['surface']
+            or old_layout.get('direction') != doc['direction']
+            or metrics != old_metrics
+            or any(doc.get(k) != old_doc.get(k) for k in LAYOUT_PARAMETERS)):
+        return None
+    old_items = old_doc['items']
+    items = doc['items']
+    pages = old_layout['pages']
+    if len(pages) < 2:
+        return None
+    changed = next((i for i, (before, after) in
+                    enumerate(zip(old_items, items)) if before != after),
+                   min(len(old_items), len(items)))
+    if (changed <= 1 or
+            (changed == len(old_items) and len(items) == len(old_items))):
+        return None
+    # Compact and detailed snapshots have different placement structures.
+    # A table can appear as fragments on several pages; never split it.
+    last_page = {}
+    page_ids = []
+    old_index = {item['id']: i for i, item in enumerate(old_items)}
+    for page_number, page in enumerate(pages):
+        names = []
+        for col in page['columns']:
+            for p in col['placements']:
+                if isinstance(p, dict) != (not compact):
+                    return None
+                ident = p['id'] if isinstance(p, dict) else p[0]
+                if ident not in old_index:
+                    return None
+                names.append(ident)
+                last_page[ident] = page_number
+        page_ids.append(names)
+    prefix = set()
+    boundaries = []
+    for boundary in range(1, len(pages)):
+        prefix.update(page_ids[boundary - 1])
+        split = len(prefix)
+        if split >= changed:
+            break
+        if (split == 0 or split >= len(old_items)
+                or any(last_page[ident] >= boundary for ident in prefix)
+                or prefix != {item['id'] for item in old_items[:split]}):
+            continue
+        boundaries.append((boundary, split))
+    if not boundaries:
+        return None
+    # A partly filled page may end early to make room for artwork. Rather
+    # than infer why it ended, *prove* that the old tail starts at an
+    # independent compositor boundary by recomposing the unchanged old
+    # suffix and comparing all of its exact page geometry.
+    chosen = None
+    for boundary, split in reversed(boundaries):
+        reference_doc = {**old_doc, 'items': old_items[split:]}
+        reference, _ = _layout(reference_doc, metrics, None, compact=compact)
+        expected_pages = [{**page, 'index': i}
+                          for i, page in enumerate(pages[boundary:])]
+        if reference['pages'] == expected_pages:
+            chosen = boundary, split
+            break
+    if chosen is None:
+        return None
+    boundary, split = chosen
+    # Cached prefix or not, the public API validates the entire new source.
+    assert_document(doc)
+    # No alternate wrapping algorithm: restart the existing _layout on only
+    # the changed suffix after its independent boundary has been verified.
+    suffix_doc = {**doc, 'items': items[split:]}
+    tail, stats = _layout(suffix_doc, metrics, None, compact=compact)
+    tail['pages'] = [*deepcopy(pages[:boundary]), *(
+        {**page, 'index': boundary + i}
+        for i, page in enumerate(tail['pages'])
+    )]
+    tail['revision'] = doc['revision']
+    stats.update(mode='complete_page_prefix',
+                 reused_prefix_columns=sum(len(page['columns'])
+                                           for page in pages[:boundary]),
+                 start_index=split)
+    return tail, stats
+
+
 def incremental_layout_document(doc: dict, previous_document: dict | None = None,
                                 previous_layout: dict | None = None,
                                 glyph_metrics: dict | None = None,
@@ -823,10 +919,17 @@ def incremental_layout_document(doc: dict, previous_document: dict | None = None
                                 compact: bool = False) -> tuple[dict, dict]:
     """Recompose object positions from IDs and sequence, never page anchors.
 
-    The previous snapshot may be reused only when the geometry inputs are
-    identical. Compact mode projects tuple placements for visible-page
-    expansion, without a second compositor.
+    A revisioned snapshot can reuse independently verified complete pages
+    before the first changed object. The remaining stream is recomposed by
+    the same compositor. Compact mode remains a projection, not a second
+    typesetting algorithm.
     """
+    if previous_document is not None and previous_layout is not None:
+        reused = _recompose_after_complete_pages(
+            doc, previous_document, previous_layout,
+            glyph_metrics or {}, previous_metrics or {}, compact)
+        if reused is not None:
+            return reused
     previous = ((previous_document, previous_layout, previous_metrics)
                 if previous_document is not None and previous_layout is not None else None)
     return _layout(doc, glyph_metrics, previous, compact)

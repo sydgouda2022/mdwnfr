@@ -15,9 +15,9 @@ from mdwnfr.document import new_document, word, clipart
 from mdwnfr.layout import layout_document, incremental_layout_document
 
 
-def build_document(words, artworks, direction):
+def build_document(words, artworks, direction, surface='A3', font_size=10):
     doc=new_document('Measured object-stream layout',direction=direction,
-                     surface='A3',font_size_pt=10)
+                     surface=surface,font_size_pt=font_size)
     corpus=['𓅓𓏏','𓈖','𓇋𓏏','𓂋𓈖','𓏺','𓅓𓈖']
     assets=['bennu','horus-falcon-raster','amun-ra']
     items=[]
@@ -43,16 +43,27 @@ def main():
     parser.add_argument('--words',type=int,default=2000)
     parser.add_argument('--artworks',type=int,default=8)
     parser.add_argument('--direction',choices=['rtl','ltr'],default='rtl')
+    parser.add_argument('--surface',choices=['A4','A3','A2'],default='A3')
+    parser.add_argument('--font-size',type=int,default=10)
+    parser.add_argument('--edit-at',type=float,default=.5,
+                        help='Fraction of stream preceding the insertion, 0.0-1.0')
+    parser.add_argument('--require-page-reuse',action='store_true',
+                        help='Fail when the fixture cannot reuse a verified page prefix')
     options=parser.parse_args()
     if not 1<=options.words<=100000 or not 0<=options.artworks<=min(200,options.words):
         parser.error('Use 1-100000 words and 0-200 artworks (not more artworks than words)')
-    doc=build_document(options.words,options.artworks,options.direction)
+    if not 0<=options.edit_at<=1 or not 6<=options.font_size<=72:
+        parser.error('Use --edit-at 0.0-1.0 and --font-size 6-72')
+    doc=build_document(options.words,options.artworks,options.direction,
+                       options.surface,options.font_size)
     original,base=timed('full_initial',lambda:layout_document(doc))
     edited=deepcopy(doc)
-    edited['items'].insert(len(edited['items'])//2,word(['𓅓','𓇋']))
+    edited['items'].insert(int(len(edited['items'])*options.edit_at),word(['𓅓','𓇋']))
     edited['revision']+=1
     updated,edit=timed('insert_middle',lambda:incremental_layout_document(
         edited,doc,original))
+    if options.require_page_reuse and updated[1]['mode']!='complete_page_prefix':
+        raise AssertionError('Benchmark did not exercise completed-page reuse')
     full,full_parity=timed('full_parity',lambda:layout_document(edited))
     if updated[0]!=full:
         raise AssertionError('Incremental reflow diverged from full compositor')
@@ -64,9 +75,11 @@ def main():
     report={
         'words':options.words,'artworks':options.artworks,
         'direction':options.direction,'surface':doc['surface'],
+        'font_size_pt':options.font_size,'edit_at':options.edit_at,
         'pages':len(updated[0]['pages']),
         'objects':len(edited['items']),
         'layout_mode':updated[1]['mode'],
+        'reused_prefix_columns':updated[1]['reused_prefix_columns'],
         'sample_timings':records
     }
     print(json.dumps(report,indent=2))
