@@ -84,6 +84,21 @@ for(const [label,engine,width,height] of [
   finally{await page.keyboard.up('Shift');}
   await page.waitForTimeout(120);
   const selectedAfterTap=await page.locator('#selection-summary').textContent();
+  if(selectedAfterTap!=='2 selected'){
+   const hitAudit=await page.evaluate(({first,second})=>{
+    const glyphs=[...document.querySelectorAll('.word')].map((word,index)=>({
+     index,id:word.dataset.id,selected:word.classList.contains('selected'),
+     box:word.getBoundingClientRect().toJSON(),
+     ink:[...word.querySelectorAll('.glyph-ink-svg text')].map(t=>({
+      glyph:t.textContent,box:t.getBoundingClientRect().toJSON()
+     }))
+    }));
+    const hit=(p)=>{const n=document.elementFromPoint(p.x+p.width/2,p.y+p.height/2);
+     return{tag:n?.tagName,classes:n?.getAttribute('class'),id:n?.closest('.word')?.dataset.id};};
+    return{glyphs,firstHit:hit(first),secondHit:hit(second)};
+   },{first:firstInk,second:ink});
+   console.log('WORD_SELECTION_HIT_AUDIT '+JSON.stringify({selectedAfterTap,hitAudit}));
+  }
   assert.equal(selectedAfterTap,'2 selected',
    'Touching second painted glyph must extend the range to two words');
   await bar.waitFor({state:'visible'});
