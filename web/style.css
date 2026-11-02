@@ -487,10 +487,10 @@ button:disabled{opacity:.42;cursor:not-allowed}
    Move the grip one full viewport target-width beyond its nearest edge.
    The inverse zoom keeps that separation 44 CSS px on iPhone and iPad. */
 .paper .compact-object-handles>.art-move{
- left:calc(-44px * var(--resize-inverse,1) - 22px);
+ left:var(--move-grip-left);
 }
 .paper .compact-object-handles.move-handle-right>.art-move{
- left:calc(100% + 44px * var(--resize-inverse,1) - 22px);
+ left:calc(100% + var(--move-grip-right));
 }
 .paper .art-resize:focus-visible{outline:2px solid #277eb6}
 
