@@ -98,16 +98,11 @@ for(const [name,engine,width,height] of [
   assert.equal(summary,'3');
   const originalWordOrder=(await read()).items.filter(o=>o.type==='word').map(o=>o.id);
 
+  await page.locator('[data-id="'+artworkId+'"]').first()
+   .waitFor({state:'visible',timeout:60000});
+  await page.locator('[data-id="'+artworkId+'"]').first().click();
   const art=page.locator('[data-id="'+artworkId+'"] .art-move').first();
-  await art.waitFor({state:'visible',timeout:60000}).catch(async()=>{
-   await page.locator('[data-id="'+artworkId+'"]').first().click();
-   await art.waitFor({state:'visible',timeout:60000});
-  });
-  // Explicitly select even when it was briefly styled by an insertion.
-  if(!await art.isVisible()){
-   await page.locator('[data-id="'+artworkId+'"]').first().click();
-   await art.waitFor({state:'visible'});
-  }
+  await art.waitFor({state:'visible',timeout:60000});
   await art.hover();
   const grip=await art.boundingBox();
   assert.ok(grip?.width>=43.9&&grip?.height>=43.9);
