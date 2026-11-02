@@ -4,6 +4,7 @@ import unittest
 
 from mdwnfr.document import new_document, word, clipart
 from mdwnfr.layout import divider_ink_runs, layout_document, object_clearance_mm
+from mdwnfr.silhouette import free_sectors
 
 
 class InkBoundedDividers(unittest.TestCase):
@@ -37,18 +38,22 @@ class InkBoundedDividers(unittest.TestCase):
                             found_art = True
                             left = obj['x'] - clearance
                             right = obj['x'] + obj['width_mm'] + clearance
-                            top = obj['y'] - clearance
-                            bottom = obj['y'] + obj['height'] + clearance
                             for line in page['dividers']:
                                 count += 1
                                 if not (left < line['x'] + line['thickness_mm']/2
                                         and line['x']-line['thickness_mm']/2 < right):
                                     continue
-                                self.assertTrue(
-                                    line['y2'] <= top + 1e-4 or
-                                    line['y1'] >= bottom - 1e-4,
-                                    'Illustration, not a decorative line, '
-                                    'must divide nearby writing')
+                                open_ink=free_sectors(obj['artwork_id'],
+                                    image_width=obj['width_mm'],image_height=obj['height'],
+                                    x_offset=obj['x'],image_top=obj['y'],
+                                    slot_left=line['x']-line['thickness_mm']/2,
+                                    slot_right=line['x']+line['thickness_mm']/2,
+                                    top=0,bottom=page['height'],clearance=clearance,
+                                    flip=obj['resolved_flip'])
+                                self.assertTrue(any(a<=line['y1']+1e-4 and
+                                    b>=line['y2']-1e-4 for a,b in open_ink),
+                                    'Divider must stop at visible bird ink, '
+                                    'not at its transparent rectangular frame')
                 self.assertTrue(found_art)
                 self.assertGreater(count, 0)
 
