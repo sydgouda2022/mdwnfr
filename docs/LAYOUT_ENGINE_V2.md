@@ -14,4 +14,6 @@ The independent headless Hieroglyphic Keyboard API supplies signs and prediction
 
 Compatibility: Existing JSON exports remain valid; schema 1 gains an optional symbol_ids field. The compact page view is a projection of the same layout decisions.
 
-Performance: The v2 compositor reflows changed object streams from the start with cached quadrat composition. Identical streams reuse their completed snapshots. Future partial-page caching can be added without restoring per-object wrapping procedures.
+Performance: Changed object streams still reflow from the start, with cached quadrat composition. Inside a pass, the compositor reuses legal glyph origins for repeated spellings within unchanged obstacle fields, indexes completed word ink by reading column when evaluating artwork anchors, and intersects divider spans with a linear sweep. These are **search optimizations only**: they must not change the canonical layout geometry or introduce another wrapping engine. Identical streams reuse their completed snapshots.
+
+Use `PYTHONPATH=core python tools/benchmark_layout_v2.py --words 2000 --artworks 8` to record full layout, midstream insertion, and compact projection timings on comparable hardware. The Python unit suite checks indexed-anchor and divider parity against unindexed reference calculations and verifies large mixed-document order and full/compact equivalence. Performance numbers are diagnostic, not fixed CI gates, because runners vary.
