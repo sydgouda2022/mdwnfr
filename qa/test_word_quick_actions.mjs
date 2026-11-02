@@ -86,6 +86,19 @@ for(const [label,engine,width,height] of [
     return{x:matrix.a*localX+matrix.c*localY+matrix.e,
      y:matrix.b*localX+matrix.d*localY+matrix.f};
    });
+  await page.evaluate(()=>{
+   window.__wordTapTrace=[];
+   document.addEventListener('click',e=>{
+    if(!e.target.closest?.('.paper,.range-handle'))return;
+    window.__wordTapTrace.push({
+     shift:e.shiftKey,target:e.target.tagName,
+     classes:e.target.getAttribute('class'),
+     word:e.target.closest('.word')?.dataset.index,
+     rangeHandle:e.target.closest('.range-handle')?.dataset.edge,
+     x:e.clientX,y:e.clientY
+    });
+   },true);
+  });
   const firstInk=await paintedCenter(0);
   await page.mouse.click(firstInk.x,firstInk.y);
   assert.equal(await page.locator('#selection-summary').textContent(),'1 selected');
@@ -97,6 +110,21 @@ for(const [label,engine,width,height] of [
   finally{await page.keyboard.up('Shift');}
   await page.waitForTimeout(120);
   const selectedAfterTap=await page.locator('#selection-summary').textContent();
+  if(selectedAfterTap!=='2 selected'){
+   const debug=await page.evaluate(({first,second})=>({
+    first,second,events:window.__wordTapTrace,
+    hit:[first,second].map(p=>{
+     const n=document.elementFromPoint(p.x,p.y);
+     return{tag:n?.tagName,classes:n?.getAttribute('class'),
+      word:n?.closest('.word')?.dataset.index,rangeHandle:n?.closest('.range-handle')?.dataset.edge};
+    }),
+    words:[...document.querySelectorAll('.word')].map(n=>({
+     index:n.dataset.index,selected:n.classList.contains('selected'),
+     box:n.getBoundingClientRect().toJSON()
+    }))
+   }),{first:firstInk,second:secondInk});
+   console.log('WORD_PAINTED_SELECTION_AUDIT '+JSON.stringify({selectedAfterTap,debug}));
+  }
   assert.equal(selectedAfterTap,'2 selected',
    'Touching second painted glyph must extend the range to two words');
   await bar.waitFor({state:'visible'});
