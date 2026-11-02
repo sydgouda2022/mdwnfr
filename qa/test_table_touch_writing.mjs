@@ -40,9 +40,16 @@ for(const [name,engine,width,height] of [
   await cell.click();
   await page.locator('#keyboard-panel').waitFor({state:'visible'});
   assert.equal(await page.locator('#insert-dialog-backdrop').isVisible(),false);
-  const before=await saved();
+  // The Python edit becomes visible before IndexedDB's debounced save.
+  // Observe durable state, not a race with the autosave timer.
+  let before;
+  for(let i=0;i<100;i++){
+   before=await saved();
+   if(before?.items?.some(o=>o.type==='table'))break;
+   await page.waitForTimeout(150);
+  }
   const table=before.items.find(o=>o.type==='table');
-  assert.ok(table);
+  assert.ok(table,'Table insertion must persist before the next transaction');
   assert.equal(table.rows[0][0].items.length,0);
   await page.locator('#keys .key').first().click();
   await page.locator('#suggestions .user-choice').first().click();
