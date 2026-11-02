@@ -49,6 +49,28 @@ def divider_ink_runs(runs, bridge_mm: float) -> list[tuple[float, float]]:
     return merged
 
 
+def intersect_ink_runs(left: list[tuple[float, float]],
+                       right: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    """Intersect sorted, nonoverlapping ink runs in O(left + right).
+
+    Caller supplies divider_ink_runs output. A pairwise Cartesian product
+    scaled quadratically with the number of disjoint decorated text sectors.
+    The sweep retains the exact same overlap and bridging semantics.
+    """
+    overlaps = []
+    i = j = 0
+    while i < len(left) and j < len(right):
+        a, b = left[i]
+        c, d = right[j]
+        if min(b, d) > max(a, c) + 1e-8:
+            overlaps.append((max(a, c), min(b, d)))
+        if b <= d:
+            i += 1
+        if d <= b:
+            j += 1
+    return divider_ink_runs(overlaps, 0)
+
+
 def proportional_extra(heights: list[float], remainder: float) -> list[float]:
     """One universal allocation law for page and object-bounded text sectors.
 
@@ -262,10 +284,7 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
             x = margins['left']+(index+1)*width
             left_ink = divider_ink_runs(word_slots[index], width/2)
             right_ink = divider_ink_runs(word_slots[index+1], width/2)
-            overlaps = sorted((max(a,c), min(b,d))
-                for a,b in left_ink for c,d in right_ink
-                if min(b,d)>max(a,c)+1e-8)
-            spans = divider_ink_runs(overlaps, 0)
+            spans = intersect_ink_runs(left_ink, right_ink)
             for art in artworks:
                 # An embedded object is its OWN separator. Do not draw a
                 # redundant line through its rectangular visual presence,
@@ -354,7 +373,10 @@ def _layout(doc: dict, glyph_metrics: dict | None,
     columns = []
     nested_masks = {}
     obstacles = []
-    word_ink = []
+    # Completed word ink is indexed by reading slot. Artwork anchor trials
+    # consult only slots touching its horizontal footprint, without changing
+    # any silhouette/collision checks or persisted geometry.
+    word_ink_by_slot = {}
     slot = 0
     pending = []             # (object, quadrat, y) in one reading-order lane
     lane_start = top
@@ -371,10 +393,10 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         return shape
 
     def clear_page():
-        nonlocal slot, obstacles, word_ink
+        nonlocal slot, obstacles, word_ink_by_slot
         slot = 0
         obstacles = []
-        word_ink = []
+        word_ink_by_slot = {}
 
     def finish_lane(overflow=False):
         """Justify each uninterrupted text sector without crossing artwork.
@@ -498,8 +520,9 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                 runs[-1][1] = max(runs[-1][1], ink_bottom)
             previous_end = origin + shape.height
             for glyph in shape.signs:
-                word_ink.append((left + glyph.x, origin + glyph.y,
-                                 glyph.width, glyph.height))
+                word_ink_by_slot.setdefault(slot, []).append(
+                    (left + glyph.x, origin + glyph.y,
+                     glyph.width, glyph.height))
         columns.append({'placements': placements, 'kind': 'words', 'span': 1,
             'text_top': round(projected[0][2], 5),
             'text_bottom': round(runs[-1][1], 5),
@@ -644,7 +667,14 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                 # Moving an object in x does not force word flow to skip x.
                 scan=range(slot,(capacity-span+1) if capacity is not None
                            else slot+max(span,32)+ceil(abs(requested)/width)+2)
-                preceding=word_ink[:]
+                clearance=object_clearance_mm(width)
+                # A word's ink stays inside its own writing slot. Only
+                # neighboring slots can meet the artwork footprint plus
+                # quarter-column clearance, even for a large floating object.
+                first_slot=max(0,int((x-clearance)//width)-1)
+                last_slot=int((x+iw+clearance)//width)+2
+                preceding=[ink for slot_index in range(first_slot,last_slot)
+                           for ink in word_ink_by_slot.get(slot_index,())]
                 for source,quadr,_y in pending:
                     for glyph in quadr.signs:
                         preceding.append((slot*width+glyph.x,_y+glyph.y,
@@ -666,7 +696,6 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                         facing='normal' if facing=='mirror' else 'mirror'
                     new=(item.get('artwork_id'),profile.get('bands'),profile.get('mask'),
                          iw,ih,x,facing,wanted_y)
-                    clearance=object_clearance_mm(width)
                     clashes_word=any(not any(a<=y+1e-6 and b>=y+h-1e-6
                         for a,b in free_sectors(item.get('artwork_id'),
                             bands=profile.get('bands'),mask=profile.get('mask'),
