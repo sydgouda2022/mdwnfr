@@ -63,6 +63,7 @@ jobs:
         run: |
           set -euo pipefail
           node qa/test_object_gestures.mjs
+          node qa/test_cross_page_drop.mjs
           node qa/test_insert_on_page.mjs
           node qa/test_cartouche_touch.mjs
           node qa/test_word_quick_actions.mjs

@@ -1361,22 +1361,24 @@ $('clipart-float').onchange=e=>{
 };
 // Hit-test already-computed layout geometry. This is interaction mapping, not
 // quadrat composition or visual-page layout. The Python engine owns the result.
-function clipartDropIndex(page,clientX,clientY,excludeId){
- let targetPage=page;
- for(const slot of pageSlots){
-  const candidate=slot.page, surface=slot.shell.querySelector('.paper');
-  if(!candidate||!surface)continue;
-  const r=surface.getBoundingClientRect();
-  if(clientX>=r.left&&clientX<=r.right&&clientY>=r.top&&clientY<=r.bottom){
-   targetPage=candidate;break;
-  }
- }
- const paper=pageSlots[targetPage.index]?.shell.querySelector('.paper');
+async function clipartDropIndex(clientX,clientY,excludeId){
+ // The viewport can contain an unloaded page shell. Hit-test the shell
+ // before asking for its canonical Python placements; otherwise dropping on
+ // a virtualized page silently relocates against the source page instead.
+ const slot=pageSlots.find(entry=>{
+  const r=entry.shell.getBoundingClientRect();
+  return clientX>=r.left&&clientX<=r.right&&clientY>=r.top&&clientY<=r.bottom;
+ });
+ if(!slot)return null; // Dropping outside a writing page cancels the gesture.
+ const pageIndex=slot.summary.index;
+ if(!slot.page)await renderPageDetails(pageIndex);
+ if(pageSlots[pageIndex]!==slot||!slot.page)return null;
+ const paper=slot.shell.querySelector(':scope > .paper:not(.draft-paper)');
  if(!paper)return null;
  const bounds=paper.getBoundingClientRect();
  const x=(clientX-bounds.left)/(pxmm*zoom),y=(clientY-bounds.top)/(pxmm*zoom);
  const candidates=[];
- for(const col of targetPage.columns)for(const pos of col.placements){
+ for(const col of slot.page.columns)for(const pos of col.placements){
   if(pos.id===excludeId)continue;
   const idx=itemIndexById.get(pos.id);
   if(idx===undefined)continue;
@@ -1386,7 +1388,8 @@ function clipartDropIndex(page,clientX,clientY,excludeId){
   candidates.push({gap,score:dx*dx*5+dy*dy});
  }
  candidates.sort((a,b)=>a.score-b.score||a.gap-b.gap);
- return {gap:candidates.length?candidates[0].gap:null,page:targetPage,paper};
+ return {gap:candidates.length?candidates[0].gap:slot.summary.start_index,
+         page:slot.page,paper};
 }
 
 // One pointer lifecycle for EVERY embedded object and the temporary Insert
@@ -1416,10 +1419,37 @@ function finishExistingObjectPreview(draft,action){
  });
  else closeInsertSheet();
 }
-function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5}){
+function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5,autoScroll=false}){
  if(e.button!==0||!e.isPrimary)return false;
  const pointer=e.pointerId,startX=e.clientX,startY=e.clientY;
  let lastX=startX,lastY=startY,moved=false,ended=false;
+ const scrollArea=$('canvas-area');
+ const initialScrollTop=scrollArea.scrollTop,initialScrollLeft=scrollArea.scrollLeft;
+ let scrollFrame=null;
+ const displacement=()=>({
+  dx:lastX-startX+(autoScroll?scrollArea.scrollLeft-initialScrollLeft:0),
+  dy:lastY-startY+(autoScroll?scrollArea.scrollTop-initialScrollTop:0),
+  clientX:lastX,clientY:lastY
+ });
+ // Auto-scroll only while MOVE gestures are active (never resizing). The
+ // compositor still owns the resulting position; scrolling changes neither
+ // document IDs nor saved page coordinates.
+ const scrollAtEdge=()=>{
+  if(ended||!moved||!autoScroll)return;
+  const box=scrollArea.getBoundingClientRect();
+  const edge=54;
+  const velocity=(position,lo,hi)=>{
+   if(position<lo+edge)return -Math.min(12,(lo+edge-position)*12/edge);
+   if(position>hi-edge)return Math.min(12,(position-(hi-edge))*12/edge);
+   return 0;
+  };
+  const beforeX=scrollArea.scrollLeft,beforeY=scrollArea.scrollTop;
+  scrollArea.scrollTop+=velocity(lastY,box.top,box.bottom);
+  scrollArea.scrollLeft+=velocity(lastX,box.left,box.right);
+  if(scrollArea.scrollLeft!==beforeX||scrollArea.scrollTop!==beforeY)
+   onMove?.({...displacement(),event:null});
+  scrollFrame=requestAnimationFrame(scrollAtEdge);
+ };
  const source=e.currentTarget;
  e.stopPropagation();
  if(source instanceof Element&&source.setPointerCapture){
@@ -1430,6 +1460,8 @@ function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5}){
   window.removeEventListener('pointermove',move,true);
   window.removeEventListener('pointerup',finish,true);
   window.removeEventListener('pointercancel',cancel,true);
+  if(scrollFrame!==null)cancelAnimationFrame(scrollFrame);
+  scrollFrame=null;
   try{if(source?.hasPointerCapture?.(pointer))source.releasePointerCapture(pointer);}catch(_){}
   return true;
  };
@@ -1438,14 +1470,15 @@ function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5}){
   lastX=ev.clientX;lastY=ev.clientY;
   const distance=Math.hypot(lastX-startX,lastY-startY);
   if(!moved&&distance<threshold)return;
+  if(!moved&&autoScroll)scrollFrame=requestAnimationFrame(scrollAtEdge);
   moved=true;
   suppressWordClick=true;suppressPaperClick=true;
   if(ev.cancelable)ev.preventDefault();
-  onMove?.({dx:lastX-startX,dy:lastY-startY,clientX:lastX,clientY:lastY,event:ev});
+  onMove?.({...displacement(),event:ev});
  };
  const finish=ev=>{
   if(ev.pointerId!==pointer||!release())return;
-  try{onFinish?.({moved,dx:lastX-startX,dy:lastY-startY,clientX:lastX,clientY:lastY});}
+  try{onFinish?.({moved,...displacement()});}
   finally{if(moved)setTimeout(()=>{suppressWordClick=false;suppressPaperClick=false;},0);}
  };
  const cancel=ev=>{
@@ -1539,10 +1572,11 @@ function beginObjectDrag(e,placement,column,page,node){
  if(!draft)return;
  const source=itemIndexById.get(placement.id);
  const unit=zoom*pxmm;
+ const grabY=(e.clientY-node.getBoundingClientRect().top)/unit;
  const isNested=original.type==='table'||original.type==='cartouche';
  const reset=()=>{node.classList.remove('drag-preview');node.style.transform='';};
  trackObjectPointer(e,{
-  node,
+  node,autoScroll:true,
   onMove:({dx,dy})=>{
    node.classList.add('drag-preview');
    node.style.transform='translate('+dx/zoom+'px,'+dy/zoom+'px)';
@@ -1563,7 +1597,7 @@ function beginObjectDrag(e,placement,column,page,node){
    }
   },
   onCancel:()=>{recentCartoucheTouch=null;reset();finishExistingObjectPreview(draft,null);},
-  onFinish:({moved,dx,dy,clientX,clientY})=>{
+  onFinish:async ({moved,dx,dy,clientX,clientY})=>{
    node.classList.remove('drag-preview');
    if(!moved){
     reset();finishExistingObjectPreview(draft,null);
@@ -1576,11 +1610,23 @@ function beginObjectDrag(e,placement,column,page,node){
    }
    recentCartoucheTouch=null;
    const deltaX=dx/unit,deltaY=dy/unit;
-   const hit=clipartDropIndex(page,clientX,clientY,placement.id);
-   const destination=hit?.page??page;
+   // A cross-page drop may need to load an offscreen, virtualized page.
+   // Snapshot the active revision before the await so a late response can
+   // never commit an action to a document the user has since changed.
+   const gestureRevision=doc.revision,gestureDocumentId=doc.id;
+   let hit;
+   try{hit=await clipartDropIndex(clientX,clientY,placement.id);}
+   catch(error){status('Could not resolve the drop page: '+error.message,true);}
+   if(insertDraft!==draft||!doc||doc.id!==gestureDocumentId||
+      doc.revision!==gestureRevision)return;
+   if(!hit){reset();finishExistingObjectPreview(draft,null);return;}
+   const destination=hit.page;
    const margins=doc.margins_mm||{top:18,bottom:18};
    const room=Math.max(0,destination.height-margins.top-margins.bottom-placement.height);
-   const proposedTop=placement.y+deltaY;
+   // A drop on another page is positioned from that page's surface and
+   // the original grab point, not from the source page's old Y coordinate.
+   const proposedTop=destination===page?placement.y+deltaY:
+    (clientY-hit.paper.getBoundingClientRect().top)/unit-grabY;
    const yAlign=room?Math.max(0,Math.min(1,(proposedTop-margins.top)/room)):0;
    let target=source,action;
    // A purely vertical gesture must not silently rewrite horizontal
@@ -1596,9 +1642,10 @@ function beginObjectDrag(e,placement,column,page,node){
       hit.gap-(source<hit.gap?1:0)));
     }
     action={op:'relocate_nested',id:placement.id,index:target};
-    if(horizontal)Object.assign(action,
+    if(destination!==page)action.x_offset_mm=0;
+    else if(horizontal)Object.assign(action,
      nestedDragHorizontalPosition(original,placement,column,deltaX,doc.direction));
-    if(vertical)action.y_align=Math.round(yAlign*10000)/10000;
+    if(vertical||destination!==page)action.y_align=Math.round(yAlign*10000)/10000;
    }else{
     const desiredX=placement.x+deltaX;
     const rawOffset=doc.direction==='rtl'
@@ -1615,8 +1662,9 @@ function beginObjectDrag(e,placement,column,page,node){
     }
     action={op:original.type==='image'?'relocate_image':'relocate_clipart',
       id:placement.id,index:target};
-    if(horizontal)action.x_offset_mm=xOffset;
-    if(vertical)action.y_align=Math.round(yAlign*10000)/10000;
+    if(horizontal||destination!==page)action.x_offset_mm=xOffset;
+    if(vertical||destination!==page)
+     action.y_align=Math.round(yAlign*10000)/10000;
    }
    selectWord(placement.id);
    finishExistingObjectPreview(draft,action);
