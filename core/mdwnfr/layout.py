@@ -912,6 +912,64 @@ def _recompose_after_complete_pages(doc: dict, old_doc: dict,
     return tail, stats
 
 
+def _reuse_style_only_layout(doc: dict, old_doc: dict, old_layout: dict,
+                             metrics: dict, old_metrics: dict,
+                             compact: bool):
+    """Retain exact geometry when only top-level word ink colors have changed.
+
+    The canonical compositor alone owns geometry. A color does not affect
+    quadrat packing, glyph sizing or silhouette clearance. In compact mode
+    the layout contains no ink colors; detailed projections carry colors on
+    word placements, which can be refreshed without typesetting again.
+    Bold is deliberately excluded because it expands obstacle clearance.
+    """
+    if (doc['id'] != old_doc.get('id')
+            or old_layout.get('document_id') != doc['id']
+            or old_layout.get('revision') != old_doc.get('revision')
+            or metrics != old_metrics
+            or any(doc.get(key) != old_doc.get(key) for key in LAYOUT_PARAMETERS)):
+        return None
+    items, prior = doc['items'], old_doc['items']
+    if len(items) != len(prior):
+        return None
+    changed_colors = {}
+    for now, before in zip(items, prior):
+        if now == before:
+            continue
+        if (now.get('type') != 'word' or before.get('type') != 'word'
+                or now.get('id') != before.get('id')
+                or {k: v for k, v in now.items() if k != 'color'}
+                   != {k: v for k, v in before.items() if k != 'color'}):
+            return None
+        changed_colors[now['id']] = now.get('color', '#192433')
+    if not changed_colors:
+        return None
+    # The unchanged document can still have acquired an invalid duplicated
+    # identity through a caller bug; never skip canonical input validation.
+    assert_document(doc)
+    layout = deepcopy(old_layout)
+    for page in layout['pages']:
+        for column in page['columns']:
+            if column.get('kind') != 'words':
+                continue
+            for placement in column['placements']:
+                if compact:
+                    if not isinstance(placement, tuple):
+                        return None
+                    continue
+                if not isinstance(placement, dict):
+                    return None
+                color = changed_colors.get(placement['id'])
+                if color is not None:
+                    placement['color'] = color
+    layout['revision'] = doc['revision']
+    stats = dict(mode='style_only',
+                 reused_prefix_columns=sum(len(p['columns']) for p in layout['pages']),
+                 reused_suffix_columns=0, computed_columns=0,
+                 composed_quadrats=0, start_index=len(items))
+    return layout, stats
+
+
 def incremental_layout_document(doc: dict, previous_document: dict | None = None,
                                 previous_layout: dict | None = None,
                                 glyph_metrics: dict | None = None,
@@ -925,6 +983,11 @@ def incremental_layout_document(doc: dict, previous_document: dict | None = None
     typesetting algorithm.
     """
     if previous_document is not None and previous_layout is not None:
+        styled = _reuse_style_only_layout(
+            doc, previous_document, previous_layout,
+            glyph_metrics or {}, previous_metrics or {}, compact)
+        if styled is not None:
+            return styled
         reused = _recompose_after_complete_pages(
             doc, previous_document, previous_layout,
             glyph_metrics or {}, previous_metrics or {}, compact)
