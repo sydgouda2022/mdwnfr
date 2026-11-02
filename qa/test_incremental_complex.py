@@ -17,7 +17,9 @@ class IllustratedReflowTests(unittest.TestCase):
         actual,stats=incremental_layout_document(after,before,old)
         expected=layout_document(after)
         self.assertEqual(actual,expected,'Revisioned object layout must match full geometry and word order')
-        self.assertEqual(stats['mode'],'object_stream')
+        self.assertEqual(stats['mode'],'complete_page_prefix')
+        self.assertGreater(stats['reused_prefix_columns'],0)
+        self.assertGreater(stats['start_index'],0)
         self.assertEqual([i['id'] for i in after['items']], [i['id'] for i in before['items']]
                          + [after['items'][-1]['id']])
 
