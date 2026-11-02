@@ -62,3 +62,22 @@ it does not depend on finished-page boundaries.
 Run `PYTHONPATH=core python tools/benchmark_layout_v2.py --surface papyrus --words 900 --artworks 6 --edit-kind color --require-style-reuse`
 to compare the edit cost against a full composition, with exact geometry parity
 checked each time.
+
+
+## Papyrus contour-query acceleration
+
+The same 256×256 artwork silhouettes remain the only collision source.
+For repeated glyph/column interactions, the engine caches the silhouette's
+occupied row intervals for a precise horizontal pixel interval and reflection
+mode. Physical page coordinates, word heights, scaling and the required
+quarter-column clearance are applied **after** the cache lookup, so results
+still use exact original pixel cells and preserve transparent gaps.
+This is a bounded, in-memory optimization only: no document changes,
+browser wrapping rules, saved positions or compatibility layer.
+The regression test `qa/test_silhouette_projection_cache.py` directly compares
+the cached calculation against the original row-by-row method for real
+Bennu, Horus and Amun masks, including LTR/RTL document reflow. Benchmark
+using `PYTHONPATH=core python tools/benchmark_layout_v2.py --surface papyrus --words 900 --artworks 6 --edit-kind insert`.
+The benchmark reports the projection cache hits and misses alongside
+end-to-end layout timings. The numerical speedup depends on the document
+and font geometry; it is not a fixed contractual threshold.
