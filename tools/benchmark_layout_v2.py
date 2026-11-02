@@ -49,7 +49,7 @@ def main():
                         help='Fraction of stream preceding the insertion, 0.0-1.0')
     parser.add_argument('--edit-kind',choices=['insert','color'],default='insert')
     parser.add_argument('--require-style-reuse',action='store_true')
-    parser.add_argument('--require-page-reuse',action='store_true'
+    parser.add_argument('--require-page-reuse',action='store_true',
                         help='Fail when the fixture cannot reuse a verified page prefix')
     options=parser.parse_args()
     if not 1<=options.words<=100000 or not 0<=options.artworks<=min(200,options.words):
