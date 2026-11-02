@@ -436,7 +436,7 @@ function paintPageContent(slot,p,shell){
      if(cell.error){const err=document.createElement('span');err.className='table-cell-error';err.textContent='⚠';err.title=cell.error;box.append(err);}
      node.append(box);
     }
-    addObjectResizeHandles(node,item);
+    addObjectResizeHandles(node,item,c,p);
     paper.append(node);continue;
    }
    if(item.type==='cartouche'){
@@ -467,7 +467,7 @@ function paintPageContent(slot,p,shell){
      drawQuadratInk(wordNode,w.quadrat,w.color,w.bold);
      node.append(wordNode);
     }
-    addObjectResizeHandles(node,item);
+    addObjectResizeHandles(node,item,c,p);
     paper.append(node);continue;
    }
    const isArt=item.type==='clipart'||item.type==='image';
@@ -499,7 +499,7 @@ function paintPageContent(slot,p,shell){
     const mirrored=(item.resolved_flip||item.flip)==='mirror';
     img.style.transform=mirrored?'scaleX(-1)':'';
     node.append(img);
-    addObjectResizeHandles(node,item);
+    addObjectResizeHandles(node,item,c,p);
    }else{
     drawQuadratInk(node,item.quadrat,item.color,item.bold);
    }
@@ -1459,7 +1459,36 @@ function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5}){
  return true;
 }
 const OBJECT_EDGES=['bottom-right']; // one unambiguous finger-sized resize target
-function addObjectResizeHandles(node,placement){
+function addObjectResizeHandles(node,placement,column,page){
+ // A cartouche can be smaller than either 44px touch target on a fitted
+ // iPhone page. Place its move grip BESIDE the object rather than allowing
+ // the move hit region to cover the independently tappable resize grip.
+ const tinyWidth=placement.width_mm*pxmm*zoom<44;
+ const tinyHeight=placement.height*pxmm*zoom<44;
+ if(tinyWidth&&tinyHeight){
+  // Avoid unsupported CSS length multiplication in Safari: compute the
+  // scaled pixel offsets once from the view's existing zoom factor.
+  const outside=44/Math.max(.1,zoom);
+  node.style.setProperty('--move-grip-left',(-outside-22)+'px');
+  node.style.setProperty('--move-grip-right',(outside-22)+'px');
+  node.classList.add('compact-object-handles');
+  // Respect both writing directions: choose whichever physical page side
+  // has room, never assume that RTL artwork is on the left.
+  if(placement.x*pxmm*zoom<52)
+   node.classList.add('move-handle-right');
+ }
+ // Tables are covered by individually editable cells. A selected object
+ // needs a dedicated move target so dragging never steals a cell tap.
+ // All four object kinds use the same direct-manipulation gesture.
+ const moveHandle=document.createElement('span');
+ moveHandle.className='art-move';
+ moveHandle.setAttribute('role','button');
+ moveHandle.setAttribute('aria-label','Move '+placement.type);
+ moveHandle.addEventListener('pointerdown',event=>{
+  event.stopPropagation();
+  beginObjectDrag(event,placement,column,page,node);
+ });
+ node.append(moveHandle);
  // The page itself is scaled to fit a phone. Cancel that scale on hit targets
  // so a 44px handle remains finger-sized in the actual viewport.
  node.style.setProperty('--resize-inverse',String(1/Math.max(.1,zoom)));
@@ -1489,6 +1518,19 @@ function noteCartoucheTouch(id,x,y){
   void beginInsertSheet('cartouche',id);
  }
 }
+function nestedDragHorizontalPosition(original,placement,column,deltaX,direction){
+ const room=Math.max(0,column.width-placement.width_mm);
+ const desiredX=placement.x+deltaX;
+ // x_align is physical within the visible writing band; an x_offset is
+ // logical travel beyond the band. These must not be applied twice.
+ if(room>0&&desiredX>=column.x&&desiredX<=column.x+room)
+  return {x_offset_mm:0,
+   x_align:Math.round((desiredX-column.x)/room*10000)/10000};
+ const leading=direction==='rtl'
+  ?column.x+column.width-placement.width_mm-desiredX
+  :desiredX-column.x;
+ return {x_offset_mm:Math.round(Math.max(-2000,Math.min(2000,leading))*10)/10};
+}
 function beginObjectDrag(e,placement,column,page,node){
  if(e.button!==0||e.target.closest('.art-resize,.table-cell-view'))return;
  const original=objectById(placement.id);
@@ -1509,13 +1551,12 @@ function beginObjectDrag(e,placement,column,page,node){
    const room=Math.max(0,page.height-margins.top-margins.bottom-placement.height);
    draft.object.y_align=Math.min(1,Math.max(0,
     (original.y_align??.5)+(room?y/room:0)));
-   draft.object.x_offset_mm=Math.max(-2000,Math.min(2000,
-    Math.round(((original.x_offset_mm||0)+
-      (doc.direction==='rtl'?-x:x))*10)/10));
-   if(isNested){
-    const horizontalRoom=Math.max(0,column.width-placement.width_mm);
-    draft.object.x_align=horizontalRoom?Math.min(1,Math.max(0,
-     (placement.x+x-column.x)/horizontalRoom)):0;
+   if(Math.abs(dx)>=2){
+    if(isNested)Object.assign(draft.object,
+     nestedDragHorizontalPosition(original,placement,column,x,doc.direction));
+    else draft.object.x_offset_mm=Math.max(-2000,Math.min(2000,
+     Math.round(((original.x_offset_mm||0)+
+       (doc.direction==='rtl'?-x:x))*10)/10));
    }
    if(performance.now()-(draft.lastReflow||0)>170){
     draft.lastReflow=performance.now();requestInsertPreview();
@@ -1542,20 +1583,22 @@ function beginObjectDrag(e,placement,column,page,node){
    const proposedTop=placement.y+deltaY;
    const yAlign=room?Math.max(0,Math.min(1,(proposedTop-margins.top)/room)):0;
    let target=source,action;
+   // A purely vertical gesture must not silently rewrite horizontal
+   // anchoring. The prior code derived a new x_offset from the painted x
+   // even at dx=0, which could move an otherwise stationary illustration.
+   const horizontal=Math.abs(dx)>=2,vertical=Math.abs(dy)>=2;
+   if(!horizontal&&!vertical){
+    reset();finishExistingObjectPreview(draft,null);return;
+   }
    if(isNested){
     if(destination!==page||Math.abs(deltaX)>column.width*.45){
      if(hit?.gap!=null)target=Math.max(0,Math.min(doc.items.length-1,
       hit.gap-(source<hit.gap?1:0)));
     }
-    const horizontalRoom=Math.max(0,column.width-placement.width_mm);
-    const logical=doc.direction==='rtl'?-deltaX:deltaX;
-    const xAlign=horizontalRoom?Math.max(0,Math.min(1,
-      (placement.x+deltaX-column.x)/horizontalRoom)):0;
-    const xOffset=Math.max(-2000,Math.min(2000,(original.x_offset_mm||0)+logical));
-    action={op:'relocate_nested',id:placement.id,index:target,
-      x_offset_mm:Math.round(xOffset*10)/10,
-      x_align:Math.round(xAlign*10000)/10000,
-      y_align:Math.round(yAlign*10000)/10000};
+    action={op:'relocate_nested',id:placement.id,index:target};
+    if(horizontal)Object.assign(action,
+     nestedDragHorizontalPosition(original,placement,column,deltaX,doc.direction));
+    if(vertical)action.y_align=Math.round(yAlign*10000)/10000;
    }else{
     const desiredX=placement.x+deltaX;
     const rawOffset=doc.direction==='rtl'
@@ -1571,8 +1614,9 @@ function beginObjectDrag(e,placement,column,page,node){
      xOffset=0;
     }
     action={op:original.type==='image'?'relocate_image':'relocate_clipart',
-      id:placement.id,index:target,x_offset_mm:xOffset,
-      y_align:Math.round(yAlign*10000)/10000};
+      id:placement.id,index:target};
+    if(horizontal)action.x_offset_mm=xOffset;
+    if(vertical)action.y_align=Math.round(yAlign*10000)/10000;
    }
    selectWord(placement.id);
    finishExistingObjectPreview(draft,action);
