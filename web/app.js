@@ -283,7 +283,11 @@ async function renderPapyrusWindow(){
 }
 // One verified font determines exact glyph ink and SVG baseline coordinates.
 // Single SVG rendering path for ordinary, table, cartouche and preview glyphs.
+const renderedWordInk = new WeakMap();
 function drawQuadratInk(host,quadrat,color,bold){
+ // Attach the compositor's temporary geometry to the rendered word only.
+ // It is a view projection, never saved document data.
+ if(host.classList.contains('word'))renderedWordInk.set(host,quadrat);
  const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
  svg.classList.add('glyph-ink-svg');
  svg.setAttribute('viewBox',`0 0 ${quadrat.width} ${quadrat.height}`);
@@ -324,17 +328,32 @@ function drawQuadratInk(host,quadrat,color,bold){
 function closestRenderedWordInk(paper,x,y,maxDistance=Infinity){
  let chosen=null,distance=Infinity;
  for(const wordNode of paper.querySelectorAll('.word')){
-  const box=wordNode.getBoundingClientRect();
-  if(x<box.left-44||x>box.right+44||y<box.top-44||y>box.bottom+44)
+  const bounds=wordNode.getBoundingClientRect();
+  if(x<bounds.left-44||x>bounds.right+44||y<bounds.top-44||y>bounds.bottom+44)
    continue;
-  for(const glyph of wordNode.querySelectorAll('.glyph-ink-svg text')){
-   const r=glyph.getBoundingClientRect();
-   if(!r.width||!r.height)continue;
-   const dx=Math.max(r.left-x,0,x-r.right),dy=Math.max(r.top-y,0,y-r.bottom);
-   const centerX=r.left+r.width/2,centerY=r.top+r.height/2;
-   // Visible boxes of different Egyptian signs can overlap despite their
-   // non-overlapping painted ink. Prefer the closest glyph center in ties.
-   const score=dx*dx+dy*dy+.01*((centerX-x)**2+(centerY-y)**2);
+  const quadrat=renderedWordInk.get(wordNode);
+  const matrix=wordNode.querySelector('.hieroglyph-direction-layer')?.getScreenCTM();
+  if(!quadrat?.signs?.length||!matrix)continue;
+  // SVG text.getBoundingClientRect() reports font metrics, NOT glyph ink.
+  // Flat signs can have font rectangles several times taller than their ink;
+  // selecting their apparent centers then picks the wrong adjacent word.
+  // The Python compositor already owns the exact painted ink rectangles.
+  // Transform those rectangles through the real SVG CTM (including RTL,
+  // paper zoom, and the browser's viewBox scaling), never remeasure the font.
+  for(const glyph of quadrat.signs){
+   const corners=[
+    [glyph.x,glyph.y],[glyph.x+glyph.width,glyph.y],
+    [glyph.x,glyph.y+glyph.height],
+    [glyph.x+glyph.width,glyph.y+glyph.height]
+   ].map(([gx,gy])=>[matrix.a*gx+matrix.c*gy+matrix.e,
+                     matrix.b*gx+matrix.d*gy+matrix.f]);
+   const left=Math.min(...corners.map(p=>p[0]));
+   const right=Math.max(...corners.map(p=>p[0]));
+   const top=Math.min(...corners.map(p=>p[1]));
+   const bottom=Math.max(...corners.map(p=>p[1]));
+   const dx=Math.max(left-x,0,x-right),dy=Math.max(top-y,0,y-bottom);
+   const cx=(left+right)/2,cy=(top+bottom)/2;
+   const score=dx*dx+dy*dy+.01*((cx-x)**2+(cy-y)**2);
    if(score<distance){distance=score;chosen=wordNode.dataset.id;}
   }
  }
