@@ -41,3 +41,24 @@ This measures incremental and full recomposition independently and checks
 the results for exact equality, but timing varies with hardware. Compact and
 detailed page parity and invalidation scenarios are covered by
 `qa/test_layout_page_prefix.py`.
+
+
+## Appearance-only edits (paper and papyrus)
+
+Word **ink color** is not a positioning input. When a revision changes only
+colors of existing top-level word objects, the compositor validates the entire
+source stream, retains the old full or compact geometry snapshot and updates
+only detailed word ink colors. The result has the current revision and reports
+`layout_stats.mode = style_only` with zero recomputed columns. All object IDs,
+glyph positions, clearances and page/column divisions stay authoritative and
+unchanged. The compact layout carries no styles; its visible-page expansion
+reads the latest canonical document, just like full recomposition.
+
+Bold, sign replacements, image size, paper, direction, or glyph metrics **do**
+affect layout and invalidate this path. There is no new persisted format or
+independent browser geometry. This optimization also works on papyrus because
+it does not depend on finished-page boundaries.
+
+Run `PYTHONPATH=core python tools/benchmark_layout_v2.py --surface papyrus --words 900 --artworks 6 --edit-kind color --require-style-reuse`
+to compare the edit cost against a full composition, with exact geometry parity
+checked each time.
