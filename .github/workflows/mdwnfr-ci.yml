@@ -1,5 +1,6 @@
 name: MdwNfr CI and pinned Hieroglyphic Keyboard verification
 # Verified production deploy requires an explicit trigger and matching live build fingerprint.
+# Release is accepted only after Wrangler publishes the same content hash and offline inventory.
 on:
   push:
     branches: [main]
