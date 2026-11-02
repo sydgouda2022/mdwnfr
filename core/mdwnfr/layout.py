@@ -844,7 +844,8 @@ def _recompose_after_complete_pages(doc: dict, old_doc: dict,
     changed = next((i for i, (before, after) in
                     enumerate(zip(old_items, items)) if before != after),
                    min(len(old_items), len(items)))
-    if changed <= 1:
+    if (changed <= 1 or
+            (changed == len(old_items) and len(items) == len(old_items))):
         return None
     # Compact and detailed snapshots have different placement structures.
     # A table can appear as fragments on several pages; never split it.
@@ -900,6 +901,9 @@ def _recompose_after_complete_pages(doc: dict, old_doc: dict,
     if chosen is None:
         return None
     boundary, split = chosen
+    # A cached prefix may contain unchanged but invalid persisted content.
+    # Retain the full compositor's public validation contract.
+    assert_document(doc)
     # No alternate wrapping algorithm: restart the original _layout at a
     # confirmed clean page boundary with the unchanged document properties.
     suffix_doc = {**doc, 'items': items[split:]}
