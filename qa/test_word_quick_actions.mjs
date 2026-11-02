@@ -64,6 +64,10 @@ for(const [label,engine,width,height] of [
   assert.equal(await page.locator('#selection-summary').textContent(),'2 selected',
    'Second touch-and-hold extends the logical selection without Shift');
   assert.equal(await page.locator('.range-handle').count(),2);
+  // The finger-sized range handles own their current glyph endpoints.
+  // A tap on empty paper dismisses the range before a new single tap.
+  await page.locator('.paper').first().click({position:{x:20,y:55}});
+  assert.equal(await page.locator('#selection-summary').textContent(),'No selection');
   await page.locator('.word[data-index="0"]').click();
   assert.equal(await page.locator('#selection-summary').textContent(),'1 selected');
   const hitTargets=await bar.locator('button:visible').evaluateAll(nodes=>nodes.map(node=>{
