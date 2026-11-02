@@ -49,6 +49,51 @@ def divider_ink_runs(runs, bridge_mm: float) -> list[tuple[float, float]]:
     return merged
 
 
+def _intersect_ink_runs(left: list[tuple[float, float]],
+                       right: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    """Intersect sorted, nonoverlapping ink runs in O(left + right).
+
+    Caller supplies divider_ink_runs output. A pairwise Cartesian product
+    scaled quadratically with the number of disjoint decorated text sectors.
+    The sweep retains the exact same overlap and bridging semantics.
+    """
+    overlaps = []
+    i = j = 0
+    while i < len(left) and j < len(right):
+        a, b = left[i]
+        c, d = right[j]
+        if min(b, d) > max(a, c) + 1e-8:
+            overlaps.append((max(a, c), min(b, d)))
+        if b <= d:
+            i += 1
+        if d <= b:
+            j += 1
+    # Overlaps are already in ascending origin order. Merge inline to avoid
+    # the original helper's unnecessary second O(k log k) sorting pass.
+    merged = []
+    for top, bottom in overlaps:
+        if merged and top <= merged[-1][1] + 1e-8:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], bottom))
+        else:
+            merged.append((top, bottom))
+    return merged
+
+
+def _anchor_word_ink(index: dict[int, list[tuple[float, float, float, float]]],
+                     x: float, artwork_width: float, clearance: float,
+                     column_width: float) -> list[tuple[float, float, float, float]]:
+    """Fetch a conservative candidate set; the caller tests exact glyph ink.
+
+    Glyphs belong to one nominal reading slot. Include an extra neighboring
+    slot on both sides to remain conservative at floating-point boundaries.
+    Scanning indexed slots rather than all preceding glyphs matters for long
+    illustrated documents and does not approximate the collision geometry.
+    """
+    first=max(0,int((x-clearance)//column_width)-1)
+    stop=int((x+artwork_width+clearance)//column_width)+2
+    return [glyph for i in range(first,stop) for glyph in index.get(i, ())]
+
+
 def proportional_extra(heights: list[float], remainder: float) -> list[float]:
     """One universal allocation law for page and object-bounded text sectors.
 
@@ -262,10 +307,7 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
             x = margins['left']+(index+1)*width
             left_ink = divider_ink_runs(word_slots[index], width/2)
             right_ink = divider_ink_runs(word_slots[index+1], width/2)
-            overlaps = sorted((max(a,c), min(b,d))
-                for a,b in left_ink for c,d in right_ink
-                if min(b,d)>max(a,c)+1e-8)
-            spans = divider_ink_runs(overlaps, 0)
+            spans = _intersect_ink_runs(left_ink, right_ink)
             for art in artworks:
                 # An embedded object is its OWN separator. Do not draw a
                 # redundant line through its rectangular visual presence,
@@ -354,7 +396,13 @@ def _layout(doc: dict, glyph_metrics: dict | None,
     columns = []
     nested_masks = {}
     obstacles = []
-    word_ink = []
+    # Completed word ink is indexed by reading slot. Artwork anchor trials
+    # consult only slots touching its horizontal footprint, without changing
+    # any silhouette/collision checks or persisted geometry.
+    word_ink_by_slot = {}
+    # Legal ink origins depend on the current obstacle set, slot and spelling,
+    # not the advancing word cursor. Reuse them across repeated words.
+    origin_cache = {}
     slot = 0
     pending = []             # (object, quadrat, y) in one reading-order lane
     lane_start = top
@@ -371,10 +419,11 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         return shape
 
     def clear_page():
-        nonlocal slot, obstacles, word_ink
+        nonlocal slot, obstacles, word_ink_by_slot
         slot = 0
         obstacles = []
-        word_ink = []
+        word_ink_by_slot = {}
+        origin_cache.clear()
 
     def finish_lane(overflow=False):
         """Justify each uninterrupted text sector without crossing artwork.
@@ -498,8 +547,9 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                 runs[-1][1] = max(runs[-1][1], ink_bottom)
             previous_end = origin + shape.height
             for glyph in shape.signs:
-                word_ink.append((left + glyph.x, origin + glyph.y,
-                                 glyph.width, glyph.height))
+                word_ink_by_slot.setdefault(slot, []).append(
+                    (left + glyph.x, origin + glyph.y,
+                     glyph.width, glyph.height))
         columns.append({'placements': placements, 'kind': 'words', 'span': 1,
             'text_top': round(projected[0][2], 5),
             'text_bottom': round(runs[-1][1], 5),
@@ -522,15 +572,24 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         lane_cursor=top
 
     def word_origins(shape,item):
-        """Intersect actual glyph-ink regions with ALL placed object silhouettes."""
+        """Legal ink origins reused until the obstacle field changes."""
+        bold=bool(item.get('bold',False))
+        key=(slot,tuple(item['signs']),bold)
+        cached=origin_cache.get(key)
+        if cached is not None:
+            return cached
         lane_x=slot*width
         clearance=object_clearance_mm(width)
         nearby=[ob for ob in obstacles
                 if ob[5]-clearance<lane_x+width and ob[5]+ob[3]+clearance>lane_x]
-        return free_word_starts(shape,column_left=lane_x,
+        allowed=free_word_starts(shape,column_left=lane_x,
             top=top,bottom=bottom,clearance=clearance,obstacles=nearby,
             ink_expansion=max((g.font_size for g in shape.signs),default=0)*.006
-                          if item.get('bold',False) else 0)
+                          if bold else 0)
+        if len(origin_cache)>=1024:
+            origin_cache.clear()
+        origin_cache[key]=allowed
+        return allowed
 
     def insert_word(item):
         nonlocal lane_cursor,slot
@@ -644,11 +703,10 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                 # Moving an object in x does not force word flow to skip x.
                 scan=range(slot,(capacity-span+1) if capacity is not None
                            else slot+max(span,32)+ceil(abs(requested)/width)+2)
-                preceding=word_ink[:]
-                for source,quadr,_y in pending:
-                    for glyph in quadr.signs:
-                        preceding.append((slot*width+glyph.x,_y+glyph.y,
-                                          glyph.width,glyph.height))
+                clearance=object_clearance_mm(width)
+                pending_ink=[(slot*width+glyph.x, _y+glyph.y,
+                              glyph.width,glyph.height)
+                             for _,quadr,_y in pending for glyph in quadr.signs]
                 for candidate in scan:
                     free_band=span*width-iw
                     align=item.get('x_align',0. if item['type'] in ('table','cartouche') else .5)
@@ -658,6 +716,10 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                     x=candidate*width+delta
                     if x < -1e-7 or (capacity is not None and x+iw>capacity*width+1e-7):
                         continue
+                    # The helper selects candidate slots only. The following
+                    # free_sectors call still checks every actual ink rectangle.
+                    preceding=_anchor_word_ink(word_ink_by_slot,x,iw,clearance,width)
+                    preceding.extend(pending_ink)
                     facing=(_logical_auto_flip(item,x,iw,page_width,margins,
                                                doc['direction'],papyrus)
                             if item['type'] in ('clipart','image') else
@@ -666,7 +728,6 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                         facing='normal' if facing=='mirror' else 'mirror'
                     new=(item.get('artwork_id'),profile.get('bands'),profile.get('mask'),
                          iw,ih,x,facing,wanted_y)
-                    clearance=object_clearance_mm(width)
                     clashes_word=any(not any(a<=y+1e-6 and b>=y+h-1e-6
                         for a,b in free_sectors(item.get('artwork_id'),
                             bands=profile.get('bands'),mask=profile.get('mask'),
@@ -732,6 +793,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
             columns.append(seed)
             stats['computed_columns']+=1
             obstacles.append(new_obstacle)
+            origin_cache.clear()
             # Keep pending quadrats, current slot and their natural y cursor.
             # Their column can continue once the object occupies its contour.
 
