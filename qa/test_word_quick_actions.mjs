@@ -44,6 +44,28 @@ for(const [label,engine,width,height] of [
    'No object-toolbar duplication for words');
   assert.equal(await page.locator('#format-panel').isVisible(),false,
    'Selecting a quadrat must not open desktop-like Format');
+
+  // Touch-only range selection cannot depend on desktop Shift+click.
+  // Deliver the same long-press pointer events WebKit/Chromium dispatch:
+  // the first tap establishes an anchor, and holding a second word extends it.
+  const next=page.locator('.word[data-index="1"]');
+  const targetBox=await next.boundingBox();
+  assert.ok(targetBox);
+  const holdPoint={x:targetBox.x+targetBox.width/2,
+   y:targetBox.y+targetBox.height/2};
+  await next.dispatchEvent('pointerdown',{
+   pointerType:'touch',pointerId:91,isPrimary:true,button:0,
+   clientX:holdPoint.x,clientY:holdPoint.y
+  });
+  await page.waitForTimeout(650);
+  await page.evaluate(({x,y})=>window.dispatchEvent(new PointerEvent('pointerup',{
+   bubbles:true,pointerType:'touch',pointerId:91,button:0,clientX:x,clientY:y
+  })),holdPoint);
+  assert.equal(await page.locator('#selection-summary').textContent(),'2 selected',
+   'Second touch-and-hold extends the logical selection without Shift');
+  assert.equal(await page.locator('.range-handle').count(),2);
+  await page.locator('.word[data-index="0"]').click();
+  assert.equal(await page.locator('#selection-summary').textContent(),'1 selected');
   const hitTargets=await bar.locator('button:visible').evaluateAll(nodes=>nodes.map(node=>{
    const r=node.getBoundingClientRect();
    return {width:r.width,height:r.height,label:node.getAttribute('aria-label')};
