@@ -2405,7 +2405,7 @@ for(const [id,action] of [['copy-selection',copySelection],['cut-selection',cutS
  $(id).onclick=()=>{hideEditMenu();action();};
 }
 // Touch-and-hold and a contextual menu share the canonical clipboard commands.
-let touchEditGesture=null,ignoreDocumentClickUntil=0;
+let touchEditGesture=null,ignoreDocumentClickUntil=0,ignoreContextMenuUntil=0;
 function hideEditMenu(){
  $('edit-menu').hidden=true;
 }
@@ -2448,6 +2448,20 @@ $('pages').addEventListener('pointerdown',e=>{
  gesture.timer=setTimeout(()=>{
   if(touchEditGesture!==gesture)return;
   ignoreDocumentClickUntil=performance.now()+1000;
+  const word=target.closest('.word');
+  const paper=word?.closest('.paper');
+  const index=word?Number(word.dataset.index):-1;
+  // A second long press extends the existing selection without requiring
+  // a desktop Shift key. This runs after the 550 ms stationary-touch hold.
+  // An ordinary initial long press still opens the familiar edit menu.
+  if(paper&&selectionAnchorId&&Number.isInteger(index)&&!isIndexSelected(index)){
+   const id=resolveRenderedWordHit(paper,word,gesture.x,gesture.y,Infinity);
+   if(id&&id!==selectionAnchorId){
+    selectWord(id,true);hideEditMenu();closePanels();
+    ignoreContextMenuUntil=performance.now()+1000;
+    return;
+   }
+  }
   showEditMenu(gesture.x,gesture.y,target,Boolean(target.closest('.range-handle')));
  },550);
  touchEditGesture=gesture;
@@ -2461,6 +2475,7 @@ $('pages').addEventListener('click',e=>{
  if(performance.now()<ignoreDocumentClickUntil){e.preventDefault();e.stopImmediatePropagation();}
 },true);
 $('pages').addEventListener('contextmenu',e=>{
+ if(performance.now()<ignoreContextMenuUntil){e.preventDefault();return;}
  if(e.target.closest('input,textarea'))return;
  e.preventDefault();cancelTouchEdit();
  showEditMenu(e.clientX,e.clientY,e.target);
