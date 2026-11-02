@@ -111,7 +111,7 @@ def typeset_cartouche(obj: dict, sign_width: float, available_width: float,
                'y':round(cursor,5),'height':round(q.height,5),'quadrat':_tag_quadrat(q,item)})
             cursor+=q.height+gap
     cw=round(cw,5);ch=round(ch,5)
-    # An Egyptian royal name-ring: oval-headed rope loop and a DISTINCT
+    # An Egyptian royal name-ring: a continuous rope loop with an ATTACHED
     # terminal tie. The loop has semicircular ends, not quarter-circle UI
     # corners. A vertical cartouche starts at its curved TOP and ends at its
     # bottom terminal. Horizontal text starts at the curved leading end,
@@ -134,7 +134,11 @@ def typeset_cartouche(obj: dict, sign_width: float, available_width: float,
               f'C {x0+r*.42:.5f} {h:.5f} {x0:.5f} {h-r*.42:.5f} {x0:.5f} {r:.5f} '
               f'C {x0:.5f} {r*.42:.5f} {x0+r*.42:.5f} 0 {x0+r:.5f} 0 Z')
         terminal_x=x0-terminal_gap if tie_left else x1+terminal_gap
-        path+=f' M {terminal_x:.5f} {h*.06:.5f} V {h*.94:.5f}'
+        # The tie crosses the rope's endpoint and is JOINED to the loop,
+        # rather than hovering as a disconnected line beside an oval.
+        anchor=x0 if tie_left else x1
+        path+=(f' M {anchor:.5f} {r:.5f} H {terminal_x:.5f} '
+               f'V {h*.06:.5f} V {h*.94:.5f}')
         if tie_left:
             for placement in placements: placement['x']=round(placement['x']+x0,5)
         ending='left' if tie_left else 'right'
@@ -148,7 +152,9 @@ def typeset_cartouche(obj: dict, sign_width: float, available_width: float,
               f'C {r*.42:.5f} {loop_h:.5f} 0 {loop_h-r*.42:.5f} 0 {loop_h-r:.5f} '
               f'V {r:.5f} C 0 {r*.42:.5f} {r*.42:.5f} 0 {r:.5f} 0 Z')
         tie_y=loop_h+terminal_gap
-        path+=f' M {w*.06:.5f} {tie_y:.5f} H {w*.94:.5f}'
+        # A short continuous rope neck joins the bottom loop to its tie.
+        path+=(f' M {r:.5f} {loop_h:.5f} V {tie_y:.5f} '
+               f'H {w*.94:.5f} H {w*.06:.5f}')
         ending='bottom'
     cw=round(w,5);ch=round(h,5)
     d=path
