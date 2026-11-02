@@ -205,6 +205,12 @@ try{
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
   await page.locator('.cartouche-object').first().waitFor({state:'visible',timeout:90000});
   await page.locator('.cartouche-object').first().dblclick();
+  await page.locator('#keyboard-panel').waitFor({state:'visible'});
+  // Writing is direct; the separate configuration inspector remains
+  // available through the contextual Edit action.
+  await page.locator('#keyboard-toggle').click();
+  await page.locator('#object-action-edit').waitFor({state:'visible'});
+  await page.locator('#object-action-edit').click();
   await page.locator('#insert-screen-cartouche').waitFor({state:'visible'});
   assert.equal(await page.locator('input[name="insert-cartouche-direction"]:checked').inputValue(),
     'horizontal','Existing cartouche reopens its same orientation editor');
