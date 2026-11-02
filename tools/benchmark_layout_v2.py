@@ -1,0 +1,75 @@
+"""Reproducible layout throughput and geometry benchmark (no pass/fail timing gate).
+
+Run from the repo root:
+  PYTHONPATH=core python tools/benchmark_layout_v2.py --words 2000 --artworks 8
+
+Uses actual deterministic document models and real silhouette data. Timings
+depend on CPU and should be compared on the same environment and Python.
+"""
+import argparse
+import json
+import time
+from copy import deepcopy
+
+from mdwnfr.document import new_document, word, clipart, transaction
+from mdwnfr.layout import layout_document, incremental_layout_document
+
+
+def build_document(words, artworks, direction):
+    doc=new_document('Measured object-stream layout',direction=direction,
+                     surface='A3',font_size_pt=10)
+    corpus=['𓅓𓏏','𓈖','𓇋𓏏','𓂋𓈖','𓏺','𓅓𓈖']
+    assets=['bennu','horus-falcon-raster','amun-ra']
+    items=[]
+    for i in range(words):
+        if artworks and i in {words*(j+1)//(artworks+1) for j in range(artworks)}:
+            obj=clipart(assets[i%len(assets)],35+i%31,'normal')
+            obj['y_align']=(i%7)/7
+            items.append(obj)
+        items.append(word(list(corpus[i%len(corpus)])))
+    doc['items']=items
+    return doc
+
+
+def timed(label,callback):
+    start=time.perf_counter()
+    result=callback()
+    return result,{'stage':label,'elapsed_ms':round((time.perf_counter()-start)*1000,2)}
+
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--words',type=int,default=2000)
+    parser.add_argument('--artworks',type=int,default=8)
+    parser.add_argument('--direction',choices=['rtl','ltr'],default='rtl')
+    options=parser.parse_args()
+    if not 1<=options.words<=100000 or not 0<=options.artworks<=200:
+        parser.error('Use 1-100000 words and 0-200 artworks')
+    doc=build_document(options.words,options.artworks,options.direction)
+    original,base=timed('full_initial',lambda:layout_document(doc))
+    edited=deepcopy(doc)
+    edited['items'].insert(len(edited['items'])//2,word(['𓅓','𓇋']))
+    edited['revision']+=1
+    updated,edit=timed('insert_middle',lambda:incremental_layout_document(
+        edited,doc,original))
+    full,_=timed('full_parity',lambda:layout_document(edited))
+    if updated[0]!=full:
+        raise AssertionError('Incremental reflow diverged from full compositor')
+    compact,project=timed('compact_projection',lambda:incremental_layout_document(
+        edited,compact=True))
+    if compact[0]['document_id']!=doc['id']:
+        raise AssertionError('Compact projection has wrong document ID')
+    records=[base,edit,project]
+    report={
+        'words':options.words,'artworks':options.artworks,
+        'direction':options.direction,'surface':doc['surface'],
+        'pages':len(updated[0]['pages']),
+        'objects':len(edited['items']),
+        'layout_mode':updated[1]['mode'],
+        'sample_timings':records
+    }
+    print(json.dumps(report,indent=2))
+
+
+if __name__=='__main__':
+    main()
