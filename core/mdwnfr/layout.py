@@ -49,7 +49,7 @@ def divider_ink_runs(runs, bridge_mm: float) -> list[tuple[float, float]]:
     return merged
 
 
-def intersect_ink_runs(left: list[tuple[float, float]],
+def _intersect_ink_runs(left: list[tuple[float, float]],
                        right: list[tuple[float, float]]) -> list[tuple[float, float]]:
     """Intersect sorted, nonoverlapping ink runs in O(left + right).
 
@@ -69,6 +69,21 @@ def intersect_ink_runs(left: list[tuple[float, float]],
         if d <= b:
             j += 1
     return divider_ink_runs(overlaps, 0)
+
+
+def _anchor_word_ink(index: dict[int, list[tuple[float, float, float, float]]],
+                     x: float, artwork_width: float, clearance: float,
+                     column_width: float) -> list[tuple[float, float, float, float]]:
+    """Fetch a conservative candidate set; the caller tests exact glyph ink.
+
+    Glyphs belong to one nominal reading slot. Include an extra neighboring
+    slot on both sides to remain conservative at floating-point boundaries.
+    Scanning indexed slots rather than all preceding glyphs matters for long
+    illustrated documents and does not approximate the collision geometry.
+    """
+    first=max(0,int((x-clearance)//column_width)-1)
+    stop=int((x+artwork_width+clearance)//column_width)+2
+    return [glyph for i in range(first,stop) for glyph in index.get(i, ())]
 
 
 def proportional_extra(heights: list[float], remainder: float) -> list[float]:
@@ -284,7 +299,7 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
             x = margins['left']+(index+1)*width
             left_ink = divider_ink_runs(word_slots[index], width/2)
             right_ink = divider_ink_runs(word_slots[index+1], width/2)
-            spans = intersect_ink_runs(left_ink, right_ink)
+            spans = _intersect_ink_runs(left_ink, right_ink)
             for art in artworks:
                 # An embedded object is its OWN separator. Do not draw a
                 # redundant line through its rectangular visual presence,
@@ -680,13 +695,9 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                     x=candidate*width+delta
                     if x < -1e-7 or (capacity is not None and x+iw>capacity*width+1e-7):
                         continue
-                    # Only the candidate footprint can intersect completed
-                    # word ink. Inspect its reading slots, then run the
-                    # unchanged exact collision test on those actual glyphs.
-                    first_slot=max(0,int((x-clearance)//width)-1)
-                    last_slot=int((x+iw+clearance)//width)+2
-                    preceding=[ink for slot_index in range(first_slot,last_slot)
-                               for ink in word_ink_by_slot.get(slot_index,())]
+                    # The helper selects candidate slots only. The following
+                    # free_sectors call still checks every actual ink rectangle.
+                    preceding=_anchor_word_ink(word_ink_by_slot,x,iw,clearance,width)
                     preceding.extend(pending_ink)
                     facing=(_logical_auto_flip(item,x,iw,page_width,margins,
                                                doc['direction'],papyrus)
