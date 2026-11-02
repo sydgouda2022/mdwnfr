@@ -1,5 +1,5 @@
 name: MdwNfr CI and pinned Hieroglyphic Keyboard verification
-# Release: four reversible object sheets and unified Python placement preview.
+# Verified production deploy requires an explicit trigger and matching live build fingerprint.
 on:
   push:
     branches: [main]
@@ -106,6 +106,23 @@ jobs:
           wrangler deploy --config wrangler.toml
           curl --fail --silent --show-error --retry 5 https://mdwnfr.sydgouda.workers.dev/ > /tmp/mdwnfr-production-check.html
           test -s /tmp/mdwnfr-production-check.html
+          # An old Cloudflare release can also answer 200/OK. Compare the
+          # generated build ID before announcing this commit as deployed.
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          pattern = r'<meta\\s+name="mdwnfr-build"\\s+content="([^"]+)"'
+          local = Path('dist/index.html').read_text(encoding='utf-8')
+          remote = Path('/tmp/mdwnfr-production-check.html').read_text(encoding='utf-8')
+          expected = re.search(pattern, local)
+          actual = re.search(pattern, remote)
+          assert expected and actual, 'Missing deploy build fingerprint'
+          assert expected.group(1) == actual.group(1), (
+              'Cloudflare still serves a different build: '
+              f'{actual.group(1)} != {expected.group(1)}'
+          )
+          print('Live Cloudflare build fingerprint matches the just-built release:', actual.group(1))
+          PY
           curl --fail --silent --show-error --retry 5 https://mdwnfr.sydgouda.workers.dev/runtime-status.json > /tmp/mdwnfr-runtime.json
           curl --fail --silent --show-error --retry 5 https://mdwnfr.sydgouda.workers.dev/offline-assets.json > /tmp/mdwnfr-offline.json
           python - <<'PY'
