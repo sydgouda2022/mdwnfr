@@ -2793,13 +2793,21 @@ async function showOfflineReadiness(){
     const manifest=await cache.match('/offline-assets.json');
     if(!manifest)continue;
     const publication=await manifest.json();
-    if(publication.complete!==true)continue;
+    if(publication.complete!==true||publication.format!=='mdwnfr-offline-publication-v1'||
+       !Array.isArray(publication.assets)||!publication.assets.length)continue;
     const critical=['/index.html','/app.js','/keyboard-prediction-worker.mjs',
      '/keyboard-release-pin.json','/vendor/pyodide/pyodide.asm.wasm',
      '/assets/fonts/hieroglyphs.woff2'];
-    const assets=new Set(publication.assets.map(item=>item.path));
-    if(critical.every(path=>assets.has(path)&&publication.assets.some(entry=>entry.path===path))&&
-       (await Promise.all(critical.map(path=>cache.match(path)))).every(Boolean)){
+    const paths=publication.assets.map(entry=>entry?.path);
+    if(paths.some(path=>typeof path!=='string'||!path.startsWith('/'))||
+       new Set(paths).size!==paths.length)continue;
+    const assets=new Set(paths);
+    if(!critical.every(path=>assets.has(path)))continue;
+    // The installer checks every SHA-256 before publishing the cache. The
+    // readiness badge must also require EVERY manifest asset to remain cached,
+    // not just six critical files. One lost Python module breaks offline edits.
+    const cached=new Set((await cache.keys()).map(request=>new URL(request.url).pathname));
+    if(paths.every(path=>cached.has(path))){
       installed=true;break;
     }
    }
@@ -2816,7 +2824,7 @@ async function showOfflineReadiness(){
 if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('controllerchange',()=>{void showOfflineReadiness();});
 
 // Export an unsaved conflict copy with a new document ID so it can be
-// reimported without overwriting the newer persisted document.
+// retained as an emergency external copy; the current library has no importer.
 function downloadUnsavedDocumentCopy(){
  if(!doc)throw new Error('No document to export');
  const copy={...structuredClone(doc),id:crypto.randomUUID().replaceAll('-',''),

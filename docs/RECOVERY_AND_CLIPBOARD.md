@@ -6,7 +6,7 @@ MdwNfr stores documents locally in IndexedDB, not in a remote account. The Docum
 
 Document saves, renames, deletes, and internal restore transactions compare exact persisted revisions inside IndexedDB readwrite transactions. Stale tabs cannot overwrite newer committed content. Spelling preferences and My Words instead use atomic intent-based profile updates so a second tab cannot erase a first tab's new choices. Preference maps retain the highest-weighted 2048 spellings; My Words supports up to 5000 entries.
 
-Uncommitted editor changes trigger a before-unload warning, and a failed autosave exposes an emergency **Export unsaved** button. Use it before closing or reloading and keep the downloaded copy safely; the minimal Documents library currently has no general-purpose Import control. The emergency copy has a fresh document ID to avoid overwriting the original.
+Uncommitted editor changes trigger a before-unload warning, and a failed autosave exposes an emergency **Export unsaved** button. Use it before closing or reloading and keep the downloaded copy safely; the minimal Documents library has **no way to import that copy back**. It is a last-resort external record, not an in-app recovery mechanism. The emergency copy has a fresh document ID to avoid overwriting the original if a validated importer is introduced in the future.
 
 ## Internal recovery checkpoints for large documents
 
