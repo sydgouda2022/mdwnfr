@@ -111,7 +111,7 @@ jobs:
           python - <<'PY'
           import re
           from pathlib import Path
-          pattern = r'<meta\\s+name="mdwnfr-build"\\s+content="([^"]+)"'
+          pattern = r'<meta[ ]+name="mdwnfr-build"[ ]+content="([^"]+)"'
           local = Path('dist/index.html').read_text(encoding='utf-8')
           remote = Path('/tmp/mdwnfr-production-check.html').read_text(encoding='utf-8')
           expected = re.search(pattern, local)
