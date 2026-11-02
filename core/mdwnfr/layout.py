@@ -392,6 +392,9 @@ def _layout(doc: dict, glyph_metrics: dict | None,
     # consult only slots touching its horizontal footprint, without changing
     # any silhouette/collision checks or persisted geometry.
     word_ink_by_slot = {}
+    # Legal ink origins depend on the current obstacle set, slot and spelling,
+    # not the advancing word cursor. Reuse them across repeated words.
+    origin_cache = {}
     slot = 0
     pending = []             # (object, quadrat, y) in one reading-order lane
     lane_start = top
@@ -412,6 +415,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         slot = 0
         obstacles = []
         word_ink_by_slot = {}
+        origin_cache.clear()
 
     def finish_lane(overflow=False):
         """Justify each uninterrupted text sector without crossing artwork.
@@ -560,15 +564,24 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         lane_cursor=top
 
     def word_origins(shape,item):
-        """Intersect actual glyph-ink regions with ALL placed object silhouettes."""
+        """Legal ink origins reused until the obstacle field changes."""
+        bold=bool(item.get('bold',False))
+        key=(slot,tuple(item['signs']),bold)
+        cached=origin_cache.get(key)
+        if cached is not None:
+            return cached
         lane_x=slot*width
         clearance=object_clearance_mm(width)
         nearby=[ob for ob in obstacles
                 if ob[5]-clearance<lane_x+width and ob[5]+ob[3]+clearance>lane_x]
-        return free_word_starts(shape,column_left=lane_x,
+        allowed=free_word_starts(shape,column_left=lane_x,
             top=top,bottom=bottom,clearance=clearance,obstacles=nearby,
             ink_expansion=max((g.font_size for g in shape.signs),default=0)*.006
-                          if item.get('bold',False) else 0)
+                          if bold else 0)
+        if len(origin_cache)>=1024:
+            origin_cache.clear()
+        origin_cache[key]=allowed
+        return allowed
 
     def insert_word(item):
         nonlocal lane_cursor,slot
@@ -772,6 +785,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
             columns.append(seed)
             stats['computed_columns']+=1
             obstacles.append(new_obstacle)
+            origin_cache.clear()
             # Keep pending quadrats, current slot and their natural y cursor.
             # Their column can continue once the object occupies its contour.
 
