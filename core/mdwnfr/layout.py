@@ -325,14 +325,6 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
                 if not spans:
                     break
             for top,bottom in spans:
-                    if top < upper-1e-8:
-                        remaining.append((top, min(bottom,upper)))
-                    if bottom > lower+1e-8:
-                        remaining.append((max(top,lower),bottom))
-                spans = remaining
-                if not spans:
-                    break
-            for top,bottom in spans:
                 if bottom>top+1e-6:
                     dividers.append({'x':round(x,5),'y1':round(top,5),
                                      'y2':round(bottom,5),
