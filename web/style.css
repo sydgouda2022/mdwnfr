@@ -483,6 +483,15 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .paper .table-object.selected .art-resize,.paper .cartouche-object.selected .art-resize,.paper .clipart-object.selected .art-resize{display:block}
 .paper .art-resize{transform:scale(var(--resize-inverse,1));transform-origin:center;touch-action:none}
 .paper .art-move{transform:scale(var(--resize-inverse,1));transform-origin:center;touch-action:none}
+/* Two 44px controls cannot both occupy the corner of a tiny cartouche.
+   Move the grip one full viewport target-width beyond its nearest edge.
+   The inverse zoom keeps that separation 44 CSS px on iPhone and iPad. */
+.paper .compact-object-handles>.art-move{
+ left:calc(-44px * var(--resize-inverse,1) - 22px);
+}
+.paper .compact-object-handles.move-handle-right>.art-move{
+ left:calc(100% + 44px * var(--resize-inverse,1) - 22px);
+}
 .paper .art-resize:focus-visible{outline:2px solid #277eb6}
 
 /* Keep the phone inspector away from the initial RTL writing column and its
