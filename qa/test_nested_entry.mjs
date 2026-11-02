@@ -33,6 +33,25 @@ for(const [label,engine,width,height] of [
    null,{timeout:90000});
   await page.locator('#insert-sheet-confirm').click();
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
+  const tableDiagnostics=await page.evaluate(async()=>{
+   const nodes=Array.from(document.querySelectorAll('.table-object'));
+   const glyphs=Array.from(document.querySelectorAll('.table-cell-word'));
+   const pages=Array.from(document.querySelectorAll('.paper')).map(e=>({visibility:getComputedStyle(e).visibility,classes:e.className}));
+   let saved=null;
+   try{
+    const storage=await import('/storage.js');
+    const docs=await storage.list();
+    saved=await Promise.all(docs.map(async item=>{
+     const d=await storage.load(item.id);
+     return {id:item.id,revision:d?.revision,table:d?.items?.filter(x=>x.type==='table').map(x=>x.rows.map(row=>row.map(cell=>(cell.items||[]).map(w=>w.signs.join('')))))};
+    }));
+   }catch(err){saved={error:String(err)};}
+   return {tableCount:nodes.length,wordCount:glyphs.length,
+    wordStates:glyphs.map(e=>({visible:getComputedStyle(e).visibility,rect:e.getBoundingClientRect().toJSON()})),
+    tableGeometry:nodes.map(e=>({classes:e.className,inner:e.querySelectorAll('.table-cell-view').length,html:e.outerHTML.slice(0,420)})),
+    pages,saved};
+  });
+  console.log('NESTED_TABLE_DIAGNOSTICS',label,JSON.stringify(tableDiagnostics));
   await page.locator('.table-cell-word').first().waitFor({state:'visible',timeout:90000});
   await page.locator('.table-cell-view').first().dblclick();
   await page.locator('#insert-table-cell-input').waitFor({state:'visible'});
