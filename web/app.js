@@ -1501,6 +1501,19 @@ function noteCartoucheTouch(id,x,y){
   void beginInsertSheet('cartouche',id);
  }
 }
+function nestedDragHorizontalPosition(original,placement,column,deltaX,direction){
+ const room=Math.max(0,column.width-placement.width_mm);
+ const desiredX=placement.x+deltaX;
+ // x_align is physical within the visible writing band; an x_offset is
+ // logical travel beyond the band. These must not be applied twice.
+ if(room>0&&desiredX>=column.x&&desiredX<=column.x+room)
+  return {x_offset_mm:0,
+   x_align:Math.round((desiredX-column.x)/room*10000)/10000};
+ const leading=direction==='rtl'
+  ?column.x+column.width-placement.width_mm-desiredX
+  :desiredX-column.x;
+ return {x_offset_mm:Math.round(Math.max(-2000,Math.min(2000,leading))*10)/10};
+}
 function beginObjectDrag(e,placement,column,page,node){
  if(e.button!==0||e.target.closest('.art-resize,.table-cell-view'))return;
  const original=objectById(placement.id);
@@ -1521,13 +1534,12 @@ function beginObjectDrag(e,placement,column,page,node){
    const room=Math.max(0,page.height-margins.top-margins.bottom-placement.height);
    draft.object.y_align=Math.min(1,Math.max(0,
     (original.y_align??.5)+(room?y/room:0)));
-   draft.object.x_offset_mm=Math.max(-2000,Math.min(2000,
-    Math.round(((original.x_offset_mm||0)+
-      (doc.direction==='rtl'?-x:x))*10)/10));
-   if(isNested){
-    const horizontalRoom=Math.max(0,column.width-placement.width_mm);
-    draft.object.x_align=horizontalRoom?Math.min(1,Math.max(0,
-     (placement.x+x-column.x)/horizontalRoom)):0;
+   if(Math.abs(dx)>=2){
+    if(isNested)Object.assign(draft.object,
+     nestedDragHorizontalPosition(original,placement,column,x,doc.direction));
+    else draft.object.x_offset_mm=Math.max(-2000,Math.min(2000,
+     Math.round(((original.x_offset_mm||0)+
+       (doc.direction==='rtl'?-x:x))*10)/10));
    }
    if(performance.now()-(draft.lastReflow||0)>170){
     draft.lastReflow=performance.now();requestInsertPreview();
@@ -1567,23 +1579,8 @@ function beginObjectDrag(e,placement,column,page,node){
       hit.gap-(source<hit.gap?1:0)));
     }
     action={op:'relocate_nested',id:placement.id,index:target};
-    if(horizontal){
-     const horizontalRoom=Math.max(0,column.width-placement.width_mm);
-     const desiredX=placement.x+deltaX;
-     // A free position within the existing band is represented by exactly
-     // one x_align value. Never apply x_align AND x_offset to the same drag:
-     // the offset overrides alignment in the authoritative Python layout.
-     if(horizontalRoom>0&&desiredX>=column.x&&
-        desiredX<=column.x+horizontalRoom){
-      action.x_offset_mm=0;
-      action.x_align=Math.round((desiredX-column.x)/horizontalRoom*10000)/10000;
-     }else{
-      const leading=doc.direction==='rtl'
-       ?column.x+column.width-placement.width_mm-desiredX
-       :desiredX-column.x;
-      action.x_offset_mm=Math.round(Math.max(-2000,Math.min(2000,leading))*10)/10;
-     }
-    }
+    if(horizontal)Object.assign(action,
+     nestedDragHorizontalPosition(original,placement,column,deltaX,doc.direction));
     if(vertical)action.y_align=Math.round(yAlign*10000)/10000;
    }else{
     const desiredX=placement.x+deltaX;
