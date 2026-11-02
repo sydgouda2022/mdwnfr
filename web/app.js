@@ -828,6 +828,11 @@ async function beginInsertSheet(kind,existingId=null){
  // Prevent edits until the initial Python draft has been constructed.
  // Otherwise a late default can silently overwrite the user's choices.
  const initializing=!original&&(kind==='table'||kind==='cartouche');
+ // Wait for the Python draft before accepting the first text input. The
+ // screen may already be visible while insertPrototype is still awaiting.
+ $('insert-table-cell-input').disabled=initializing;
+ $('insert-cartouche-words').disabled=initializing;
+ if(initializing)$('insert-glyph-keyboard').hidden=true;
  for(const id of ['insert-table-rows','insert-table-columns',
                   'insert-table-border','insert-table-color',
                   'insert-table-line','insert-table-padding'])
@@ -870,6 +875,9 @@ async function beginInsertSheet(kind,existingId=null){
   }
    showDraftContents(insertDraft);
   if(insertDraft?.token!==token)return;
+  $('insert-table-cell-input').disabled=false;
+  $('insert-cartouche-words').disabled=false;
+  if(kind==='table'||kind==='cartouche')$('insert-glyph-keyboard').hidden=false;
   for(const id of ['insert-table-rows','insert-table-columns',
                    'insert-table-border','insert-table-color',
                    'insert-table-line','insert-table-padding'])$(id).disabled=false;
@@ -1152,7 +1160,7 @@ async function runInsertPreview(d,version){
   return queued;
  }
  function scheduleDraftText(){
-  const d=insertDraft;if(!d||!['table','cartouche'].includes(d.kind))return;
+  const d=insertDraft;if(!d?.object||!['table','cartouche'].includes(d.kind))return;
   ++d.textVersion;
   // Invalidate a running preview; it may not re-enable Done for stale text.
   ++insertPreviewVersion;
@@ -1164,7 +1172,7 @@ async function runInsertPreview(d,version){
  $('insert-cartouche-words').oninput=scheduleDraftText;
  $('insert-table-cell-input').oninput=scheduleDraftText;
  function typeDraftGlyph(value,backspace=false){
-  const d=insertDraft;if(!d||!['table','cartouche'].includes(d.kind))return;
+  const d=insertDraft;if(!d?.object||!['table','cartouche'].includes(d.kind))return;
   const input=draftInput(d),start=input.selectionStart??input.value.length,
    end=input.selectionEnd??input.value.length;
   const prev=start>=2&&input.value.codePointAt(start-2)>=0x13000?start-2:Math.max(0,start-1);
