@@ -1,12 +1,10 @@
-# Live verification after table-cell touch release cb31a846.
-# Production verification following ink-bounded divider release 26b82a9d.
+# Read-only audits use the current deployed site, not necessarily the latest main commit.
 name: MdwNfr Live User Journey Audit (read-only)
 on:
   push:
     branches: [main]
     paths:
       - '.github/workflows/mdwnfr-live-audit.yml'
-      - 'qa/audit_live_ui_20261030.mjs'
       - 'qa/audit_live_ui_20261030.mjs'
   workflow_dispatch:
 permissions:
