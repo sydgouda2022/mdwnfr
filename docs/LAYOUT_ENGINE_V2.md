@@ -17,3 +17,25 @@ Compatibility: Existing JSON exports remain valid; schema 1 gains an optional sy
 Performance: Changed object streams still reflow from the start, with cached quadrat composition. Inside a pass, the compositor reuses legal glyph origins for repeated spellings within unchanged obstacle fields, indexes completed word ink by reading column when evaluating artwork anchors, and intersects divider spans with a linear sweep. These are **search optimizations only**: they must not change the canonical layout geometry or introduce another wrapping engine. Identical streams reuse their completed snapshots.
 
 Use `PYTHONPATH=core python tools/benchmark_layout_v2.py --words 2000 --artworks 8` to record full layout, midstream insertion, and compact projection timings on comparable hardware. The Python unit suite checks indexed-anchor and divider parity against unindexed reference calculations and verifies large mixed-document order and full/compact equivalence. Performance numbers are diagnostic, not fixed CI gates, because runners vary.
+
+
+## Completed-page prefix reuse
+
+A later edit may reuse completed pages **only** if the old and new document
+have identical typography/paper/metrics and an unchanged source prefix.
+The boundary must follow a fully consumed fixed-paper writing grid, contain
+no split object/table continuation, and start the following page with the
+same unchanged quadrat in writing slot zero. The suffix then calls the
+**same** `_layout` compositor on its remaining ordered objects; no second
+wrapping algorithm or saved page positions are introduced. Papyrus, early
+edits, changed layout settings and ambiguous boundaries recompute in full.
+The resulting `layout_stats.mode` is `complete_page_prefix`, with the
+reused column count and first recomputed object index reported explicitly.
+All original object IDs, symbols and glyph ink geometry remain authoritative.
+
+Benchmark a late edit on a multi-page document with:
+`PYTHONPATH=core python tools/benchmark_layout_v2.py --surface A4 --font-size 18 --words 1000 --artworks 4 --edit-at 0.9`.
+This measures incremental and full recomposition independently and checks
+the results for exact equality, but timing varies with hardware. Compact and
+detailed page parity and invalidation scenarios are covered by
+`qa/test_layout_page_prefix.py`.
