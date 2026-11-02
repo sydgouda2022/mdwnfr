@@ -47,6 +47,8 @@ def main():
     parser.add_argument('--font-size',type=int,default=10)
     parser.add_argument('--edit-at',type=float,default=.5,
                         help='Fraction of stream preceding the insertion, 0.0-1.0')
+    parser.add_argument('--require-page-reuse',action='store_true',
+                        help='Fail when the fixture cannot reuse a verified page prefix')
     options=parser.parse_args()
     if not 1<=options.words<=100000 or not 0<=options.artworks<=min(200,options.words):
         parser.error('Use 1-100000 words and 0-200 artworks (not more artworks than words)')
@@ -60,6 +62,8 @@ def main():
     edited['revision']+=1
     updated,edit=timed('insert_middle',lambda:incremental_layout_document(
         edited,doc,original))
+    if options.require_page_reuse and updated[1]['mode']!='complete_page_prefix':
+        raise AssertionError('Benchmark did not exercise completed-page reuse')
     full,full_parity=timed('full_parity',lambda:layout_document(edited))
     if updated[0]!=full:
         raise AssertionError('Incremental reflow diverged from full compositor')

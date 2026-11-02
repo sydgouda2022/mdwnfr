@@ -919,9 +919,10 @@ def incremental_layout_document(doc: dict, previous_document: dict | None = None
                                 compact: bool = False) -> tuple[dict, dict]:
     """Recompose object positions from IDs and sequence, never page anchors.
 
-    The previous snapshot may be reused only when the geometry inputs are
-    identical. Compact mode projects tuple placements for visible-page
-    expansion, without a second compositor.
+    A revisioned snapshot can reuse independently verified complete pages
+    before the first changed object. The remaining stream is recomposed by
+    the same compositor. Compact mode remains a projection, not a second
+    typesetting algorithm.
     """
     if previous_document is not None and previous_layout is not None:
         reused = _recompose_after_complete_pages(

@@ -14,7 +14,7 @@ The independent headless Hieroglyphic Keyboard API supplies signs and prediction
 
 Compatibility: Existing JSON exports remain valid; schema 1 gains an optional symbol_ids field. The compact page view is a projection of the same layout decisions.
 
-Performance: Changed object streams still reflow from the start, with cached quadrat composition. Inside a pass, the compositor reuses legal glyph origins for repeated spellings within unchanged obstacle fields, indexes completed word ink by reading column when evaluating artwork anchors, and intersects divider spans with a linear sweep. These are **search optimizations only**: they must not change the canonical layout geometry or introduce another wrapping engine. Identical streams reuse their completed snapshots.
+Performance: Changes after a proven independent fixed-paper page boundary reuse the unchanged preceding pages and recompose only the remaining stream; otherwise layout reflows from the beginning. Cached quadrat composition is retained. Inside a pass, the compositor reuses legal glyph origins for repeated spellings within unchanged obstacle fields, indexes completed word ink by reading column when evaluating artwork anchors, and intersects divider spans with a linear sweep. These are **search optimizations only**: they must not change the canonical layout geometry or introduce another wrapping engine. Identical streams reuse their completed snapshots.
 
 Use `PYTHONPATH=core python tools/benchmark_layout_v2.py --words 2000 --artworks 8` to record full layout, midstream insertion, and compact projection timings on comparable hardware. The Python unit suite checks indexed-anchor and divider parity against unindexed reference calculations and verifies large mixed-document order and full/compact equivalence. Performance numbers are diagnostic, not fixed CI gates, because runners vary.
 
@@ -23,9 +23,11 @@ Use `PYTHONPATH=core python tools/benchmark_layout_v2.py --words 2000 --artworks
 
 A later edit may reuse completed pages **only** if the old and new document
 have identical typography/paper/metrics and an unchanged source prefix.
-The boundary must follow a fully consumed fixed-paper writing grid, contain
-no split object/table continuation, and start the following page with the
-same unchanged quadrat in writing slot zero. The suffix then calls the
+The boundary must split an unchanged, contiguous object prefix from its
+suffix, with no table continuation or other object crossing it. Crucially,
+recomposing the ORIGINAL suffix independently must reproduce the old page
+geometry exactly; this also admits early page breaks around artwork. The
+new suffix then calls the
 **same** `_layout` compositor on its remaining ordered objects; no second
 wrapping algorithm or saved page positions are introduced. Papyrus, early
 edits, changed layout settings and ambiguous boundaries recompute in full.
