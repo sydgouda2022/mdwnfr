@@ -816,6 +816,106 @@ def layout_document(doc: dict, glyph_metrics: dict | None = None) -> dict:
     return _layout(doc, glyph_metrics, None)[0]
 
 
+def _recompose_after_complete_pages(doc: dict, old_doc: dict,
+                                    old_layout: dict, metrics: dict,
+                                    old_metrics: dict, compact: bool):
+    """Reuse a proven finished-page prefix; run the SAME compositor on the rest.
+
+    A page is an independent restart only when the preceding page consumed
+    its complete writing grid AND the next page begins with an unchanged word
+    at the first writing slot. Floating objects/table continuations crossing
+    that boundary disqualify it. This deliberately never speculates about an
+    incomplete lane or a still-pending silhouette.
+    """
+    if (doc['surface'] == 'papyrus'
+            or doc['id'] != old_doc.get('id')
+            or old_layout.get('document_id') != doc['id']
+            or old_layout.get('revision') != old_doc.get('revision')
+            or old_layout.get('surface') != doc['surface']
+            or old_layout.get('direction') != doc['direction']
+            or metrics != old_metrics
+            or any(doc.get(k) != old_doc.get(k) for k in LAYOUT_PARAMETERS)):
+        return None
+    old_items = old_doc['items']
+    items = doc['items']
+    pages = old_layout['pages']
+    if len(pages) < 2:
+        return None
+    changed = next((i for i, (before, after) in
+                    enumerate(zip(old_items, items)) if before != after),
+                   min(len(old_items), len(items)))
+    if changed <= 1:
+        return None
+    # Compact and detailed snapshots have different placement structures.
+    # A table can appear as fragments on several pages; never split it.
+    last_page = {}
+    page_ids = []
+    old_index = {item['id']: i for i, item in enumerate(old_items)}
+    for page_number, page in enumerate(pages):
+        names = []
+        for col in page['columns']:
+            for p in col['placements']:
+                if isinstance(p, dict) != (not compact):
+                    return None
+                ident = p['id'] if isinstance(p, dict) else p[0]
+                if ident not in old_index:
+                    return None
+                names.append(ident)
+                last_page[ident] = page_number
+        page_ids.append(names)
+    capacity, _ = fixed_page_column_grid(
+        pages[0]['width'] - old_layout['margins_mm']['left']
+        - old_layout['margins_mm']['right'],
+        column_width_mm(doc['font_size_pt']))
+    prefix = set()
+    chosen = None
+    for boundary in range(1, len(pages)):
+        prefix.update(page_ids[boundary - 1])
+        split = len(prefix)
+        if split >= changed:
+            break
+        if (split == 0 or split >= len(old_items)
+                or any(last_page[ident] >= boundary for ident in prefix)
+                or prefix != {item['id'] for item in old_items[:split]}):
+            continue
+        prev_page = pages[boundary - 1]
+        if sum(col.get('span', 1) for col in prev_page['columns']) != capacity:
+            continue
+        next_page = pages[boundary]
+        if not next_page['columns']:
+            continue
+        first = next_page['columns'][0]
+        if (first.get('kind') != 'words' or first.get('span', 1) != 1
+                or not first['placements'] or old_items[split]['type'] != 'word'):
+            continue
+        first_ident = (first['placements'][0]['id'] if not compact
+                       else first['placements'][0][0])
+        expected_x = (old_layout['margins_mm']['left'] if doc['direction'] == 'ltr'
+                      else next_page['width'] - old_layout['margins_mm']['right']
+                      - old_layout['column_width_mm'])
+        if (first_ident != old_items[split]['id']
+                or abs(first['x'] - expected_x) > 1e-4):
+            continue
+        chosen = boundary, split
+    if chosen is None:
+        return None
+    boundary, split = chosen
+    # No alternate wrapping algorithm: restart the original _layout at a
+    # confirmed clean page boundary with the unchanged document properties.
+    suffix_doc = {**doc, 'items': items[split:]}
+    tail, stats = _layout(suffix_doc, metrics, None, compact=compact)
+    tail['pages'] = [*deepcopy(pages[:boundary]), *(
+        {**page, 'index': boundary + i}
+        for i, page in enumerate(tail['pages'])
+    )]
+    tail['revision'] = doc['revision']
+    stats.update(mode='complete_page_prefix',
+                 reused_prefix_columns=sum(len(page['columns'])
+                                           for page in pages[:boundary]),
+                 start_index=split)
+    return tail, stats
+
+
 def incremental_layout_document(doc: dict, previous_document: dict | None = None,
                                 previous_layout: dict | None = None,
                                 glyph_metrics: dict | None = None,
@@ -827,6 +927,12 @@ def incremental_layout_document(doc: dict, previous_document: dict | None = None
     identical. Compact mode projects tuple placements for visible-page
     expansion, without a second compositor.
     """
+    if previous_document is not None and previous_layout is not None:
+        reused = _recompose_after_complete_pages(
+            doc, previous_document, previous_layout,
+            glyph_metrics or {}, previous_metrics or {}, compact)
+        if reused is not None:
+            return reused
     previous = ((previous_document, previous_layout, previous_metrics)
                 if previous_document is not None and previous_layout is not None else None)
     return _layout(doc, glyph_metrics, previous, compact)
