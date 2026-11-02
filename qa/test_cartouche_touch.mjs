@@ -35,41 +35,30 @@ for(const [label,browserType,width,height] of [
   const at=await cart.boundingBox();
   assert.ok(at,'A new cartouche must have a visible hit target');
   const cx=at.x+at.width/2,cy=at.y+at.height/2;
-  // Initial selection must not open an inspector or install text-only handles.
+  // Direct tap enters the nested keyboard, not an inspector window.
   await page.touchscreen.tap(cx,cy);
+  await page.locator('#keyboard-panel').waitFor({state:'visible',timeout:15000});
   assert.equal(await page.locator('#insert-dialog-backdrop').isVisible(),false);
   assert.equal(await page.locator('.range-handle').count(),0,
-   'Text range handles must not block cartouche touch editing');
-  await page.locator('#object-quick-actions').waitFor({state:'visible'});
-  assert.equal(await page.locator('#object-action-edit').isVisible(),true,
-   'A selected object should have a direct Edit action, like a document editor');
-  assert.equal(await page.locator('#format-panel').isVisible(),false,
-   'Object selection must not force the full Format inspector open');
-  const afterFirst=await page.evaluate(({x,y})=>{
-   const node=document.elementFromPoint(x,y);
-   return {tag:node?.tagName,classes:node?.getAttribute('class'),
-    cartouche:node?.closest('.cartouche-object')?.dataset.id,
-    handle:node?.closest('.art-resize')?.getAttribute('class'),
-    panel:!!document.querySelector('#insert-screen-cartouche:not([hidden])')};
-  },{x:cx,y:cy});
-  console.log('CART_TOUCH_HIT',label,JSON.stringify({at,afterFirst}));
-  // A second real finger tap must open the non-modal cartouche inspector.
-  await page.touchscreen.tap(cx,cy);
-  await page.locator('#insert-screen-cartouche').waitFor({state:'visible',timeout:15000});
-  assert.equal(await page.locator('input[name="insert-cartouche-direction"]:checked').inputValue(),
-   'horizontal','Reopening may not lose saved orientation');
-  assert.equal(await page.locator('#insert-sheet-cancel-top').count(),0,
-   'Mobile inspector must not acquire a desktop X close button');
-  await page.locator('#insert-sheet-cancel').click();
-  await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
-  assert.equal(await cart.count(),1,'Cancel must leave the existing cartouche intact');
-  // Select once, then use the contextual actions without a double-tap or
-  // a blocking desktop inspector. They share the document's undo history.
+   'Word selection handles may not block cartouche text entry');
+  await page.locator('#keys .key').first().click();
+  await page.locator('#suggestions .user-choice').first().click();
+  await page.waitForFunction(()=>document.querySelector('.cartouche-word')!==null,
+   null,{timeout:90000});
+  assert.equal(await page.locator('.cartouche-word').count(),1,
+   'A hieroglyph typed through the keyboard must appear inside the cartouche');
+  // Closing the keyboard reveals contextual actions. The object specification
+  // remains available through Edit rather than interrupting text entry.
+  await page.locator('#keyboard-toggle').click();
   await page.locator('#object-quick-actions').waitFor({state:'visible'});
   await page.locator('#object-action-edit').click();
   await page.locator('#insert-screen-cartouche').waitFor({state:'visible',timeout:30000});
+  assert.equal(await page.locator('input[name="insert-cartouche-direction"]:checked').inputValue(),
+   'horizontal','Editing must preserve the existing cartouche orientation');
   await page.locator('#insert-sheet-cancel').click();
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
+  assert.equal(await cart.count(),1,'Cancel must preserve cartouche and text');
+  await page.locator('#object-quick-actions').waitFor({state:'visible'});
   await page.locator('#object-action-copy').click();
   await page.locator('#object-action-delete').click();
   await page.waitForFunction(()=>document.querySelectorAll('.cartouche-object').length===0,
@@ -79,7 +68,7 @@ for(const [label,browserType,width,height] of [
   await page.keyboard.press('Control+z');
   await page.locator('.cartouche-object').first().waitFor({state:'visible',timeout:90000});
   assert.deepEqual(errors,[],'No uncaught browser errors');
-  console.log('PASS:',label,'single touch selects, double touch reopens, cancel preserves object');
+  console.log('PASS:',label,'tap types nested word; Edit opens inspector; cancel preserves object');
  } finally{
   await context.close();await browser.close();
  }

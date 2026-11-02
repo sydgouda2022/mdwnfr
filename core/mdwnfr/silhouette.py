@@ -78,8 +78,8 @@ def cartouche_object_mask(width_mm: float, height_mm: float, orientation: str,
                          terminal_end: str, stroke_mm: float) -> str:
     """Rasterize the solid footprint of the Egyptian rope-loop enclosure.
 
-    The interior is occupied because it contains nested signs. The semicircular
-    cap and terminal/tie are retained, leaving genuinely free corner sectors.
+    The interior is occupied because it contains nested signs. The joined terminal lies at the capsule tangent with no empty gap;
+    the capsule and inner writing surface form one occupied footprint.
     Geometry is derived only from the cartouche compositor's measured outline.
     """
     if width_mm <= 0 or height_mm <= 0 or orientation not in ('vertical','horizontal'):
@@ -91,28 +91,24 @@ def cartouche_object_mask(width_mm: float, height_mm: float, orientation: str,
         for k in range(size):
             x=(k+.5)/size*width_mm
             if orientation=='vertical':
-                # Terminal occupies the bottom of the rectangular mask. The
-                # curved loop occupies the remaining main rectangle.
-                terminal=max(stroke_mm*2.6, width_mm*.12)
-                loop_h=max(width_mm, height_mm-terminal)
-                r=min(width_mm/2, loop_h/2)
-                if y<=loop_h:
-                    if y<r: inside=(x-width_mm/2)**2+(y-r)**2<=r*r
-                    elif y>loop_h-r: inside=(x-width_mm/2)**2+(y-(loop_h-r))**2<=r*r
-                    else: inside=True
+                # Same complete capsule bounds as typeset_cartouche.
+                # The joined tie crosses the lower tangent, with no
+                # extra disconnected terminal band in the object footprint.
+                r=min(width_mm/2,height_mm/2)
+                if y<r:
+                    inside=(x-width_mm/2)**2+(y-r)**2<=r*r
+                elif y>height_mm-r:
+                    inside=(x-width_mm/2)**2+(y-(height_mm-r))**2<=r*r
                 else:
-                    inside=(y<=loop_h+terminal and stroke_mm <= x <= width_mm-stroke_mm)
+                    inside=True
             else:
-                terminal=max(stroke_mm*2.6,height_mm*.12)
-                tie_left=terminal_end=='left'
-                loop_x0=terminal if tie_left else 0.0
-                loop_x1=width_mm if tie_left else width_mm-terminal
-                r=min(height_mm/2,(loop_x1-loop_x0)/2)
-                if loop_x0<=x<=loop_x1:
-                    if x<loop_x0+r: inside=(x-(loop_x0+r))**2+(y-height_mm/2)**2<=r*r
-                    elif x>loop_x1-r: inside=(x-(loop_x1-r))**2+(y-height_mm/2)**2<=r*r
-                    else:inside=True
-                else:inside= (0<=x<loop_x0 or loop_x1<x<=width_mm) and stroke_mm<=y<=height_mm-stroke_mm
+                r=min(height_mm/2,width_mm/2)
+                if x<r:
+                    inside=(x-r)**2+(y-height_mm/2)**2<=r*r
+                elif x>width_mm-r:
+                    inside=(x-(width_mm-r))**2+(y-height_mm/2)**2<=r*r
+                else:
+                    inside=True
             if inside:bits|=1<<(size-1-k)
         rows.append(bits.to_bytes(32,'big'))
     return base64.b64encode(b''.join(rows)).decode('ascii')

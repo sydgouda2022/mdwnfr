@@ -309,23 +309,19 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
             right_ink = divider_ink_runs(word_slots[index+1], width/2)
             spans = _intersect_ink_runs(left_ink, right_ink)
             for art in artworks:
-                # An embedded object is its OWN separator. Do not draw a
-                # redundant line through its rectangular visual presence,
-                # even when the underlying silhouette has transparent holes.
-                # This affects decoration only: the layout engine still fits
-                # words against precise 2D ink masks and preserves clearance.
-                if (x+divider_thickness/2+clearance <= art['x'] or
-                    x-divider_thickness/2-clearance >= art['x']+art['width_mm']):
-                    continue
-                upper = art['y']-clearance
-                lower = art['y']+art['height']+clearance
-                remaining = []
-                for top,bottom in spans:
-                    if top < upper-1e-8:
-                        remaining.append((top, min(bottom,upper)))
-                    if bottom > lower+1e-8:
-                        remaining.append((max(top,lower),bottom))
-                spans = remaining
+                # A divider is a narrow painted stroke, NOT an entire
+                # rectangular text column. Clip its exact x footprint against
+                # the original 2D artwork mask. Transparent holes and clear
+                # sectors within the image frame remain drawable.
+                allowed=free_sectors(art.get('artwork_id'),
+                    image_width=art['width_mm'],image_height=art['height'],
+                    x_offset=art['x'],image_top=art['y'],
+                    slot_left=x-divider_thickness/2,
+                    slot_right=x+divider_thickness/2,
+                    top=0,bottom=page_height,clearance=clearance,
+                    flip=art.get('flip','normal'),
+                    bands=art.get('bands'),mask=art.get('mask'))
+                spans=_intersect_ink_runs(spans,allowed)
                 if not spans:
                     break
             for top,bottom in spans:
