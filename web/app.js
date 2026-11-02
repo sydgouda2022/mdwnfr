@@ -813,6 +813,8 @@ async function beginInsertSheet(kind,existingId=null){
  const index=original?logicalIndexById.get(original.id):insertIndex();
  insertDraft={token,kind,index,existingId,object:original?structuredClone(original):null,
               busy:false,valid:false};
+ if(kind==='table'&&original&&selectedTableCell?.tableId===original.id)
+  insertDraft.cell={row:selectedTableCell.row,col:selectedTableCell.column};
  $('object-quick-actions').hidden=true;
  $('word-quick-actions').hidden=true;
  $('insert-dialog-backdrop').hidden=false;
@@ -1044,6 +1046,7 @@ async function runInsertPreview(d,version){
   $('insert-object-width').max=d.kind==='table'?'500':'300';
   if(document.activeElement!==$('insert-object-y'))
    $('insert-object-y').value=Math.round((d.object.y_align??.5)*100);
+  if((d.textVersion||0)!==(d.textAppliedVersion||0))return;
   d.valid=true;$('insert-sheet-confirm').disabled=false;
  }catch(error){
   if(insertDraft===d&&version===insertPreviewVersion){
@@ -1093,9 +1096,7 @@ async function runInsertPreview(d,version){
  function draftInput(d){
   return d.kind==='table'?$('insert-table-cell-input'):$('insert-cartouche-words');
  }
- function draftTextAction(d){
-  if(!d?.object||!['table','cartouche'].includes(d.kind))return null;
-  const raw=draftInput(d).value.trim();
+ function draftTextAction(d,raw,cell){
   const words=raw?raw.split(/\s+/u).map(w=>Array.from(w)):[];
   const valid=c=>c.codePointAt(0)>=0x13000&&c.codePointAt(0)<=0x1342f;
   if(d.kind==='cartouche'){
@@ -1104,7 +1105,7 @@ async function runInsertPreview(d,version){
    return raw===d.object.items.map(w=>w.signs.join('')).join(' ')?null:
     {op:'set_cartouche_words',id:d.object.id,words};
   }
-  const {row,col}=d.cell;
+  const {row,col}=cell;
   if(raw===draftCellString(d,row,col))return null;
   const action={op:'set_table_cell',id:d.object.id,row,column:col};
   if(raw.startsWith('=')){action.mode='formula';action.formula=raw;}
@@ -1117,35 +1118,48 @@ async function runInsertPreview(d,version){
  function writeDraftText(d){
   if(d!==insertDraft)return Promise.resolve();
   if(d.textTimer!==undefined){clearTimeout(d.textTimer);d.textTimer=undefined;}
-  let action;
-  try{action=draftTextAction(d);}
-  catch(error){
-   d.valid=false;$('insert-sheet-confirm').disabled=true;
-   $('insert-preview-status').textContent=error.message;return Promise.resolve();
-  }
-  if(!action)return d.textQueue||Promise.resolve();
+  const version=d.textVersion||0;
+  // Capture both text and cell before any async operation. Never redirect
+  // a late input into the cell currently selected by a subsequent tap.
+  const raw=draftInput(d).value.trim();
+  const cell=d.kind==='table'?{...(d.cell||{row:0,col:0})}:null;
+  if((d.textAppliedVersion||0)===version)
+   return d.textQueue||Promise.resolve();
   d.valid=false;$('insert-sheet-confirm').disabled=true;
-  d.textQueue=(d.textQueue||Promise.resolve()).catch(()=>{}).then(async()=>{
+  const previous=d.textQueue||Promise.resolve();
+  const queued=previous.catch(()=>{}).then(async()=>{
    if(d!==insertDraft)return;
-   const snapshot={...doc,items:[d.object]};
-   const response=await rpc('transact',{document:snapshot,action});
-   if(d!==insertDraft)return;
-   d.object=response.document.items[0];
-   if(d.kind==='table')drawDraftCells(d);
-   requestInsertPreview();
+   // Reconcile against the previous queued edit, so type-then-delete
+   // never leaves the first spelling silently saved.
+   const action=draftTextAction(d,raw,cell);
+   if(action){
+    const answer=await rpc('transact',{document:{...doc,items:[d.object]},action});
+    if(d!==insertDraft)return;
+    d.object=answer.document.items[0];
+   }
+   if(d.textVersion===version){
+    d.textAppliedVersion=version;
+    if(d.kind==='table')drawDraftCells(d);
+    requestInsertPreview();
+   }
   }).catch(error=>{
-   if(d===insertDraft){
+   if(d===insertDraft&&d.textVersion===version){
     d.valid=false;$('insert-sheet-confirm').disabled=true;
     $('insert-preview-status').textContent='Writing error: '+error.message;
    }
   });
-  return d.textQueue;
+  d.textQueue=queued;
+  return queued;
  }
  function scheduleDraftText(){
   const d=insertDraft;if(!d||!['table','cartouche'].includes(d.kind))return;
+  ++d.textVersion;
+  // Invalidate a running preview; it may not re-enable Done for stale text.
+  ++insertPreviewVersion;
+  if(insertPreviewTimer!==null){clearTimeout(insertPreviewTimer);insertPreviewTimer=null;}
   if(d.textTimer!==undefined)clearTimeout(d.textTimer);
   d.valid=false;$('insert-sheet-confirm').disabled=true;
-  d.textTimer=setTimeout(()=>writeDraftText(d),220);
+  d.textTimer=setTimeout(()=>{void writeDraftText(d);},220);
  }
  $('insert-cartouche-words').oninput=scheduleDraftText;
  $('insert-table-cell-input').oninput=scheduleDraftText;
@@ -1205,6 +1219,7 @@ function scheduleInsertTableSpec(){
   $('insert-preview-status').textContent='Choose a valid table size and style';
   return;
  }
+ if(d.textTimer!==undefined)void writeDraftText(d);
  const previous=Promise.all([d.specQueue||Promise.resolve(),d.textQueue||Promise.resolve()]);
  d.specQueue=previous.catch(()=>{}).then(async()=>{
   if(insertDraft!==d||version!==d.specRequested)return;
@@ -1294,7 +1309,8 @@ $('insert-sheet-confirm').onclick=async()=>{
  if(!d?.object||d.busy)return;
  if(d.textTimer!==undefined){await writeDraftText(d);return;}
  if(d.textQueue)await d.textQueue;
- if(d!==insertDraft||!d.valid)return;
+ if(d!==insertDraft||!d.valid||
+    (d.textVersion||0)!==(d.textAppliedVersion||0))return;
  if(d.kind==='table' && (d.specApplied||0)!==(d.specRequested||0)){
   $('insert-preview-status').textContent='Updating table settings; confirm when the latest preview is ready…';
   return;
