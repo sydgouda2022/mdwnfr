@@ -66,39 +66,37 @@ for(const [label,engine,width,height] of [
   await page.waitForFunction(()=>document.querySelector('.word .glyph-ink-svg text')?.getAttribute('fill')==='#192433',
    null,{timeout:90000});
 
-  // Whole-word multi-select keeps formatting, but never edits a random word.
-  // At Fit Page, DOM hitboxes overlap. Both range endpoints are selected
-  // by real taps at visible glyph centers, never container bounding boxes.
-  const firstInk=await page.locator('.word').first()
-   .locator('.glyph-ink-svg text').first().boundingBox();
-  assert.ok(firstInk&&firstInk.width&&firstInk.height,'First glyph needs visible ink');
-  await page.mouse.click(firstInk.x+firstInk.width/2,firstInk.y+firstInk.height/2);
+  // Flat hieroglyphs may occupy a thin band inside a much taller font
+  // rectangle. Measure painted ink using independent browser canvas metrics,
+  // not SVG text.getBoundingClientRect(), which includes empty em-space.
+  const paintedCenter=async logicalIndex=>
+   page.locator('.word[data-index="'+logicalIndex+'"] .glyph-ink-svg text').first().evaluate(t=>{
+    const ctx=document.createElement('canvas').getContext('2d');
+    const fontSize=Number(t.getAttribute('font-size'));
+    ctx.font=fontSize+'px "MdwNfr Hieroglyphs"';
+    const m=ctx.measureText(t.textContent);
+    if(!m.actualBoundingBoxRight||!m.actualBoundingBoxAscent)
+     throw Error('Selected glyph has no measured painted ink');
+    const localX=Number(t.getAttribute('x'))+
+     (m.actualBoundingBoxRight-m.actualBoundingBoxLeft)/2;
+    const localY=Number(t.getAttribute('y'))+
+     (m.actualBoundingBoxDescent-m.actualBoundingBoxAscent)/2;
+    const matrix=t.getScreenCTM();
+    if(!matrix)throw Error('Selected glyph has no screen transform');
+    return{x:matrix.a*localX+matrix.c*localY+matrix.e,
+     y:matrix.b*localX+matrix.d*localY+matrix.f};
+   });
+  const firstInk=await paintedCenter(0);
+  await page.mouse.click(firstInk.x,firstInk.y);
   assert.equal(await page.locator('#selection-summary').textContent(),'1 selected');
-  assert.equal(await page.locator('.word').first().evaluate(n=>n.classList.contains('selected')),true,
+  assert.equal(await page.locator('.word[data-index="0"]').evaluate(n=>n.classList.contains('selected')),true,
    'Painted first glyph must select the first logical quadrat');
-  const ink=await page.locator('.word').nth(1)
-   .locator('.glyph-ink-svg text').first().boundingBox();
-  assert.ok(ink&&ink.width&&ink.height,'Second quadrat needs visible ink');
+  const secondInk=await paintedCenter(1);
   await page.keyboard.down('Shift');
-  try{await page.mouse.click(ink.x+ink.width/2,ink.y+ink.height/2);}
+  try{await page.mouse.click(secondInk.x,secondInk.y);}
   finally{await page.keyboard.up('Shift');}
   await page.waitForTimeout(120);
   const selectedAfterTap=await page.locator('#selection-summary').textContent();
-  if(selectedAfterTap!=='2 selected'){
-   const hitAudit=await page.evaluate(({first,second})=>{
-    const glyphs=[...document.querySelectorAll('.word')].map((word,index)=>({
-     index,logicalIndex:word.dataset.index,id:word.dataset.id,selected:word.classList.contains('selected'),
-     box:word.getBoundingClientRect().toJSON(),
-     ink:[...word.querySelectorAll('.glyph-ink-svg text')].map(t=>({
-      glyph:t.textContent,box:t.getBoundingClientRect().toJSON()
-     }))
-    }));
-    const hit=(p)=>{const n=document.elementFromPoint(p.x+p.width/2,p.y+p.height/2);
-     return{tag:n?.tagName,classes:n?.getAttribute('class'),id:n?.closest('.word')?.dataset.id};};
-    return{glyphs,firstHit:hit(first),secondHit:hit(second)};
-   },{first:firstInk,second:ink});
-   console.log('WORD_SELECTION_HIT_AUDIT '+JSON.stringify({selectedAfterTap,hitAudit}));
-  }
   assert.equal(selectedAfterTap,'2 selected',
    'Touching second painted glyph must extend the range to two words');
   await bar.waitFor({state:'visible'});
