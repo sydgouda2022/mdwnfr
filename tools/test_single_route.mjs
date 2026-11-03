@@ -61,7 +61,7 @@ assert.equal(new Set(functions).size,functions.length,'Duplicate editor function
 const rpc=[...api.matchAll(/name=="([a-z_]+)"/g)].map(m=>m[1]);
 assert.deepEqual(new Set(rpc),new Set([
  'new','transact','session_open','session_edit','session_history','layout',
- 'layout_open','layout_sync','layout_columns','layout_page'
+ 'layout_open','layout_sync','layout_columns','layout_page','import_document'
 ]),'A new or retired Python RPC route must be deliberately reviewed');
 for(const retired of [
  'web/quadrat_preview.mjs','web/lexicon/coverage.json',

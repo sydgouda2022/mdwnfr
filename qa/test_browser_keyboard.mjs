@@ -19,8 +19,10 @@ try{
    assert.equal(await page.locator('.library-wordmark').textContent(),'𓌃𓄤𓂋𓆑');
    const fab=await page.locator('#create-document').boundingBox();
    assert.ok(fab&&fab.x>280&&fab.y>690,'The + button must float bottom-right');
-   assert.equal(await page.locator('#import-file').count(),0,
-    'Removed document-import controls must not survive in the page');
+   assert.equal(await page.locator('#library-import-file').count(),1,
+    'Documents library must expose current-schema backup import');
+   assert.equal(await page.locator('#library-trash').count(),1,
+    'Deleted documents must remain recoverable from Trash');
   await page.waitForFunction(()=>document.querySelector('#create-document')?.disabled===false,
     {timeout:180000});
   await page.locator('#create-document').click();
@@ -95,7 +97,7 @@ try{
   const own=page.locator('#suggestions button.user-choice').first();
   await own.waitFor({state:'visible'});
   await own.click();
-  await page.waitForFunction(()=>document.getElementById('wordcount')?.textContent==='1 words',
+  await page.waitForFunction(()=>document.getElementById('wordcount')?.textContent==='1 word',
     null,{timeout:90000});
   await page.waitForFunction(()=>
     document.querySelectorAll('.word .glyph-ink-svg text').length===2,
@@ -149,7 +151,7 @@ try{
     null,{timeout:180000});
   await page.locator('#doc-list .document-open').first().click();
   await page.locator('#editor-screen').waitFor({state:'visible',timeout:90000});
-  await page.waitForFunction(()=>document.getElementById('wordcount')?.textContent==='1 words',
+  await page.waitForFunction(()=>document.getElementById('wordcount')?.textContent==='1 word',
     null,{timeout:90000});
   await page.waitForFunction(()=>
     document.querySelectorAll('.word .glyph-ink-svg text').length===2,

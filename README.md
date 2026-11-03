@@ -10,7 +10,9 @@ The Documents library is the initial view: an iPhone list and iPad document
 grid, a floating lower-right + to create a document, and contextual ellipsis
 actions for Rename and Delete. Documents and learning preferences are saved
 locally in the canonical `mdwnfr-documents` IndexedDB database. No earlier
-document database is opened or migrated. Clearing site data erases this data.
+document database is opened or migrated. Documents can be exported as complete
+editable files and imported into the current schema. Deleted files stay in local Trash
+until permanently removed; clearing site data still erases both Documents and Trash.
 
 A source-structure test in CI rejects retired UI components, duplicate control IDs,
 missing control references and alternate application entrypoints.
@@ -46,5 +48,6 @@ See `docs/EDITOR_UX.md`, `docs/KEYBOARD_INTEGRATION.md`,
 `docs/LAYOUT_ENGINE.md`, `docs/RECOVERY_AND_CLIPBOARD.md`, and
 `docs/DEPLOYMENT.md` for current contracts and limitations.
 
-Emergency unsaved JSON downloads do not currently have a restore/import UI.
-Internal recovery checkpoints are device-local, not external backups.
+Emergency unsaved backups can be imported through the same strict current-schema
+validator. Editable source backup files are distinct from text-only sharing.
+Local checkpoints and Trash are not external backups and do not survive site-data clearing.

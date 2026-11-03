@@ -26,3 +26,9 @@ placement and compact/full geometry parity on phone (375/390 px) and tablet
 
 The read-only live user-journey audit exercises the Insert sheet for both
 creation and editing of existing tables, with actual on-page drag/resize checks.
+
+Current safety UI: Documents has Import/Export and recoverable Trash; local-only
+snapshots are not an external backup. Phone editing defaults to readable zoom,
+with horizontally scrollable numerals, a preserved keyboard launcher position,
+and a taller nested-text sheet. These are viewport controls, not additional layout
+or compatibility engines.

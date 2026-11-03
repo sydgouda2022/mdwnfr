@@ -95,6 +95,19 @@ jobs:
           node qa/test_atomic_service_worker.mjs
           node qa/test_offline_readiness.mjs
           node qa/test_pages_overview.mjs
+      - name: Package exact tested source code
+        if: github.event_name != 'pull_request'
+        run: |
+          git archive --format=zip --output=mdwnfr-source.zip HEAD
+          unzip -t mdwnfr-source.zip | tail -1
+      - name: Attach separate source archive
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mdwnfr-source-${{ github.sha }}
+          path: mdwnfr-source.zip
+          retention-days: 14
+          if-no-files-found: error
       - name: Install Wrangler only after explicit production cutover
         if: github.event_name != 'pull_request' && (vars.CUTOVER_ENABLED == 'true' || (github.event_name == 'workflow_dispatch' && inputs.deploy_now) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[deploy-cloudflare]')))
         run: npm install --global wrangler@4.45.4

@@ -66,6 +66,7 @@ jobs:
         run: |
           set -euo pipefail
           node qa/test_nested_entry.mjs
+          node qa/test_document_backup.mjs
           node qa/test_object_gestures.mjs
           node qa/test_bird_visual_browser.mjs
           node qa/test_cross_page_drop.mjs
