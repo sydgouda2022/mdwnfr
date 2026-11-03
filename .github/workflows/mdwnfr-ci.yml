@@ -105,24 +105,36 @@ jobs:
         run: |
           set -euo pipefail
           wrangler deploy --config wrangler.toml
-          curl --fail --silent --show-error --retry 5 https://mdwnfr.sydgouda.workers.dev/ > /tmp/mdwnfr-production-check.html
-          test -s /tmp/mdwnfr-production-check.html
-          # An old Cloudflare release can also answer 200/OK. Compare the
-          # generated build ID before announcing this commit as deployed.
+          # Newly deployed Worker versions may take time to reach every edge.
+          # Verify that the PUBLIC endpoint serves this exact build, not just HTTP 200.
           python - <<'PY'
           import re
+          import time
+          import urllib.request
           from pathlib import Path
           pattern = r'<meta[ ]+name="mdwnfr-build"[ ]+content="([^"]+)"'
           local = Path('dist/index.html').read_text(encoding='utf-8')
-          remote = Path('/tmp/mdwnfr-production-check.html').read_text(encoding='utf-8')
           expected = re.search(pattern, local)
-          actual = re.search(pattern, remote)
-          assert expected and actual, 'Missing deploy build fingerprint'
-          assert expected.group(1) == actual.group(1), (
-              'Cloudflare still serves a different build: '
-              f'{actual.group(1)} != {expected.group(1)}'
-          )
-          print('Live Cloudflare build fingerprint matches the just-built release:', actual.group(1))
+          assert expected, 'Missing local build fingerprint'
+          version = expected.group(1)
+          last = 'no response'
+          for attempt in range(30):
+              try:
+                  url = f'https://mdwnfr.sydgouda.workers.dev/?release={version}&attempt={attempt}'
+                  req = urllib.request.Request(url, headers={'Cache-Control':'no-cache','Pragma':'no-cache'})
+                  with urllib.request.urlopen(req, timeout=15) as response:
+                      page = response.read().decode('utf-8')
+                  live = re.search(pattern, page)
+                  last = live.group(1) if live else 'missing build fingerprint'
+                  if last == version:
+                      print('Verified live Cloudflare build:', version)
+                      break
+              except Exception as exc:
+                  last = str(exc)
+              print(f'Waiting for Cloudflare version {version}: attempt {attempt+1}/30, saw {last}')
+              time.sleep(3)
+          else:
+              raise AssertionError(f'Cloudflare still serves {last}, expected {version}')
           PY
           curl --fail --silent --show-error --retry 5 https://mdwnfr.sydgouda.workers.dev/runtime-status.json > /tmp/mdwnfr-runtime.json
           curl --fail --silent --show-error --retry 5 https://mdwnfr.sydgouda.workers.dev/offline-assets.json > /tmp/mdwnfr-offline.json
