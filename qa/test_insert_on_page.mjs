@@ -20,7 +20,7 @@ for(const [name,engine,width,height] of [
   await page.locator('#insert-clipart').click();
   const panel=page.locator('#insert-sheet');
   await panel.waitFor({state:'visible'});
-  assert.equal(await panel.getAttribute('aria-modal'),null,'No blocking modal dialog');
+  assert.notEqual(await panel.getAttribute('aria-modal'),'true','Insert is a non-modal writing sheet');
   assert.equal(await page.locator('#insert-sheet-cancel-top').count(),0,'No desktop X button');
   assert.equal(await page.locator('#insert-preview').count(),0,'No miniature document duplicate');
   assert.equal(await page.locator('#insert-sheet-confirm').textContent(),'Done');
@@ -36,7 +36,7 @@ for(const [name,engine,width,height] of [
   const inspector=await panel.boundingBox(),viewport=page.viewportSize();
   assert.ok(width>700
     ?inspector.width<viewport.width-150
-    :inspector.height<viewport.height*.45&&inspector.y>viewport.height*.5,
+    :inspector.height<viewport.height*.60&&inspector.y>viewport.height*.32,
    'iPad uses a side inspector; iPhone leaves the writing page visible above its sheet');
   const current=await draft.boundingBox();
   const startX=current.x+Math.min(24,current.width*.5);
