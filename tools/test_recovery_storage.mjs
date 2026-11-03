@@ -71,7 +71,7 @@ const source=fs.readFileSync(new URL('../web/storage.js',import.meta.url),'utf8'
 const testSource=source.replace('const MAX_SNAPSHOT_BYTES=40*1024*1024;',
   'const MAX_SNAPSHOT_BYTES=4096;');
 assert.notEqual(testSource,source,'Expected production history budget');
-vm.runInContext(testSource.replaceAll('export async function ','async function ')+
+vm.runInContext(testSource.replaceAll('export async function ','async function ').replaceAll('export function ','function ')+
  'globalThis.storage={save,load,list,remove,listSnapshots,restoreSnapshot,updateProfile,loadProfile};',context);
 const {save,load,list,remove,listSnapshots,restoreSnapshot,updateProfile,loadProfile}=context.storage;
 const doc=(rev)=>({id:'d1',name:'Papyrus',revision:rev,items:[{type:'word',id:'w1',signs:['𓅓']},...Array.from({length:rev},(_,i)=>({type:'word',id:`w${i+2}`,signs:['𓏏']}))],surface:'A4',direction:'rtl',created_at:'2026-01-01',updated_at:new DateFake(now).toISOString()});

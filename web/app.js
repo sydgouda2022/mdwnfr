@@ -1507,11 +1507,15 @@ function trackObjectPointer(e,{node,onMove,onFinish,onCancel,threshold=5,autoScr
  const scrollArea=$('canvas-area');
  const initialScrollTop=scrollArea.scrollTop,initialScrollLeft=scrollArea.scrollLeft;
  let scrollFrame=null;
- const displacement=()=>({
-  dx:lastX-startX+(autoScroll?scrollArea.scrollLeft-initialScrollLeft:0),
-  dy:lastY-startY+(autoScroll?scrollArea.scrollTop-initialScrollTop:0),
-  clientX:lastX,clientY:lastY
- });
+ const displacement=()=>{
+  const dx=lastX-startX,dy=lastY-startY;
+  // Edge-scroll cannot move an axis the user's pointer never moved.
+  return {
+   dx:Math.abs(dx)<2?0:dx+(autoScroll?scrollArea.scrollLeft-initialScrollLeft:0),
+   dy:Math.abs(dy)<2?0:dy+(autoScroll?scrollArea.scrollTop-initialScrollTop:0),
+   clientX:lastX,clientY:lastY
+  };
+ };
  // Auto-scroll only while MOVE gestures are active (never resizing). The
  // compositor still owns the resulting position; scrolling changes neither
  // document IDs nor saved page coordinates.
