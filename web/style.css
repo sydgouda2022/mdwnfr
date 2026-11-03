@@ -512,3 +512,41 @@ button:disabled{opacity:.42;cursor:not-allowed}
 @media(max-width:720px){
  .editor-screen .format-panel{right:auto;left:max(12px,env(safe-area-inset-left))}
 }
+
+/* 2026-11-03 touch-first mdwnfr UI. The document model is unchanged. */
+.library-screen{background:linear-gradient(#f9fafb,#edf2f5)}
+.library-header{background:#fff;color:#203a55;border-bottom:1px solid #dfe6ec}
+.library-overline{color:#957039}.library-status{color:#59748a}
+.library-logo{border:0;border-radius:15px;background:#eef3f6}
+.create-document{border-radius:999px;box-shadow:none}
+.document-card{border-radius:16px;box-shadow:0 5px 22px #15345213}
+.editor-topbar{background:#fff;border-bottom:1px solid #e1e7ec;box-shadow:none}
+.editor-topbar .subtitle,.editor-app-icon{display:none!important}
+.editor-screen .canvas-area{background:#e9edf1}
+.editor-screen .bottom-bar{background:#fff;color:#617a91;border-top:1px solid #dce5eb}
+.keyboard-panel{left:clamp(5px,2vw,24px);right:clamp(5px,2vw,24px);bottom:calc(41px + env(safe-area-inset-bottom));height:min(44dvh,440px);max-height:calc(100dvh - 115px - env(safe-area-inset-top) - env(safe-area-inset-bottom));padding:8px 11px;border-radius:17px;background:#f8fafb;box-shadow:0 12px 34px #122d4633}
+.keyboard-panel .composer{min-height:32px;max-height:41px;margin:3px 0;background:#fff;font-size:23px}
+.keyboard-panel .quadrat-preview{min-height:31px;max-height:42px;margin:2px 0}
+.keyboard-panel .suggestion-toolbar{margin-top:2px}
+.keyboard-panel .suggestions{flex:0 0 43px;min-height:43px;max-height:43px;padding:4px;border-radius:9px;background:#fff}
+.keyboard-panel .suggestions button{min-height:32px;min-width:47px;font-size:20px}
+.keyboard-panel .keyboard-tabs{margin-top:6px}
+.keyboard-panel .tab{min-height:34px;padding:5px 6px;border-radius:9px;font-size:11px}
+.keyboard-panel .keys{display:flex;flex-direction:column;justify-content:safe center;gap:4px;flex:1 1 auto;min-height:55px;max-height:none;overflow-y:auto;overflow-x:hidden;padding:5px 2px;scrollbar-width:thin;overscroll-behavior:contain}
+.keyboard-panel .key-row{display:flex;align-items:center;justify-content:center;gap:4px;width:100%;flex:0 0 auto}
+.keyboard-panel .key{flex:0 0 calc((100% - (var(--columns) - 1)*4px)/var(--columns));width:calc((100% - (var(--columns) - 1)*4px)/var(--columns));max-width:52px;min-width:0;min-height:0;height:42px;padding:1px;border-radius:7px;border:1px solid #d2dee8;border-bottom:2px solid #bac8d2;box-shadow:none}
+.keyboard-panel .key-glyph{font:clamp(22px,2.3vw,29px)/1 var(--gfont);min-height:0}
+.keyboard-panel .key-code{display:none!important}
+.keyboard-panel .numbers-label{font-size:9px;padding-top:4px;margin:0;border:0}
+.keyboard-panel .numbers{display:flex;align-items:center;justify-content:flex-start;gap:4px;flex:0 0 41px;min-height:41px;max-height:41px;overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.keyboard-panel .numkey{flex:0 0 42px;width:42px;height:36px;min-height:36px;border-radius:7px}
+.keyboard-panel .numkey .glyph{font-size:22px}.keyboard-panel .numkey small{display:none}
+@media(max-width:720px){
+ .keyboard-panel{left:5px;right:5px;bottom:calc(40px + env(safe-area-inset-bottom));height:min(49dvh,405px);padding:7px}
+ .keyboard-panel .key{height:37px;max-width:44px}.keyboard-panel .key-glyph{font-size:24px}
+ .keyboard-panel .numbers{flex-basis:38px;min-height:38px;max-height:38px}
+ .keyboard-panel .numkey{flex-basis:36px;width:36px;min-height:34px;height:34px}.keyboard-panel .numkey .glyph{font-size:20px}
+ .keyboard-panel .suggestions{flex-basis:40px;min-height:40px;max-height:40px}
+ .editor-screen .bottom-bar #revision{display:none}
+}
+@media(max-height:670px){.keyboard-panel{height:min(48dvh,315px)}.keyboard-panel .key{height:34px}}

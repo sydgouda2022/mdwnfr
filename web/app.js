@@ -2837,23 +2837,44 @@ function facingSequenceNode(signs){
  for(const glyph of signs)sequence.append(facingSignNode(glyph));
  return sequence;
 }
+
+let keyboardColumns=0;
+function columnCount(){
+ const w=Math.min(window.innerWidth,document.documentElement.clientWidth);
+ return w<360?8:w<600?9:w<850?12:w<1180?18:20;
+}
 function drawKeys(){
  const keys=$('keys');keys.replaceChildren();
- for(const sign of glyphGroups[activeGroup]){
-  const button=document.createElement('button');button.className='key';
-  const glyph=facingSignNode(sign.glyph,'key-glyph');
-  const number=document.createElement('small');number.className='key-code';number.textContent=sign.code;
-  button.append(glyph,number);button.title=sign.code+' · '+sign.name;
-  button.setAttribute('aria-label',sign.code+' '+sign.name);
-  button.type='button';button.onclick=()=>typeSign(sign.glyph);keys.append(button);
+ const columns=columnCount();keyboardColumns=columns;
+ keys.style.setProperty('--columns',String(columns));
+ const signs=glyphGroups[activeGroup];
+ for(let i=0;i<signs.length;i+=columns){
+  const row=document.createElement('div');row.className='key-row';
+  for(const sign of signs.slice(i,i+columns)){
+   const button=document.createElement('button');button.type='button';button.className='key';
+   button.append(facingSignNode(sign.glyph,'key-glyph'));
+   button.title=sign.code+' · '+sign.name;
+   button.setAttribute('aria-label',sign.code+' '+sign.name);
+   button.onclick=()=>typeSign(sign.glyph);
+   row.append(button);
+  }
+  keys.append(row);
  }
- const row=$('numbers');row.replaceChildren();for(const n of numerals){const btn=document.createElement('button');btn.className='numkey';
-  const glyph=facingSignNode(n.sign,'glyph');
-  const value=document.createElement('small');value.textContent=n.value;btn.append(glyph,value);
-  btn.setAttribute('aria-label','Egyptian numeral '+n.value);btn.onclick=()=>typeSign(n.sign);row.append(btn);}
- for(const t of document.querySelectorAll('.tab'))t.classList.toggle('active',t.dataset.tab===activeGroup);
+ const numbers=$('numbers');numbers.replaceChildren();
+ for(const n of numerals){
+  const b=document.createElement('button');b.type='button';b.className='numkey';
+  b.append(facingSignNode(n.sign,'glyph'));
+  b.title='Egyptian numeral '+n.value;
+  b.setAttribute('aria-label','Egyptian numeral '+n.value);
+  b.onclick=()=>typeSign(n.sign);numbers.append(b);
+ }
+ for(const t of document.querySelectorAll('.tab')){
+  const chosen=t.dataset.tab===activeGroup;
+  t.classList.toggle('active',chosen);t.setAttribute('aria-pressed',String(chosen));
+ }
  keys.scrollTop=0;
 }
+window.addEventListener('resize',()=>{if(!editorScreen.hidden&&keyboardColumns&&columnCount()!==keyboardColumns)drawKeys();});
 
 function typeSign(sign){if(commitPending)return;buffer.push(sign);renderComposer();}
 let predVersion=0,previewTimer=null,commitPending=false;
