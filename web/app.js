@@ -1028,6 +1028,13 @@ async function runInsertPreview(d,version){
  try{
   const response=await layoutRpc('layout',{document:previewDocument()});
   if(insertDraft!==d||version!==insertPreviewVersion)return;
+  // A draft may finish before the initial Python layout has painted a page.
+  // Retain it until paint() supplies the only authoritative writing surface.
+  if(!pageSlots.length){
+   d.awaitingPageShell=true;
+   $('insert-preview-status').textContent='Preparing the writing page…';
+   return;
+  }
   const pages=response.layout.pages;
   const page=pages.find(p=>p.columns.some(c=>c.placements.some(pos=>pos.id===d.object.id)));
   if(!page)throw Error('The object does not fit on the document');
@@ -2260,6 +2267,12 @@ function paint(layout){
  }
  if(doc?.surface==='papyrus')schedulePapyrusWindow();
  drawInsertionCaret();drawSelectionHandles();renderPagesOverview();
+ // Re-run only the preview that finished before our first page shell existed.
+ // Both passes use the same Python compositor, never a second layout path.
+ if(insertDraft?.awaitingPageShell&&insertDraft.object&&!insertDraft.gestureOnly){
+  insertDraft.awaitingPageShell=false;
+  requestInsertPreview();
+ }
 }
 // A caret is a gap in the logical object sequence, never a screen coordinate.
 // Rendering derives its visible position exclusively from the latest layout.
