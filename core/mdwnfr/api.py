@@ -1,7 +1,8 @@
 """JSON RPC boundary shared by native tests and browser Pyodide bridge."""
 from __future__ import annotations
 import json
-from .document import new_document, transaction
+from copy import deepcopy
+from .document import new_document, transaction, assert_document, fresh_id
 from .layout import LayoutSession
 from .session import DocumentSession
 from .layout_sync import LayoutDocumentSession
@@ -21,6 +22,16 @@ def handle(request: dict) -> dict:
         return _document_session.history(request["direction"])
     if name=="new":
         return {"document":new_document(request.get("name","Untitled"))}
+    if name=="import_document":
+        # Strict current-schema import: reuse the canonical document validator.
+        incoming=request["document"]
+        assert_document(incoming)
+        restored=deepcopy(incoming)
+        restored["id"]=fresh_id()
+        restored["revision"]=0
+        restored["name"]=(incoming["name"][:109]+" (imported)")[:120]
+        assert_document(restored)
+        return {"document":restored}
     if name=="transact":
         return {"document":transaction(request["document"],request["action"])}
     if name=="layout_open":
