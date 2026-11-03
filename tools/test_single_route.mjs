@@ -7,6 +7,15 @@ const html=read('web/index.html');
 const app=read('web/app.js');
 const boot=read('web/boot.mjs');
 const api=read('core/mdwnfr/api.py');
+const storage=read('web/storage.js');
+const layoutSync=read('core/mdwnfr/layout_sync.py');
+const packageInit=read('core/mdwnfr/__init__.py');
+assert.match(storage,/const DB='mdwnfr-documents';/,'Only the new document database is supported');
+assert.doesNotMatch(storage,/mdwnfr-canonical-v1/,'No historical database route');
+assert.match(app,/const OBJECT_EDGES=\['bottom-right'\]/,'Only the active resize handle is used');
+assert.doesNotMatch(layoutSync,/def apply_canonical_delta\(/,'No duplicate layout replay API');
+assert.doesNotMatch(packageInit,/__version__\s*=/,'Package version belongs only in pyproject.toml');
+
 const css=read('web/style.css');
 // CSS is not validated by Node's syntax checker. A partial comment removal
 // can silently hide an entire suffix of an otherwise well-formed stylesheet.
