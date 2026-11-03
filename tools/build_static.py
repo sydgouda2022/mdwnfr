@@ -14,8 +14,13 @@ copytree(ROOT/'web',DEST,ignore=ignore_patterns('__pycache__','*.pyc','.DS_Store
 copytree(ROOT/'core',DEST/'core',ignore=ignore_patterns('__pycache__','*.pyc','.DS_Store'))
 # Startup can detect when a newly activated worker owns a different HTML schema.
 # Hash source bytes before inserting the marker, avoiding a circular fingerprint.
-release_files=('index.html','boot.mjs','app.js','style.css','editor_controls.mjs','core/mdwnfr/document.py')
-release=hashlib.sha256(b'\0'.join((DEST/name).read_bytes() for name in release_files)).hexdigest()[:16]
+# Fingerprint the entire deployed source, including layout, storage and runtime.
+digest=hashlib.sha256()
+for asset in sorted(p for p in DEST.rglob('*') if p.is_file()):
+    digest.update(asset.relative_to(DEST).as_posix().encode('utf-8'))
+    digest.update(b'\0')
+    digest.update(hashlib.sha256(asset.read_bytes()).digest())
+release=digest.hexdigest()[:16]
 index=DEST/'index.html'
 index.write_text(index.read_text(encoding='utf-8').replace(
     'name="mdwnfr-build" content="development"',

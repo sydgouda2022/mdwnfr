@@ -12,7 +12,7 @@ The document is an ordered array of persistent objects. Every object has an ID, 
 
 The independent headless Hieroglyphic Keyboard API supplies signs and predictions but does not own document objects, geometry or layout.
 
-Compatibility: Existing JSON exports remain valid; schema 1 gains an optional symbol_ids field. The compact page view is a projection of the same layout decisions.
+Current documents contain persistent symbol_ids for every word. Compact page detail is a projection of the one authoritative layout.
 
 Performance: Changes after a proven independent fixed-paper page boundary reuse the unchanged preceding pages and recompose only the remaining stream; otherwise layout reflows from the beginning. Cached quadrat composition is retained. Inside a pass, the compositor reuses legal glyph origins for repeated spellings within unchanged obstacle fields, indexes completed word ink by reading column when evaluating artwork anchors, and intersects divider spans with a linear sweep. These are **search optimizations only**: they must not change the canonical layout geometry or introduce another wrapping engine. Identical streams reuse their completed snapshots.
 

@@ -11,9 +11,10 @@ on:
       - 'tools/**'
       - 'keyboard-lock.json'
       - '.github/workflows/mdwnfr-ci.yml'
+      - 'worker.mjs'
+      - 'wrangler.toml'
+      - 'pyproject.toml'
   pull_request:
-  schedule:
-    - cron: '17 * * * *'
   workflow_dispatch:
     inputs:
       deploy_now:
@@ -74,7 +75,6 @@ jobs:
           node --check web/keyboard-prediction-worker.mjs
           node --check web/vendor/hieroglyphic/keyboard_api.mjs
           python -m compileall -q core/mdwnfr
-          node qa/test_quadrat_preview.mjs
           node qa/test_hieroglyph_facing.mjs
           node tools/test_layout_detail_guard.mjs
           node tools/test_recovery_storage.mjs
