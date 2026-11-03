@@ -94,19 +94,6 @@ def _anchor_word_ink(index: dict[int, list[tuple[float, float, float, float]]],
     return [glyph for i in range(first,stop) for glyph in index.get(i, ())]
 
 
-def proportional_extra(heights: list[float], remainder: float) -> list[float]:
-    """One universal allocation law for page and object-bounded text sectors.
-
-    Each *quadrat box*, not its visible glyph, receives an increment weighted
-    by its ORIGINAL height. Any between-word gap is already reserved before
-    calling this function and stays constant.
-    """
-    total = sum(heights)
-    if remainder <= 0 or total <= 0:
-        return [0.0] * len(heights)
-    return [remainder * height / total for height in heights]
-
-
 def fixed_page_column_grid(usable_width:float,nominal_width:float)->tuple[int,float]:
     """Share the sub-column horizontal remainder equally across fixed-paper slots.
 

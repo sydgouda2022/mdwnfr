@@ -238,22 +238,6 @@ def _adjust_row_gaps(quadrat:Quadrat,changes:list[float])->Quadrat:
                    tuple(revised),quadrat.rows,corrected)
 
 
-def expand_after_word(quadrat:Quadrat,additional_height:float)->Quadrat:
-    """Extend ONLY the whitespace after a complete word, never its inner rows.
-
-    All visible sign positions and dimensions stay identical. The extra space
-    is a placement tail so the following word starts later in the column.
-    """
-    if additional_height<0 or not math.isfinite(additional_height):
-        raise ValueError('External word space must be finite and nonnegative')
-    if additional_height==0:return quadrat
-    gaps=quadrat.flexible_gaps
-    if not gaps:return quadrat
-    return Quadrat(quadrat.width,quadrat.height+additional_height,
-                   quadrat.signs,quadrat.rows,
-                   gaps[:-1]+(gaps[-1]+additional_height,))
-
-
 def expand_internal(quadrat:Quadrat,additional_height:float)->Quadrat:
     """Share extra whitespace equally per glyph, after its row."""
     if additional_height<=0:return quadrat

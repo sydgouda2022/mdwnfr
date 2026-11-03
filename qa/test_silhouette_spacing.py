@@ -3,7 +3,7 @@ import json,math,sys,unittest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'core'))
-from mdwnfr.quadrat import compose,expand_internal,expand_after_word,expand_to_ink_bottom,glyph_geometry,glyph_scanlines,glyph_optical_factors,_silhouette_advance
+from mdwnfr.quadrat import compose,expand_internal,expand_to_ink_bottom,glyph_geometry,glyph_scanlines,glyph_optical_factors,_silhouette_advance
 from mdwnfr.layout import fixed_page_column_grid, layout_document, column_width_mm
 from mdwnfr.typography import DIVIDER_TO_STEM_RATIO, glyph_reference_stroke_mm, divider_stroke_mm
 
