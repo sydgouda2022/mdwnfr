@@ -415,7 +415,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .insert-screen .artwork-choice{min-width:0}
 .insert-screen .artwork-choice[aria-pressed=true]{outline:3px solid #1277b2;outline-offset:1px;background:#e2f3fc}
 @media(max-width:720px){
- .insert-sheet{bottom:0;left:0;width:100%;box-sizing:border-box;max-height:min(56dvh,calc(100dvh - 100px));border-radius:18px 18px 0 0;padding:12px max(12px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom))}
+ .insert-sheet{bottom:0;left:0;width:100%;box-sizing:border-box;max-height:min(40dvh,calc(100dvh - 100px));border-radius:18px 18px 0 0;padding:12px max(12px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom))}
  .insert-screen .artwork-grid{max-height:40dvh;grid-template-columns:repeat(2,minmax(0,1fr))}
  .insert-sheet-footer{bottom:calc(-12px - env(safe-area-inset-bottom))}
 }
