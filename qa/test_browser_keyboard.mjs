@@ -188,8 +188,7 @@ try{
    await page.waitForFunction(()=>document.querySelectorAll('.table-object .table-cell-word .glyph-ink-svg text').length>=2,null,{timeout:90000});
    // The four Insert screens are drafts. Cancel must never change the
   // document, even after a valid Python layout preview is rendered.
-  await page.locator('#format-toggle').click();
-  await page.locator('#format-toggle').click();
+  if(!await page.locator('#format-panel').isVisible())await page.locator('#format-toggle').click();
   await page.locator('#insert-clipart').click();
   await page.locator('#insert-dialog-backdrop').waitFor({state:'visible'});
   await page.locator('#artwork-grid .artwork-choice').first().waitFor({state:'visible'});
