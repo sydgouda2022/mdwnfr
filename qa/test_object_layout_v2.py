@@ -100,20 +100,14 @@ class ObjectSequenceLayout(unittest.TestCase):
         undone=transaction(result['document'],result['undo'])
         self.assertEqual(undone['items'][0]['symbol_ids'],ids)
 
-    def test_legacy_words_keep_deterministic_atom_ids(self):
-        from mdwnfr.document import assert_document
-        doc=new_document('Legacy identity')
+    def test_missing_symbol_ids_are_rejected(self):
+        from mdwnfr.document import assert_document, DocumentError
+        doc=new_document('Strict glyph identity')
         item=word(['𓅓','𓏏'])
         del item['symbol_ids']
         doc['items']=[item]
-        assert_document(doc)
-        first=layout_document(doc)
-        doc['surface']='A3'
-        second=layout_document(doc)
-        atoms=lambda snapshot: [g['id'] for pg in snapshot['pages']
-            for col in pg['columns'] for pl in col['placements']
-            if pl['type']=='word' for g in pl['quadrat']['signs']]
-        self.assertEqual(atoms(first),atoms(second))
+        with self.assertRaises(DocumentError):
+            assert_document(doc)
 
     def test_default_table_uses_real_writing_space_with_editable_cell_heights(self):
         from mdwnfr.tables import table

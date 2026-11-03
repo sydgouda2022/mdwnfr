@@ -2,8 +2,7 @@
 
 A rasterized 256x256 silhouette is evaluated against the ENTIRE column width,
 with physical clearance applied to both axes. The browser never calculates text
-sectors. Historical saved images containing only 128 envelope bands are still
-readable; new imports and all bundled art use actual two-dimensional masks.
+sectors. All objects require the same exact 2D mask.
 """
 from __future__ import annotations
 
@@ -150,7 +149,7 @@ def _occupied_mask_row_runs(encoded: str, x0: int, x1: int,
 
 def free_sectors(artwork_id, *, image_width, image_height, x_offset,
                  slot_left, slot_right, top, bottom, clearance, flip='normal',
-                 image_top=None, bands=None, mask=None):
+                 image_top=None, mask=None):
     """Exact raster-silhouette free vertical intervals in a word-sized column.
 
     Occupied pixels are not collapsed to horizontal envelopes. Each 2D row is
@@ -162,37 +161,16 @@ def free_sectors(artwork_id, *, image_width, image_height, x_offset,
     if image_width<=0 or image_height<=0 or bottom<=top:return [(top,bottom)]
     if mask is None and artwork_id is not None:
         mask=_profiles()[artwork_id]['mask']
+    if mask is None:raise ValueError('Exact 2D silhouette mask is required')
     blocked=[]
-    if mask is not None:
-        # Packed columns are rounded to 5 decimals of a millimeter. Treat
-        # genuinely touching clearance boundaries as free, rather than
-        # exposing a phantom occupied pixel due to that rounding. The epsilon
-        # is below the published geometric precision and is not a new margin.
-        epsilon=2e-5
-        x0=max(0,min(SIZE,floor((slot_left-clearance-x_offset+epsilon)/image_width*SIZE)))
-        x1=max(0,min(SIZE,ceil((slot_right+clearance-x_offset-epsilon)/image_width*SIZE)))
-        if x1<=x0:return [(top,bottom)]
-        for first,stop in _occupied_mask_row_runs(mask,x0,x1,flip):
-            lo=max(top,image_top+image_height*first/SIZE-clearance)
-            hi=min(bottom,image_top+image_height*stop/SIZE+clearance)
-            if hi>lo:blocked.append((lo,hi))
-        return _free_from_blocks(blocked,top,bottom)
-    # Legacy imported documents: row-envelope fallback, until reopened and
-    # migrated by the browser from the authoritative embedded PNG bytes.
-    if bands is None:
-        return [(top,bottom)]
-    n=len(bands)
-    for j,b in enumerate(bands):
-        if b is None:continue
-        lo,hi=b[0]/10000,b[1]/10000
-        orientations=((lo,hi),(1-hi,1-lo)) if flip=='auto' else (
-                     ((1-hi,1-lo),) if flip=='mirror' else ((lo,hi),))
-        if not any(x_offset+r*image_width+clearance>slot_left+1e-8 and
-                   x_offset+l*image_width-clearance<slot_right-1e-8
-                   for l,r in orientations):continue
-        a=max(top,image_top+image_height*j/n-clearance)
-        b=min(bottom,image_top+image_height*(j+1)/n+clearance)
-        if b>a:blocked.append((a,b))
+    epsilon=2e-5
+    x0=max(0,min(SIZE,floor((slot_left-clearance-x_offset+epsilon)/image_width*SIZE)))
+    x1=max(0,min(SIZE,ceil((slot_right+clearance-x_offset-epsilon)/image_width*SIZE)))
+    if x1<=x0:return [(top,bottom)]
+    for first,stop in _occupied_mask_row_runs(mask,x0,x1,flip):
+        lo=max(top,image_top+image_height*first/SIZE-clearance)
+        hi=min(bottom,image_top+image_height*stop/SIZE+clearance)
+        if hi>lo:blocked.append((lo,hi))
     return _free_from_blocks(blocked,top,bottom)
 
 
@@ -210,8 +188,8 @@ def free_word_starts(quadrat, *, column_left, top, bottom, clearance,
     starts=[(top,bottom-ink_bottom-ink_expansion)]
     if starts[0][1]<top:return []
     for glyph in quadrat.signs:
-        for aid,bands,mask,iw,ih,ix,flip,iy in obstacles:
-            free=free_sectors(aid,bands=bands,mask=mask,
+        for aid,mask,iw,ih,ix,flip,iy in obstacles:
+            free=free_sectors(aid,mask=mask,
                 image_width=iw,image_height=ih,x_offset=ix,
                 slot_left=column_left+glyph.x,
                 slot_right=column_left+glyph.x+glyph.width,
@@ -280,7 +258,7 @@ def silhouettes_collide(first: dict, second: dict, clearance: float) -> bool:
     if mask_b is None and second.get('artwork_id'):
         mask_b = _profiles()[second['artwork_id']]['mask']
     if not mask_a or not mask_b:
-        return True  # Legacy band-only records: safe conservative fallback.
+        raise ValueError('Exact masks required for collision')
     runs_a = _mask_row_runs(mask_a)
     runs_b = _mask_row_runs(mask_b)
     step_a, step_b = ah / SIZE, bh / SIZE

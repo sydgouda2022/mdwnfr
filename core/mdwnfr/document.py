@@ -10,7 +10,7 @@ from uuid import uuid4
 from difflib import SequenceMatcher
 from functools import lru_cache
 from pathlib import Path
-import json, math, re, base64, hashlib
+import json, math, re, base64
 from .tables import table, validate_table, cell_at, cell, MAX_ROWS, MAX_COLS, TableError
 from .cartouches import validate_cartouche, MAX_CARTOUCHE_WORDS
 
@@ -22,11 +22,11 @@ MAX_ATOMIC_OBJECTS = 150_000
 DEFAULT_MARGINS_MM = {'top': 18.0, 'bottom': 18.0, 'left': 18.0, 'right': 18.0}
 
 def validated_margins(doc: dict) -> dict[str, float]:
-    """Four independent physical writing-frame borders. Old files use 18 mm.
+    """Four independent physical writing-frame borders. 
 
     These are document properties, not coordinates on any rendered page.
     """
-    raw = doc.get('margins_mm', DEFAULT_MARGINS_MM)
+    raw = doc.get('margins_mm')
     if not isinstance(raw, dict) or set(raw) != set(DEFAULT_MARGINS_MM):
         raise DocumentError('All four page margins are required')
     margins = {}
@@ -35,14 +35,8 @@ def validated_margins(doc: dict) -> dict[str, float]:
         if type(val) not in (int, float) or not math.isfinite(val) or not 0 <= val <= 80:
             raise DocumentError('Invalid page margin: ' + edge)
         margins[edge] = float(val)
-    if doc.get('surface') == 'papyrus':
-        # A papyrus has no fixed far edge. Its physical length is the occupied
-        # text width + two IDENTICAL end margins, so no page-width fitting or
-        # independently adjusted trailing margin is meaningful. A legacy
-        # papyrus with asymmetric margins is viewed with its original LEFT
-        # margin on all sides; no saved source data is mutated by this getter.
-        m = margins['left']
-        margins = {edge: m for edge in DEFAULT_MARGINS_MM}
+    if doc.get('surface') == 'papyrus' and len(set(margins.values())) != 1:
+        raise DocumentError('Papyrus margins must be symmetric')
     height = (float(doc.get('papyrus_height_mm', 300)) if doc.get('surface') == 'papyrus'
               else SURFACES.get(doc.get('surface'), (0, 0))[1])
     if height - margins['top'] - margins['bottom'] <= 0:
@@ -94,10 +88,10 @@ def validate_clipart(item: dict) -> None:
     if item.get('flip') not in ('auto', 'normal', 'mirror'):
         raise DocumentError('Invalid clip-art flip mode')
     for prop in ('x_align', 'y_align'):
-        value = item.get(prop, 0.5)  # Pre-0.1.16 documents open centered.
+        value = item.get(prop)
         if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
             raise DocumentError('Invalid clip-art alignment: '+prop)
-    xoff = item.get('x_offset_mm', 0.0)  # Older documents retain the original band alignment.
+    xoff = item.get('x_offset_mm')
     if type(xoff) not in (int, float) or not math.isfinite(xoff) or not -2000 <= xoff <= 2000:
         raise DocumentError('Invalid clip-art horizontal offset')
 
@@ -108,11 +102,11 @@ def validate_clipart(item: dict) -> None:
 # retained. Bound the byte count to prevent accidental multi-gigabyte saves.
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
 
-def image(data_url: str, pixel_width: int, pixel_height: int, bands: list,
+def image(data_url: str, pixel_width: int, pixel_height: int,
           width_mm: float = 65.0, name: str = 'Imported image', mask: str | None = None) -> dict:
     obj = {'id':fresh_id(), 'type':'image', 'data_url':data_url,
            'pixel_width':pixel_width, 'pixel_height':pixel_height,
-           'bands':bands, 'mask':mask, 'name':name,
+           'mask':mask, 'name':name,
            'width_mm':width_mm, 'flip':'auto',
            'x_align':0.5,'y_align':0.5,'x_offset_mm':0.0}
     validate_image(obj)
@@ -137,13 +131,6 @@ def validate_image(obj: dict) -> None:
         raise DocumentError('Invalid image PNG data')
     if (int.from_bytes(binary[16:20],'big'),int.from_bytes(binary[20:24],'big'))!=(w,h):
         raise DocumentError('Image PNG dimensions disagree with object')
-    bands=obj.get('bands')
-    if not isinstance(bands,list) or len(bands)!=128:
-        raise DocumentError('User image needs a 128-row opacity profile')
-    for band in bands:
-        if band is not None and (not isinstance(band,list) or len(band)!=2 or
-             any(type(x) is not int for x in band) or not 0<=band[0]<band[1]<=10000):
-            raise DocumentError('Invalid user-image silhouette band')
     # One canonical image format: 2D alpha mask is required.
     from .silhouette import validate_mask
     if not validate_mask(obj.get('mask')):
@@ -214,15 +201,8 @@ def word(signs: list[str], color: str = "#192433", bold: bool = False,
 
 
 def symbol_ids_for_word(obj: dict) -> list[str]:
-    """Stable sign IDs, independent of page coordinates and typography.
-
-    Pre-v2 words derive symbol IDs from their existing persistent word ID;
-    document validation never mutates an existing source during migration.
-    """
-    if 'symbol_ids' in obj:
-        return list(obj['symbol_ids'])
-    return [hashlib.sha256((obj['id']+':'+str(i)).encode()).hexdigest()
-            for i in range(len(obj['signs']))]
+    """Every word owns persistent IDs for all its glyphs."""
+    return list(obj['symbol_ids'])
 
 
 def reconcile_symbol_ids(existing: dict, signs: list[str]) -> list[str]:
@@ -291,13 +271,12 @@ def validate_word_record(obj: dict) -> None:
     ref=obj.get('lexicon_ref')
     if ref is not None and (not isinstance(ref,str) or len(ref)>512):
         raise DocumentError('Invalid word reference')
-    if 'symbol_ids' in obj:
-        atoms=obj['symbol_ids']
-        if not isinstance(atoms,list) or len(atoms)!=len(obj['signs']):
-            raise DocumentError('Every symbol must have one ID')
-        if len(set(atoms))!=len(atoms) or any(
-                not isinstance(uid,str) or not uid or len(uid)>128 for uid in atoms):
-            raise DocumentError('Invalid symbol identity')
+    atoms=obj.get('symbol_ids')
+    if not isinstance(atoms,list) or len(atoms)!=len(obj['signs']):
+        raise DocumentError('Every symbol must have one persistent ID')
+    if len(set(atoms))!=len(atoms) or any(
+            not isinstance(uid,str) or not uid or len(uid)>128 for uid in atoms):
+        raise DocumentError('Invalid symbol identity')
 
 
 def assert_document(doc: dict) -> None:
@@ -438,7 +417,7 @@ def transaction(document: dict, action: dict) -> dict:
         if type(index) is not int or not 0<=index<=len(items):
             raise DocumentError('Invalid imported-image insertion index')
         items.insert(index, image(action['data_url'],action['pixel_width'],
-            action['pixel_height'],action['bands'],action.get('width_mm',65.0),
+            action['pixel_height'],action.get('width_mm',65.0),
             action.get('name','Imported image'),action.get('mask')))
     elif op == 'replace_table':
         idx=_locate(items,action.get('id',''))

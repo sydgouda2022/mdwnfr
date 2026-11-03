@@ -1336,18 +1336,6 @@ async function prepareImportedImage(file){
   const ctx=canvas.getContext('2d',{willReadFrequently:true});
   if(!ctx)throw Error('Canvas is unavailable');
   ctx.clearRect(0,0,w,h);ctx.drawImage(source,0,0,w,h);
-  const pixels=ctx.getImageData(0,0,w,h).data;
-  const bands=[];let occupied=false;
-  for(let row=0;row<128;row++){
-   const top=Math.floor(row*h/128),bottom=Math.max(top+1,Math.ceil((row+1)*h/128));
-   let lo=w,hi=0;
-   for(let y=top;y<Math.min(h,bottom);y++)for(let x=0;x<w;x++){
-    if(pixels[(y*w+x)*4+3]>8){lo=Math.min(lo,x);hi=Math.max(hi,x+1);}
-   }
-   if(hi<=lo)bands.push(null);
-   else {occupied=true;bands.push([Math.floor(lo*10000/w),Math.ceil(hi*10000/w)]);}
-  }
-  if(!occupied)throw Error('Image has no visible pixels');
   // Store a real two-dimensional alpha mask. A column queries its exact
   // occupied pixels; the renderer never calculates the silhouette.
   const maskCanvas=document.createElement('canvas');maskCanvas.width=256;maskCanvas.height=256;
@@ -1356,11 +1344,13 @@ async function prepareImportedImage(file){
   maskContext.clearRect(0,0,256,256);maskContext.drawImage(canvas,0,0,256,256);
   const maskPixels=maskContext.getImageData(0,0,256,256).data;
   const maskBytes=new Uint8Array(8192);
-  for(let p=0;p<65536;p++)if(maskPixels[p*4+3]>8)maskBytes[p>>3]|=1<<(7-(p&7));
+  let occupied=false;
+  for(let p=0;p<65536;p++)if(maskPixels[p*4+3]>8){occupied=true;maskBytes[p>>3]|=1<<(7-(p&7));}
+  if(!occupied)throw Error('Image has no visible pixels');
   const mask=btoa(String.fromCharCode(...maskBytes));
   const data_url=canvas.toDataURL('image/png');
   if(data_url.length>11_200_000)throw Error('Normalized PNG exceeds embedded image limit');
-  return {data_url,pixel_width:w,pixel_height:h,bands,mask,
+  return {data_url,pixel_width:w,pixel_height:h,mask,
    name:(file.name||'Imported image').slice(0,120),width_mm:65};
  }finally{URL.revokeObjectURL(url);}
 }

@@ -128,7 +128,6 @@ def _art_x(column_x: float, column_width: float, image_width: float,
 
     A positive offset lets the object float *forward* in reading order across
     arbitrarily many adjacent slots. It does not store a page coordinate.
-    Pre-0.1.17 art uses the old within-band x_align exactly.
     """
     column_x = round(column_x, 5)
     requested = (owner.get('x_offset_mm', 0.0) if offset_override is None
@@ -267,11 +266,11 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
         for col in positioned:
             if col['kind']=='clipart' and col['placements']:
                 art=col['placements'][0]
-                if isinstance(art,dict): artworks.append({**art, 'flip':art['resolved_flip'], 'bands':clipart_by_id[art['id']].get('bands'), 'mask':clipart_by_id[art['id']].get('mask')})
+                if isinstance(art,dict): artworks.append({**art, 'flip':art['resolved_flip'], 'mask':clipart_by_id[art['id']].get('mask')})
                 else:
                     ident, ay, ah, aw=art
                     obj=clipart_by_id[ident]
-                    artworks.append({'id':ident,'artwork_id':obj.get('artwork_id'), 'bands':obj.get('bands'),'mask':obj.get('mask'),
+                    artworks.append({'id':ident,'artwork_id':obj.get('artwork_id'), 'mask':obj.get('mask'),
                       'flip':_physical_auto_flip(obj,_art_x(col['x'],col['width'],aw,obj,doc['direction'],col.get('float_offset')),page_w,doc['direction'],page_capacity is None),'y':ay,'height':ah,
                       'width_mm':aw,'x':_art_x(col['x'],col['width'],aw,obj,doc['direction'],
                                                col.get('float_offset'))})
@@ -318,7 +317,7 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
                 for segment_top,segment_bottom in spans:
                     remaining.extend(free_sectors(
                         art.get('artwork_id'),
-                        bands=art.get('bands'), mask=art.get('mask'),
+                        mask=art.get('mask'),
                         image_width=art['width_mm'], image_height=art['height'],
                         x_offset=art['x'],
                         slot_left=x-divider_thickness/2,
@@ -631,7 +630,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
             scale = min(1.0,maximum/iw,usable_height/ih)
             iw *= scale
             ih *= scale
-            return [(iw,ih,{'mask':item.get('mask'), 'bands':item.get('bands')},None)]
+            return [(iw,ih,{'mask':item.get('mask')},None)]
         if kind=='cartouche':
             try:
                 geometry = typeset_cartouche(item,width,
@@ -647,7 +646,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
             ncols = len(item['rows'][0])
             # A table must occupy a usable portion of the writing frame,
             # not a miniature block of 1.6 glyph widths per cell. Preserve
-            # explicit legacy/user widths; only automatic sizing changes.
+            # Explicit user widths are retained; only automatic sizing changes.
             if item.get('width_mm') is None:
                 minimum = ncols * max(width*3.5, 14.0)
                 target = (min(capacity*width*.40, 14*width)
@@ -727,11 +726,11 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                             ('mirror' if doc['direction']=='rtl' else 'normal'))
                     if doc['direction']=='rtl' and item['type'] in ('clipart','image'):
                         facing='normal' if facing=='mirror' else 'mirror'
-                    new=(item.get('artwork_id'),profile.get('bands'),profile.get('mask'),
+                    new=(item.get('artwork_id'),profile.get('mask'),
                          iw,ih,x,facing,wanted_y)
                     clashes_word=any(not any(a<=y+1e-6 and b>=y+h-1e-6
                         for a,b in free_sectors(item.get('artwork_id'),
-                            bands=profile.get('bands'),mask=profile.get('mask'),
+                            mask=profile.get('mask'),
                             image_width=iw,image_height=ih,x_offset=x,
                             slot_left=px,slot_right=px+pw,top=y,bottom=y+h,
                             clearance=clearance,flip=facing,image_top=wanted_y))
@@ -744,7 +743,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                              'mask':profile.get('mask'),'flip':facing,
                              'artwork_id':item.get('artwork_id')},
                             clearance)
-                            for aid,_,mask,pw,ph,px,flip,py in obstacles):
+                            for aid,mask,pw,ph,px,flip,py in obstacles):
                         continue
                     return candidate,x,new
                 return None
