@@ -400,7 +400,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .insert-content-editor{display:grid;gap:6px;border-top:1px solid #d9e3eb;padding-top:8px}
 .insert-screen textarea{width:100%;min-height:62px;resize:vertical;border:1px solid #b8cad9;border-radius:10px;padding:8px;color:#142f4f;background:#fff;font:21px/1.5 var(--gfont);box-sizing:border-box}
 .insert-table-cell-grid{display:grid;grid-template-columns:repeat(var(--draft-cols,2),minmax(0,1fr));gap:3px;max-height:125px;overflow:auto}
-.insert-table-cell-grid button{min-width:0;min-height:38px;border:1px solid #c2d2df;border-radius:7px;background:#fff;color:#173c62;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:13px var(--gfont)}
+.insert-table-cell-grid button{min-width:0;min-height:44px;border:1px solid #c2d2df;border-radius:7px;background:#fff;color:#173c62;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:13px var(--gfont)}
 .insert-table-cell-grid button[aria-pressed=true]{background:#dbebf9;border:2px solid #2e7cb0}
 .insert-glyph-keyboard{display:grid;gap:5px;border-top:1px solid #dde5ed;padding-top:7px}
 .insert-glyph-keyboard[hidden]{display:none}
@@ -415,8 +415,8 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .insert-screen .artwork-choice{min-width:0}
 .insert-screen .artwork-choice[aria-pressed=true]{outline:3px solid #1277b2;outline-offset:1px;background:#e2f3fc}
 @media(max-width:720px){
- .insert-sheet{bottom:0;left:0;width:100%;box-sizing:border-box;max-height:40dvh;border-radius:18px 18px 0 0;padding:12px max(12px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom))}
- .insert-screen .artwork-grid{max-height:100px}
+ .insert-sheet{bottom:0;left:0;width:100%;box-sizing:border-box;max-height:min(56dvh,calc(100dvh - 100px));border-radius:18px 18px 0 0;padding:12px max(12px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom))}
+ .insert-screen .artwork-grid{max-height:40dvh;grid-template-columns:repeat(2,minmax(0,1fr))}
  .insert-sheet-footer{bottom:calc(-12px - env(safe-area-inset-bottom))}
 }
 /* Python-composed temporary page is mounted over the normal page. It is not
@@ -468,7 +468,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .keyboard-panel .suggestions{flex:0 0 43px;min-height:43px;max-height:43px;padding:4px;border-radius:9px;background:#fff}
 .keyboard-panel .suggestions button{min-height:32px;min-width:47px;font-size:20px}
 .keyboard-panel .keyboard-tabs{margin-top:6px}
-.keyboard-panel .tab{min-height:34px;padding:5px 6px;border-radius:9px;font-size:11px}
+.keyboard-panel .tab{min-height:44px;padding:5px 6px;border-radius:9px;font-size:11px}
 .keyboard-panel .keys{display:flex;flex-direction:column;justify-content:safe center;gap:4px;flex:1 1 auto;min-height:55px;max-height:none;overflow-y:auto;overflow-x:hidden;padding:5px 2px;scrollbar-width:thin;overscroll-behavior:contain}
 .keyboard-panel .key-row{display:flex;align-items:center;justify-content:center;gap:4px;width:100%;flex:0 0 auto}
 .keyboard-panel .key{flex:0 0 calc((100% - (var(--columns) - 1)*4px)/var(--columns));width:calc((100% - (var(--columns) - 1)*4px)/var(--columns));max-width:52px;min-width:0;min-height:0;height:42px;padding:1px;border-radius:7px;border:1px solid #d2dee8;border-bottom:2px solid #bac8d2;box-shadow:none}
@@ -479,9 +479,9 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .keyboard-panel .numkey .glyph{font-size:22px}.keyboard-panel .numkey small{display:none}
 @media(max-width:720px){
  .keyboard-panel{left:5px;right:5px;bottom:calc(34px + env(safe-area-inset-bottom));height:min(49dvh,405px);padding:7px}
- .keyboard-panel .key{height:37px;max-width:44px}.keyboard-panel .key-glyph{font-size:24px}
- .keyboard-panel .numbers{flex-basis:38px;min-height:38px;max-height:38px}
- .keyboard-panel .numkey{flex-basis:36px;width:36px;min-height:34px;height:34px}.keyboard-panel .numkey .glyph{font-size:20px}
+ .keyboard-panel .key{height:44px;max-width:44px}.keyboard-panel .key-glyph{font-size:24px}
+ .keyboard-panel .numbers{flex-basis:48px;min-height:48px;max-height:48px}
+ .keyboard-panel .numkey{flex-basis:44px;width:44px;min-height:44px;height:44px}.keyboard-panel .numkey .glyph{font-size:20px}
  .keyboard-panel .suggestions{flex-basis:40px;min-height:40px;max-height:40px}
  .editor-screen .bottom-bar #revision{display:none}
 }
@@ -562,8 +562,32 @@ button:disabled{opacity:.42;cursor:not-allowed}
 
 /* One shared hieroglyphic key renderer for the main and nested input contexts. */
 .insert-glyph-numbers{display:flex;justify-content:safe center;align-items:center;gap:3px;overflow-x:auto;padding:2px 0}
-.insert-glyph-numbers .numkey{flex:0 0 29px;min-width:29px;min-height:35px;max-height:35px;padding:2px}
+.insert-glyph-numbers .numkey{flex:0 0 42px;min-width:42px;min-height:44px;max-height:44px;padding:2px}
 .insert-glyph-numbers .numkey .glyph{font:17px/1 var(--gfont)}
 .insert-glyph-keys{display:flex;flex-direction:column;gap:3px;max-height:124px;overflow-y:auto}
 .insert-glyph-keys .key-row{display:flex;justify-content:center;gap:3px}
-.insert-glyph-keys .key{flex:0 1 37px;min-width:0;min-height:36px;font:22px var(--gfont);padding:2px}
+.insert-glyph-keys .key{flex:0 1 44px;min-width:0;min-height:44px;font:22px var(--gfont);padding:2px}
+
+/* User-visible backups, recoverable Trash and phone editing reachability. */
+.library-file-actions{display:flex;align-items:center;gap:7px;margin-left:auto}
+.library-file-actions button,.library-trash-sheet button{min-width:44px;min-height:44px;border:1px solid #c8d8e5;border-radius:10px;background:#fff;color:#173c5e;padding:7px 12px}
+.library-file-actions button:disabled{opacity:.5}
+.library-status{font-size:12px;white-space:nowrap;color:#617b91;margin-left:auto}
+.library-trash-dialog{position:fixed;inset:0;z-index:200;display:grid;place-items:center;background:#092a4480;padding:16px}
+.library-trash-dialog[hidden]{display:none!important}
+.library-trash-sheet{width:min(520px,95vw);max-height:85dvh;overflow:auto;background:#fffdf8;border-radius:18px;padding:16px;box-shadow:0 18px 48px #06192a50}
+.library-trash-sheet header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.library-trash-sheet h2{margin:0}.library-trash-sheet p{line-height:1.5;color:#527088}
+.trash-entry{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0;border-top:1px solid #e0e8ed}
+.trash-entry strong{flex:1 1 140px;overflow-wrap:anywhere}.trash-entry button:last-child{color:#a32c2c}
+.document-preview-types{display:flex;justify-content:center;gap:6px;align-items:center;font-size:20px;color:#506f88;padding:10px}
+.keyboard-panel .numbers,.insert-glyph-numbers{scrollbar-width:auto;overscroll-behavior-inline:contain}
+.keyboard-panel .numbers::after,.insert-glyph-numbers::after{content:'⇆';position:sticky;right:0;flex:0 0 20px;pointer-events:none;text-align:right;color:#42688b;background:#f8fafbd9;font:18px system-ui}
+.insert-glyph-tabs button{min-height:44px}
+@media(max-width:720px){
+ .library-toolbar{flex-wrap:wrap;row-gap:8px}.library-file-actions{margin-left:0}.library-status{font-size:11px}
+ .icon-control{min-width:44px;min-height:44px}
+ .insert-sheet:has(#insert-glyph-keyboard:not([hidden])){max-height:min(77dvh,calc(100dvh - 85px))}
+ .insert-sheet:has(#insert-glyph-keyboard:not([hidden])) .insert-screen textarea{min-height:72px}
+ .keyboard-panel .keys{min-height:55px}
+}
