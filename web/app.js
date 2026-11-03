@@ -657,28 +657,8 @@ function updateFormatState(){
  updateHistoryState();
  const selection=selectedItems();
  const clip=selection.length===1&&['clipart','image'].includes(selection[0]?.type)?selection[0]:null;
- const currentTable=selection.length===1&&selection[0]?.type==='table'?selection[0]:null;
- renderTableControls(currentTable);
- const nested=currentTable||(selection.length===1&&selection[0]?.type==='cartouche'?selection[0]:null);
- $('nested-position-controls').hidden=!nested;
- if(nested){$('nested-horizontal').value=Math.round(100*(nested.x_align??0));
-  $('nested-vertical').value=Math.round(100*(nested.y_align??0));
-  $('nested-float').value=Number(nested.x_offset_mm??0).toFixed(1);}
  $('clipart-controls').hidden=!clip;
- const selectedCartouche=selection.length===1&&selection[0]?.type==='cartouche'?selection[0]:null;
- $('cartouche-controls').hidden=!selectedCartouche;
- if(selectedCartouche){
-  $('cartouche-orientation').value=selectedCartouche.orientation;
-  const marker=`${selectedCartouche.id}:${doc?.revision}`;
-  if($('cartouche-words').dataset.source!==marker){
-   $('cartouche-words').value=selectedCartouche.items.map(w=>w.signs.join('')).join(' ');
-   $('cartouche-words').dataset.source=marker;
-  }
- }
- if(clip){$('clipart-width').value=clip.width_mm;$('clipart-flip').value=clip.flip;
-  $('clipart-horizontal').value=Math.round(100*(clip.x_align??0.5));
-  $('clipart-float').value=Number(clip.x_offset_mm??0).toFixed(1);
-  $('clipart-vertical').value=Math.round(100*(clip.y_align??0.5));}
+ if(clip){$('clipart-width').value=clip.width_mm;$('clipart-flip').value=clip.flip;}
 
  const words=editableStyleWords(selection);
  const hasWords=words.length>0;
@@ -850,8 +830,7 @@ async function beginInsertSheet(kind,existingId=null){
   $(id).disabled=initializing;
  for(const input of $('insert-screen-cartouche').querySelectorAll('input[type=radio]'))
   input.disabled=initializing;
- $('insert-placement').hidden=true;
- $('insert-preview-status').textContent='Select an object to see it on the writing page';
+  $('insert-preview-status').textContent='Select an object to see it on the writing page';
  $('insert-sheet-confirm').disabled=true;
  try{
   if(kind==='clipart'){
@@ -1056,15 +1035,6 @@ async function runInsertPreview(d,version){
   const position=page.columns.flatMap(c=>c.placements).find(pos=>pos.id===d.object.id);
   showDraftPage(d,page,position);
   $('insert-preview-status').textContent='Preview on page · changes are not saved';
-  $('insert-placement').hidden=false;
-  d.lastPlacementWidth=position.width_mm;
-  $('insert-object-width').disabled=false;
-  if(document.activeElement!==$('insert-object-width'))
-   $('insert-object-width').value=String(Math.round(position.width_mm*10)/10);
-  $('insert-object-width').min=d.kind==='table'?'15':'6';
-  $('insert-object-width').max=d.kind==='table'?'500':'300';
-  if(document.activeElement!==$('insert-object-y'))
-   $('insert-object-y').value=Math.round((d.object.y_align??.5)*100);
   if((d.textVersion||0)!==(d.textAppliedVersion||0))return;
   d.valid=true;$('insert-sheet-confirm').disabled=false;
  }catch(error){
@@ -1191,24 +1161,41 @@ async function runInsertPreview(d,version){
   input.dispatchEvent(new Event('input',{bubbles:true}));
   input.focus({preventScroll:true});
  }
- function drawInsertGlyphs(){
-  const tabs=$('insert-glyph-tabs');tabs.replaceChildren();
-  for(const [key,title] of [['unilaterals','Uni'],['bilaterals','Bi'],['trilaterals','Tri'],['numerals','123']]){
-   const b=document.createElement('button');b.type='button';b.textContent=title;
-   b.setAttribute('aria-pressed',String(key===draftGlyphTab));
-   b.onclick=()=>{draftGlyphTab=key;drawInsertGlyphs();};tabs.append(b);
+ 
+function glyphKeyRows(container,group,columns,accept){
+ container.replaceChildren();
+ const signs=glyphGroups[group];
+ for(let i=0;i<signs.length;i+=columns){
+  const row=document.createElement('div');row.className='key-row';
+  for(const sign of signs.slice(i,i+columns)){
+   const key=document.createElement('button');key.type='button';key.className='key';
+   key.append(facingSignNode(sign.glyph,'key-glyph'));
+   key.title=sign.code+' · '+sign.name;key.setAttribute('aria-label',sign.code+' '+sign.name);
+   key.onclick=()=>accept(sign.glyph);row.append(key);
   }
-  const keys=$('insert-glyph-keys');keys.replaceChildren();
-  const signs=draftGlyphTab==='numerals'?numerals.map(n=>({glyph:n.sign,name:n.value})):
-   glyphGroups[draftGlyphTab];
-  for(const sign of signs){
-   const b=document.createElement('button');b.type='button';
-   b.textContent=sign.glyph;b.setAttribute('aria-label',sign.name||sign.code||'Sign');
-   b.onclick=()=>typeDraftGlyph(sign.glyph);keys.append(b);
-  }
+  container.append(row);
  }
- $('insert-glyph-space').onclick=()=>typeDraftGlyph(' ');
- $('insert-glyph-backspace').onclick=()=>typeDraftGlyph('',true);
+}
+function numeralKeyRow(container,accept){
+ container.replaceChildren();
+ for(const n of numerals){
+  const key=document.createElement('button');key.type='button';key.className='numkey';
+  key.append(facingSignNode(n.sign,'glyph'));key.title='Egyptian numeral '+n.value;
+  key.setAttribute('aria-label','Egyptian numeral '+n.value);
+  key.onclick=()=>accept(n.sign);container.append(key);
+ }
+}
+function drawInsertGlyphs(){
+ const tabs=$('insert-glyph-tabs');tabs.replaceChildren();
+ for(const [group,label] of [['unilaterals','Uni'],['bilaterals','Bi'],['trilaterals','Tri']]){
+  const b=document.createElement('button');b.type='button';b.textContent=label;
+  b.setAttribute('aria-pressed',String(group===draftGlyphTab));
+  b.onclick=()=>{draftGlyphTab=group;drawInsertGlyphs();};tabs.append(b);
+ }
+ numeralKeyRow($('insert-glyph-numbers'),sign=>typeDraftGlyph(sign));
+ glyphKeyRows($('insert-glyph-keys'),draftGlyphTab,Math.min(9,columnCount()),sign=>typeDraftGlyph(sign));
+}
+$('insert-glyph-backspace').onclick=()=>typeDraftGlyph('',true);
 
 function scheduleInsertTableSpec(){
  const d=insertDraft;
@@ -1275,23 +1262,6 @@ for(const input of $('insert-screen-cartouche').querySelectorAll('input[type=rad
    insertDraft.object.orientation=input.value;requestInsertPreview();
   }
  });
-$('insert-object-width').addEventListener('change',e=>{
- const d=insertDraft;if(!d?.object)return;
- const width=Number(e.target.value);
- if(!Number.isFinite(width)||width<(d.kind==='table'?15:6)||
-    width>(d.kind==='table'?500:300))return;
- if(d.kind==='cartouche'){
-  // Change the enclosure, never the document's hieroglyph font size.
-  const prior=Number(d.lastPlacementWidth||width);
-  d.object.enclosure_padding_mm=Math.min(30,Math.max(0,
-   Math.round(((d.object.enclosure_padding_mm||0)+(width-prior)/2)*10)/10));
- }else d.object.width_mm=width;
- requestInsertPreview();
-});
-$('insert-object-y').addEventListener('input',e=>{
- if(insertDraft?.object){insertDraft.object.y_align=Number(e.target.value)/100;
-  requestInsertPreview();}
-});
 $('insert-image-choose').onclick=()=>$('insert-image-file').click();
 $('insert-image-file').addEventListener('change',async e=>{
  const file=e.target.files?.[0];e.target.value='';
@@ -1399,16 +1369,6 @@ async function prepareImportedImage(file){
 $('insert-cartouche').onclick=()=>beginInsertSheet('cartouche');
 function selectedCartoucheObject(){const selected=selectedItems();
  return selected.length===1&&selected[0]?.type==='cartouche'?selected[0]:null;}
-$('cartouche-orientation').onchange=e=>{const item=selectedCartoucheObject();
- if(item)apply({op:'set_cartouche_orientation',id:item.id,orientation:e.target.value});};
-$('cartouche-save').onclick=()=>{const item=selectedCartoucheObject();if(!item)return;
- const value=$('cartouche-words').value.trim();
- const parts=value?value.split(/\s+/u):[];
- const allowed=/^[\u{13000}-\u{1342F}]+$/u;
- if(parts.length>48||parts.some(s=>!allowed.test(s))){status('Cartouche accepts up to 48 hieroglyphic words',true);return;}
- apply({op:'set_cartouche_words',id:item.id,words:parts.map(s=>Array.from(s))});
-};
-$('cartouche-keyboard').onclick=()=>{if(selectedCartoucheObject()&&activePanel!=='keyboard')switchPanel('keyboard');};
 $('insert-table').onclick=()=>beginInsertSheet('table');
 function selectedTable(){
  const table=selectedItems();return table.length===1&&table[0]?.type==='table'?table[0]:null;
@@ -1423,86 +1383,7 @@ function selectTableCell(tableId,row,column){
    Number(box.dataset.row)===row&&Number(box.dataset.column)===column);
  }
 }
-function tableCellText(entry){
- return entry.mode==='formula'?entry.formula:
-  (entry.items||[]).map(w=>(w.signs||[]).join('')).join(' ');
-}
-function renderTableControls(table){
- const controls=$('table-controls');controls.hidden=!table;
- if(!table)return;
- const rows=table.rows.length,cols=table.rows[0].length;
- $('table-dimensions').textContent=`${rows} × ${cols}`;
- $('table-width').value=table.width_mm??'';
- if(!selectedTableCell||selectedTableCell.tableId!==table.id||
-     selectedTableCell.row>=rows||selectedTableCell.column>=cols)
-  selectedTableCell={tableId:table.id,row:0,column:0};
- const grid=$('table-grid-editor');grid.replaceChildren();
- grid.style.gridTemplateColumns=`repeat(${cols},minmax(0,1fr))`;
- for(let row=0;row<rows;row++)for(let column=0;column<cols;column++){
-  const entry=table.rows[row][column];
-  const button=document.createElement('button');button.type='button';
-  const ref=String.fromCharCode(65+column)+(row+1);
-  button.textContent=ref+' '+tableCellText(entry);
-  button.setAttribute('aria-label','Edit '+ref);button.title=ref;
-  const current=selectedTableCell.row===row&&selectedTableCell.column===column;
-  button.classList.toggle('current',current);
-  button.onclick=()=>selectTableCell(table.id,row,column);
-  grid.append(button);
- }
- const {row,column}=selectedTableCell;
- // Avoid destroying in-progress input on format refresh for the SAME cell.
- const input=$('table-cell-value');const key=`${table.id}:${row}:${column}:${doc?.revision??''}`;
- if(input.dataset.cellKey!==key){input.value=tableCellText(table.rows[row][column]);input.dataset.cellKey=key;}
- $('table-row-delete').disabled=rows===1;
- $('table-column-delete').disabled=cols===1;
-}
-$('table-cell-keyboard').onclick=()=>{if(selectedTable()){renderComposer();if(activePanel!=='keyboard')switchPanel('keyboard');}};
-$('table-cell-save').onclick=async()=>{
- const table=selectedTable();if(!table)return;
- const loc=selectedTableCell;if(!loc)return;
- const raw=$('table-cell-value').value.trim();
- const action={op:'set_table_cell',id:table.id,row:loc.row,column:loc.column};
- if(raw.startsWith('=')){action.mode='formula';action.formula=raw;}
- else{
-  action.mode='text';action.words=raw?raw.split(/\s+/u).map(s=>Array.from(s)):[];
-  if(action.words.some(word=>word.some(c=>!(c.codePointAt(0)>=0x13000&&c.codePointAt(0)<=0x1342f)))){
-   status('Only hieroglyphic Unicode words are supported in table cells',true);return;
-  }
- }
- await apply(action);
-};
-for(const [control,op,axis] of [
- ['table-row-add','table_insert_row','row'],['table-row-delete','table_delete_row','row'],
- ['table-column-add','table_insert_column','column'],['table-column-delete','table_delete_column','column']]){
- $(control).onclick=()=>{
-  const table=selectedTable();if(!table)return;
-  const loc=selectedTableCell||{row:0,column:0};
-  const index=axis==='row'?loc.row:loc.column;
-  apply({op,id:table.id,index:op.includes('insert')?index+1:index});
- };
-}
-$('table-width').onchange=e=>{
- const table=selectedTable();if(!table)return;
- const v=e.target.value.trim();
- apply({op:'set_table_width',id:table.id,width_mm:v===''?null:Number(v)});
-};
 $('insert-image').onclick=()=>beginInsertSheet('image');
-for(const [control,field] of [['nested-horizontal','x_align'],['nested-vertical','y_align']]){
- $(control).onchange=e=>{
-  const obj=selectedItems();const item=obj.length===1&&['table','cartouche'].includes(obj[0]?.type)?obj[0]:null;
-  if(!item)return;
-  const percent=Number(e.target.value);
-  if(e.target.value.trim()===''||!Number.isFinite(percent)||percent<0||percent>100){updateFormatState();return;}
-  apply({op:'set_nested_position',id:item.id,[field]:percent/100});
- };
-}
-$('nested-float').onchange=e=>{
- const obj=selectedItems();const item=obj.length===1&&['table','cartouche'].includes(obj[0]?.type)?obj[0]:null;
- if(!item)return;
- const mm=Number(e.target.value);
- if(e.target.value.trim()===''||!Number.isFinite(mm)||mm< -2000||mm>2000){updateFormatState();return;}
- apply({op:'set_nested_position',id:item.id,x_offset_mm:Math.round(mm*10)/10});
-};
 $('clipart-width').onchange=e=>{
  const item=selectedItems().length===1?selectedItems()[0]:null;
  if(item?.type==='clipart'||item?.type==='image')apply({op:item.type==='image'?'set_image':'set_clipart',id:item.id,width_mm:Number(e.target.value)});
@@ -1510,27 +1391,6 @@ $('clipart-width').onchange=e=>{
 $('clipart-flip').onchange=e=>{
  const item=selectedItems().length===1?selectedItems()[0]:null;
  if(item?.type==='clipart'||item?.type==='image')apply({op:item.type==='image'?'set_image':'set_clipart',id:item.id,flip:e.target.value});
-};
-for(const [element,property] of [['clipart-horizontal','x_align'],['clipart-vertical','y_align']]){
- $(element).onchange=e=>{
-  const item=selectedItems().length===1?selectedItems()[0]:null;
-  if((item?.type==='clipart'||item?.type==='image')&&e.target.value.trim()!==''){
-   const percentage=Number(e.target.value);
-   if(Number.isFinite(percentage)&&percentage>=0&&percentage<=100)
-    apply({op:item.type==='image'?'set_image':'set_clipart',id:item.id,[property]:percentage/100,
-      ...(property==='x_align'?{x_offset_mm:0}:{})});
-   else updateFormatState();
-  }
- };
-}
-$('clipart-float').onchange=e=>{
- const item=selectedItems().length===1?selectedItems()[0]:null;
- if((item?.type==='clipart'||item?.type==='image')&&e.target.value.trim()!==''){
-  const mm=Number(e.target.value);
-  if(Number.isFinite(mm)&&mm>=-2000&&mm<=2000)
-   apply({op:item.type==='image'?'set_image':'set_clipart',id:item.id,x_offset_mm:Math.round(mm*10)/10});
-  else updateFormatState();
- }
 };
 // Hit-test already-computed layout geometry. This is interaction mapping, not
 // quadrat composition or visual-page layout. The Python engine owns the result.
@@ -2854,34 +2714,16 @@ function columnCount(){
  const w=Math.min(window.innerWidth,document.documentElement.clientWidth);
  return w<360?8:w<600?9:w<850?12:w<1180?18:20;
 }
+
 function drawKeys(){
- const keys=$('keys');keys.replaceChildren();
  const columns=columnCount();keyboardColumns=columns;
- keys.style.setProperty('--columns',String(columns));
- const signs=glyphGroups[activeGroup];
- for(let i=0;i<signs.length;i+=columns){
-  const row=document.createElement('div');row.className='key-row';
-  for(const sign of signs.slice(i,i+columns)){
-   const button=document.createElement('button');button.type='button';button.className='key';
-   button.append(facingSignNode(sign.glyph,'key-glyph'));
-   button.title=sign.code+' · '+sign.name;
-   button.setAttribute('aria-label',sign.code+' '+sign.name);
-   button.onclick=()=>typeSign(sign.glyph);
-   row.append(button);
-  }
-  keys.append(row);
- }
- const numbers=$('numbers');numbers.replaceChildren();
- for(const n of numerals){
-  const b=document.createElement('button');b.type='button';b.className='numkey';
-  b.append(facingSignNode(n.sign,'glyph'));
-  b.title='Egyptian numeral '+n.value;
-  b.setAttribute('aria-label','Egyptian numeral '+n.value);
-  b.onclick=()=>typeSign(n.sign);numbers.append(b);
- }
- for(const t of document.querySelectorAll('.tab')){
-  const chosen=t.dataset.tab===activeGroup;
-  t.classList.toggle('active',chosen);t.setAttribute('aria-pressed',String(chosen));
+ const keys=$('keys');keys.style.setProperty('--columns',String(columns));
+ glyphKeyRows(keys,activeGroup,columns,sign=>typeSign(sign));
+ numeralKeyRow($('numbers'),sign=>typeSign(sign));
+ for(const tab of document.querySelectorAll('.tab')){
+  const active=tab.dataset.tab===activeGroup;
+  tab.classList.toggle('active',active);
+  tab.setAttribute('aria-pressed',String(active));
  }
  keys.scrollTop=0;
 }

@@ -172,26 +172,21 @@ try{
   assert.equal(await page.locator('#format-panel').isVisible(),false,
     'Cell selection must not pop an inspector over the next touch');
   await page.locator('#format-toggle').click();
-  await page.locator('#table-controls').waitFor({state:'visible'});
-  assert.equal(await table.locator('.table-cell-view').count(),4);
-  const actualWidth=await table.evaluate(el=>el.getBoundingClientRect().width);
-  const inkColumnWidth=await page.locator('.word').first().evaluate(el=>el.getBoundingClientRect().width);
-  assert.ok(actualWidth>=inkColumnWidth*9,
-    'A default table must not be a miniature block beside one text column');
-  assert.equal(await page.locator('#table-width').isVisible(),true,
-    'The existing manual table width must remain accessible');
-  await page.locator('#table-cell-value').fill('𓅓𓏏');
-  await page.locator('#table-cell-save').click();
-  await page.waitForFunction(()=>document.querySelectorAll(
-    '.table-object .table-cell-word .glyph-ink-svg text').length>=2,
-    null,{timeout:90000});
-  await page.locator('#format-toggle').click();
-  await table.locator('.table-cell-view').nth(1).click();
-  await page.locator('#format-toggle').click();
-  await page.locator('#table-controls').waitFor({state:'visible'});
-  const selected=await page.locator('#table-grid-editor button.current').getAttribute('aria-label');
-  assert.equal(selected,'Edit B1','Tap selects a cell; explicit Format opens its inspector');
-  // The four Insert screens are drafts. Cancel must never change the
+   assert.equal(await page.locator('#table-controls').count(),0,'No second table editor');
+   assert.equal(await table.locator('.table-cell-view').count(),4);
+   const actualWidth=await table.evaluate(el=>el.getBoundingClientRect().width);
+   const inkColumnWidth=await page.locator('.word').first().evaluate(el=>el.getBoundingClientRect().width);
+   assert.ok(actualWidth>=inkColumnWidth*9,'Table remains readable');
+   await page.locator('#format-toggle').click();
+   await table.locator('.table-cell-view').first().click();
+   await page.locator('#object-action-edit').click();
+   await page.locator('#insert-dialog-backdrop').waitFor({state:'visible'});
+   await page.locator('#insert-table-cell-input').fill('𓅓𓏏');
+   await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm').disabled,null,{timeout:90000});
+   await page.locator('#insert-sheet-confirm').click();
+   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
+   await page.waitForFunction(()=>document.querySelectorAll('.table-object .table-cell-word .glyph-ink-svg text').length>=2,null,{timeout:90000});
+   // The four Insert screens are drafts. Cancel must never change the
   // document, even after a valid Python layout preview is rendered.
   await page.locator('#format-toggle').click();
   await page.locator('#format-toggle').click();

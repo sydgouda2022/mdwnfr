@@ -100,43 +100,13 @@
         <div class="format-group format-insert" role="group" aria-label="Insert" data-format-group="insert">
           <button id="insert-clipart" type="button" class="format-control" aria-label="Insert Egyptian artwork" aria-controls="artwork-picker" aria-expanded="false" title="Insert Egyptian artwork"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m4 17 5-5 4 4 3-6 4 7M8 8h.01"/></svg></button>
           <button id="insert-image" type="button" class="format-control" aria-label="Insert image" title="Insert image"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="2"/><path d="m21 15-5-5L5 21"/></svg></button>
-          <input id="image-file" type="file" accept="image/png,image/jpeg,image/webp" hidden aria-label="Choose local image"/>
           <button id="insert-table" type="button" class="format-control" aria-label="Insert table" title="Insert table"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg></button>
           <button id="insert-cartouche" type="button" class="format-control" aria-label="Insert cartouche" title="Insert cartouche"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="18" rx="6"/><path d="M5 22h14M10 6h4M10 10h4m-4 4 1 1 1-1 1 1 1-1"/></svg></button>
         </div>
         <div class="object-inspector">
 <div id="clipart-controls" class="clipart-controls" hidden>
           <label>Width (mm) <input id="clipart-width" type="number" min="6" max="300" step="1" /></label>
-          <label>Facing <select id="clipart-flip"><option value="auto">Auto inward</option><option value="normal">Original</option><option value="mirror">Flipped</option></select></label>
-          <label>Across band (%) <input id="clipart-horizontal" type="number" min="0" max="100" step="1" aria-label="Artwork horizontal alignment" /></label>
-          <label>Horizontal float (mm; negative = backward) <input id="clipart-float" type="number" min="-2000" max="2000" step="0.1" aria-label="Artwork cross-column offset" /></label>
-          <label>Down page (%) <input id="clipart-vertical" type="number" min="0" max="100" step="1" aria-label="Artwork vertical alignment" /></label>
-          <span class="clipart-note">Drag images or clip art across adjacent columns. Reflow, contour clearance and placement are calculated by Python; no fixed page coordinates are saved.</span>
-        </div>
-<div id="cartouche-controls" class="cartouche-controls" hidden>
-          <div class="format-section-title">Selected cartouche</div>
-          <label class="format-line">Orientation <select id="cartouche-orientation"><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option></select></label>
-          <label for="cartouche-words">Hieroglyphic words (separate with spaces)</label>
-          <textarea id="cartouche-words" rows="3" aria-label="Cartouche hieroglyphic words" placeholder="𓅓 𓏏 𓂋"></textarea>
-          <div class="table-buttons"><button id="cartouche-save" type="button" class="icon-only-action" aria-label="Apply cartouche words" title="Apply cartouche words"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m4 12 5 5L20 6"/></svg></button><button id="cartouche-keyboard" type="button" class="icon-only-action" aria-label="Open hieroglyphic keyboard" title="Open hieroglyphic keyboard"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 13h.01M10 13h.01M14 13h.01M18 13h.01M7 16h10"/></svg></button></div>
-          <div class="clipart-note">One indivisible object. Signs remain in logical order, and the Python compositor fits the enclosure to its contents.</div>
-        </div>
-<div id="table-controls" class="table-controls" hidden>
-          <div class="format-section-title">Selected table <span id="table-dimensions"></span></div>
-          <div class="table-buttons"><button id="table-row-add" type="button" class="icon-only-action" aria-label="Add row" title="Add row"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="13" height="15"/><path d="M3 9h13M3 14h13M19 14v8M15 18h8"/></svg></button><button id="table-row-delete" type="button" class="icon-only-action" aria-label="Delete row" title="Delete row"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="13" height="15"/><path d="M3 9h13M3 14h13M15 18h8"/></svg></button><button id="table-column-add" type="button" class="icon-only-action" aria-label="Add column" title="Add column"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="13" height="15"/><path d="M8 4v15M13 4v15M19 14v8M15 18h8"/></svg></button><button id="table-column-delete" type="button" class="icon-only-action" aria-label="Delete column" title="Delete column"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="13" height="15"/><path d="M8 4v15M13 4v15M15 18h8"/></svg></button></div>
-          <label>Table width (mm, optional) <input id="table-width" type="number" min="15" max="500" step="1" placeholder="Auto"/></label>
-          <div id="table-grid-editor" class="table-grid-editor" aria-label="Choose table cell"></div>
-          <label for="table-cell-value">Cell content (hieroglyphic words separated by spaces, or =formula)</label>
-          <textarea id="table-cell-value" rows="3" aria-label="Selected table cell content" placeholder="𓅓𓏏 or =SUM(A1:B2)"></textarea>
-          <div class="table-buttons"><button id="table-cell-save" type="button" class="icon-only-action" aria-label="Apply table cell" title="Apply table cell"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m4 12 5 5L20 6"/></svg></button><button id="table-cell-keyboard" type="button" class="icon-only-action" aria-label="Open hieroglyphic keyboard" title="Open hieroglyphic keyboard"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 13h.01M10 13h.01M14 13h.01M18 13h.01M7 16h10"/></svg></button></div>
-          <div class="clipart-note">All cell edits and row/column changes are reversible. Select cells directly or from this grid. Hieroglyphic Unicode only; formulas use cell references.</div>
-        </div>
-<div id="nested-position-controls" class="clipart-controls" hidden>
-          <div class="format-section-title">Table / cartouche placement</div>
-          <label>Across reserved columns (%) <input id="nested-horizontal" type="number" min="0" max="100" step="1" aria-label="Nested object horizontal alignment" /></label>
-          <label>Horizontal float (mm; negative = backward) <input id="nested-float" type="number" min="-2000" max="2000" step="0.1" aria-label="Nested object cross-column float" /></label>
-          <label>Down writing frame (%) <input id="nested-vertical" type="number" min="0" max="100" step="1" aria-label="Nested object vertical alignment" /></label>
-          <span class="clipart-note">Drag a cartouche or table border to change its document position. Forward and bounded backward floating expose silhouette-safe writing sectors; all collision checks and clearance are calculated by Python. Long tables remain top-aligned while spanning pages.</span>
+          <label>Facing <select id="clipart-flip"><option value="auto">Auto inward</option><option value="normal">Original</option><option value="mirror">Flipped</option></select></label>          <span class="clipart-note">Drag images or clip art across adjacent columns. Reflow, contour clearance and placement are calculated by Python; no fixed page coordinates are saved.</span>
         </div>
         </div>
       </div>
@@ -198,20 +168,11 @@
           <p class="insert-hint">Separate words with spaces. The outline follows the writing.</p>
         </div>
         <div id="insert-glyph-keyboard" class="insert-glyph-keyboard" hidden>
-          <div id="insert-glyph-tabs" class="insert-glyph-tabs" role="group" aria-label="Hieroglyph keyboard groups"></div>
+          <div id="insert-glyph-numbers" class="insert-glyph-numbers" role="group" aria-label="Egyptian numerals"></div>
+           <div id="insert-glyph-tabs" class="insert-glyph-tabs" role="group" aria-label="Hieroglyph keyboard groups"></div>
           <div id="insert-glyph-keys" class="insert-glyph-keys" aria-label="Hieroglyph keyboard"></div>
-          <div class="insert-glyph-actions">
-            <button id="insert-glyph-space" type="button">Space</button>
-            <button id="insert-glyph-backspace" type="button" aria-label="Delete preceding sign">⌫</button>
+          <div class="insert-glyph-actions">            <button id="insert-glyph-backspace" type="button" aria-label="Delete preceding sign">⌫</button>
           </div>
-        </div>
-        <div id="insert-placement" class="insert-placement" hidden>
-          <strong>Position and size</strong>
-          <div class="insert-fields">
-            <label>Width (mm)<input id="insert-object-width" type="number" min="6" max="500" step="1"/></label>
-            <label>Height position (%)<input id="insert-object-y" type="range" min="0" max="100" value="50"/></label>
-          </div>
-          <p class="insert-hint">Drag the outlined object in the preview to move it. Drag the corner handle to resize it. Hieroglyphs keep the document's size and direction.</p>
         </div>
         <div id="insert-preview-status" class="insert-hint" role="status" aria-live="polite">Preparing preview…</div>
         <footer class="insert-sheet-footer">
