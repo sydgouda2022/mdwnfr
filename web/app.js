@@ -802,6 +802,7 @@ $('artwork-search').addEventListener('input',e=>displayArtworkGrid(e.target.valu
 // All four insert screens share ONE uncommitted Python document preview.
 // No CSS-only text approximation, duplicate compositor or interim save.
 let insertTicket=0,insertPreviewTimer=null,insertPreviewVersion=0;
+let insertReturnFocus=null;
 function closeInsertSheet(){
  ++insertTicket;++insertPreviewVersion;
  if(insertPreviewTimer!==null)clearTimeout(insertPreviewTimer);
@@ -830,6 +831,10 @@ function closeInsertSheet(){
   void renderPageDetails(previous.pageIndex);
  $('insert-dialog-backdrop').hidden=true;
  $('insert-sheet-confirm').disabled=true;
+ if(previous&&!previous.gestureOnly&&insertReturnFocus){
+  const focus=insertReturnFocus.isConnected&&insertReturnFocus.getClientRects().length?insertReturnFocus:$('format-toggle');
+  insertReturnFocus=null;focus.focus({preventScroll:true});
+ }
  updateObjectQuickActions();
 }
 function insertIndex(){
@@ -844,7 +849,7 @@ async function beginInsertSheet(kind,existingId=null){
  if(!doc||!ready)return;
  const original=existingId?objectById(existingId):null;
  if(original&&original.type!==kind)return;
- closeInsertSheet();closePanels();
+ closeInsertSheet();insertReturnFocus=document.activeElement;closePanels();
  const token=insertTicket;
  const index=original?logicalIndexById.get(original.id):insertIndex();
  insertDraft={token,kind,index,existingId,object:original?structuredClone(original):null,
@@ -3125,10 +3130,16 @@ async function renderDocList(){
   const paper=document.createElement('span');paper.className='document-preview-page';paper.dataset.surface=entry.surface||'A4';
   paper.dir=entry.direction==='ltr'?'ltr':'rtl';
   const words=Array.isArray(entry.preview_words)?entry.preview_words.slice(0,12):[];
+  const types=Array.isArray(entry.object_types)?entry.object_types:[];
+  preview.title='Text excerpt and object types; not a page-layout thumbnail';
   if(words.length){
    const ink=document.createElement('span');ink.className='document-preview-ink';
    for(let i=0;i<words.length;i+=3){const row=document.createElement('span');row.className='document-preview-line';row.textContent=words.slice(i,i+3).join(' ');ink.append(row);}
    paper.append(ink);
+  }else if(types.length){
+   const sample=document.createElement('span');sample.className='document-preview-types';
+   sample.textContent=types.map(t=>({image:'▧',clipart:'𓅓',table:'▦',cartouche:'𓍹'})[t]||'◇').join('  ');
+   sample.title=types.join(', ')+' (contents not shown)';paper.append(sample);
   }else{
    const empty=document.createElement('span');empty.className='document-preview-placeholder';empty.textContent='𓏞';paper.append(empty);
   }
@@ -3139,7 +3150,8 @@ async function renderDocList(){
   const stamp=new Date(entry.updated_at||entry.created_at||'');
   date.textContent=Number.isNaN(stamp.getTime())?'Saved locally':'Edited '+new Intl.DateTimeFormat(undefined,{year:'numeric',month:'short',day:'numeric'}).format(stamp);
   const meta=document.createElement('span');meta.className='document-meta';
-  meta.textContent=(entry.surface||'A4')+' · '+(entry.word_count??0)+' words';
+  const total=entry.word_count??0;
+  meta.textContent=(entry.surface||'A4')+' · '+total+' '+(total===1?'word':'words')+(types.length?' · '+types.join(', '):'');
   detail.append(name,date,meta);open.append(preview,detail);
   const controls=document.createElement('div');controls.className='document-actions';
   const more=document.createElement('button');more.type='button';more.className='document-more';
