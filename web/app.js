@@ -1,4 +1,4 @@
-import {save,load,list,remove,loadProfile,updateProfile} from './storage.js';
+import {save,load,list,listTrash,moveToTrash,restoreFromTrash,remove,loadProfile,updateProfile,countWords} from './storage.js';
 import {createKeyboardFromData} from './vendor/hieroglyphic/keyboard_api.mjs';
 import {NO_MIRROR_HIEROGLYPHS,mirrorSign,reverseVisualQuadrat} from './hieroglyph_facing.mjs';
 import {buildEgyptianPalette,normalizeColour} from './editor_controls.mjs';
@@ -579,6 +579,11 @@ function textForSharing(items){
 $('share-copy').onclick=async()=>{if(!doc)return;try{await navigator.clipboard.writeText(textForSharing(doc.items));status('Text copied');closePanels();}catch(e){status('Copy failed: '+e.message,true);}};
 $('share-native').onclick=async()=>{if(!doc)return;try{const text=textForSharing(doc.items);if(navigator.share)await navigator.share({title:doc.name,text});else{await navigator.clipboard.writeText(text);status('Sharing unavailable: text copied');}closePanels();}catch(e){if(e.name!=='AbortError')status('Share failed: '+e.message,true);}};
 $('share-print').onclick=()=>{closePanels();window.print();};
+$('share-backup').onclick=async()=>{
+ if(!doc)return;
+ try{await flushAutosave();downloadEditableBackup(doc);status('Editable file downloaded');closePanels();}
+ catch(e){status('Editable export failed: '+e.message,true);}
+};
 document.addEventListener('pointerdown',e=>{
  if(!e.target.closest('#edit-menu'))hideEditMenu();
  if(!activePanel||editorScreen.hidden)return;
@@ -1843,6 +1848,7 @@ function showEditor(){
 }
 function setLibraryBusy(value){
  libraryBusy=value;$('create-document').disabled=value||!ready;
+ $('library-import').disabled=value||!ready;
  for(const btn of document.querySelectorAll('.document-grid button')){
   const needsEngine=btn.classList.contains('document-open')||btn.classList.contains('rename-action');
   btn.disabled=value||(needsEngine&&!ready);
@@ -1851,8 +1857,8 @@ function setLibraryBusy(value){
 
 worker.onmessage=async ev=>{
  const m=ev.data;
- if(m.type==='fatal'){ready=false;setLibraryBusy(true);showLibraryError('Python runtime could not start: '+m.error);status('Python runtime unavailable',true);return;}
- if(m.type==='ready') {ready=true;status('Python '+m.python+' · Ready');setLibraryBusy(false);await initialize();return;}
+ if(m.type==='fatal'){ready=false;setLibraryBusy(true);$('library-state').textContent='Editor unavailable';showLibraryError('Python runtime could not start: '+m.error);status('Python runtime unavailable',true);return;}
+ if(m.type==='ready') {ready=true;$('library-state').textContent='Ready';status('Python '+m.python+' · Ready');setLibraryBusy(false);await initialize();return;}
  if(m.id!==undefined&&pending.has(m.id)) {const {resolve,reject}=pending.get(m.id);pending.delete(m.id);m.ok?resolve(m):reject(new Error(m.error));}
 };
 worker.onerror=e=>{ready=false;setLibraryBusy(true);showLibraryError('Python runtime error: '+e.message);status('Python runtime unavailable',true);};
@@ -1939,10 +1945,8 @@ function setUiFromDoc(){
  $('paper-margin-controls').hidden=papyrus;
  $('papyrus-margin-group').hidden=!papyrus;
  $('papyrus-group').hidden=!papyrus;
- $('wordcount').textContent=doc.items.reduce((total,item)=>total+(
-  item.type==='word'?1:
-  item.type==='table'?item.rows.reduce((sum,row)=>sum+row.reduce((n,cell)=>n+(cell.mode==='text'?cell.items.length:0),0),0):
-  item.type==='cartouche'?item.items.length:0),0)+' words';
+ const totalWords=countWords(doc.items);
+ $('wordcount').textContent=totalWords+' '+(totalWords===1?'word':'words');
  $('revision').textContent='Revision '+doc.revision;
  updateFormatState();
  // Python's committed style delta can change Bold / ink without changing
@@ -2984,13 +2988,11 @@ async function renameDocument(id){
 async function deleteDocument(id){
  if(libraryBusy)return;
  const entry=await load(id);if(!entry){await renderDocList();return;}
- const decision=await modal({title:'Delete document?',description:'“'+entry.name+'” will be permanently deleted from this device. This action cannot be undone.',action:'Delete',destructive:true});
+ const decision=await modal({title:'Delete document?',description:'Move “'+entry.name+'” to Trash? You can restore it until permanently deleted or site data is cleared.',action:'Delete',destructive:true});
  if(!decision.confirmed)return;
  setLibraryBusy(true);showLibraryError();
  try{
-   await remove(id,entry.revision);
-   // Do not retain per-document spelling preferences for deleted documents.
-   await queueProfileChange({op:'forget-document',document_id:id});
+   await moveToTrash(id,entry.revision);
    await renderDocList();
   }
  catch(e){showLibraryError('Could not delete document: '+e.message);}
@@ -3047,9 +3049,16 @@ async function renderDocList(){
   more.onclick=()=>{const next=menu.hidden;closeLibraryMenus();menu.hidden=!next;more.setAttribute('aria-expanded',String(next));if(next)menu.querySelector('button')?.focus();};
   const rename=document.createElement('button');rename.type='button';rename.className='document-action rename-action';rename.textContent='Rename';rename.setAttribute('role','menuitem');
   rename.onclick=()=>{closeLibraryMenus();void renameDocument(entry.id);};
-  const del=document.createElement('button');del.type='button';del.className='document-action delete-action';del.textContent='Delete';del.setAttribute('role','menuitem');
+  const exportBtn=document.createElement('button');exportBtn.type='button';
+  exportBtn.className='document-action';exportBtn.textContent='Export file';
+  exportBtn.setAttribute('role','menuitem');
+  exportBtn.onclick=async()=>{closeLibraryMenus();
+   try{const current=await load(entry.id);if(!current)throw Error('Document not found');downloadEditableBackup(current);}
+   catch(error){showLibraryError('Export failed: '+error.message);}
+  };
+  const del=document.createElement('button');del.type='button';del.className='document-action delete-action';del.textContent='Move to Trash';del.setAttribute('role','menuitem');
   del.onclick=()=>{closeLibraryMenus();void deleteDocument(entry.id);};
-  menu.append(rename,del);controls.append(more,menu);card.append(open,controls);root.append(card);
+  menu.append(rename,exportBtn,del);controls.append(more,menu);card.append(open,controls);root.append(card);
  }
  setLibraryBusy(libraryBusy);
 }
