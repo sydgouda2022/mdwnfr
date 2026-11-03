@@ -9,7 +9,8 @@ published application is https://mdwnfr.sydgouda.workers.dev/.
 The Documents library is the initial view: an iPhone list and iPad document
 grid, a floating lower-right + to create a document, and contextual ellipsis
 actions for Rename and Delete. Documents and learning preferences are saved
-locally in IndexedDB. Clear-browser-data actions permanently erase them.
+locally in the canonical `mdwnfr-documents` IndexedDB database. No earlier
+document database is opened or migrated. Clearing site data erases this data.
 
 The editor stores a sequence of identified quadrats and other objects. Python
 authorizes every transaction and determines page, column, silhouette and glyph

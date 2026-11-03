@@ -19,3 +19,11 @@ No browser storage technique can promise recovery after full quota exhaustion, c
 MdwNfr uses Unicode plain text for external programs and its private rich-fragment format when the browser supports clipboard custom data. Native clipboard events use `application/x-mdwnfr-fragment+json`; the asynchronous Clipboard API uses the browser's `web ` custom-format prefix. Unknown clipboard content is treated as plain Unicode, and matching text alone never triggers a hidden rich-object paste. Browser permission denial can fall back to the current tab's internal clipboard; the app reports when content is only available inside MdwNfr.
 
 Rich clipboard objects and any documents processed through the Python validation core are validated before use. Object IDs are regenerated on paste.
+
+## Fresh canonical document database
+
+The current editor uses only the `mdwnfr-documents` IndexedDB database.
+It does not open, migrate, or import records from the former application
+namespace. Earlier device-local documents are intentionally not displayed in
+the new Documents library. This clean namespace is separate from the pinned
+keyboard's verified dictionary cache.

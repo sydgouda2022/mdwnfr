@@ -283,7 +283,7 @@ try{
   for(let attempt=0;attempt<50;attempt++){
     snapshot=await page.evaluate(async()=>{
     const db=await new Promise((resolve,reject)=>{
-      const r=indexedDB.open('mdwnfr-canonical-v1',1);
+      const r=indexedDB.open('mdwnfr-documents',1);
       r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
     });
     try{

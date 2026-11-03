@@ -1,6 +1,6 @@
 /* One device-local IndexedDB. Library browsing never loads embedded image data.
    Only the current canonical document schema is accepted. */
-const DB='mdwnfr-canonical-v1';
+const DB='mdwnfr-documents';
 const STORE='documents';
 const PROFILE='writing-profile';
 const INDEX='document-index';
