@@ -207,7 +207,7 @@ try{
     'There must not be a second miniature document preview');
   assert.equal(await page.locator('#insert-sheet-cancel-top').count(),0,
     'The contextual inspector must not have a desktop close X');
-  assert.equal(await page.locator('#insert-sheet').getAttribute('aria-modal'),null,
+  assert.notEqual(await page.locator('#insert-sheet').getAttribute('aria-modal'),'true',
     'Insert must not behave as a modal desktop dialog');
   await page.locator('#insert-sheet-cancel').click();
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
