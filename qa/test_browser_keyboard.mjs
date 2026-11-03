@@ -62,12 +62,25 @@ try{
   assert.ok(await reed.count(),'The glyph keyboard must expose M17');
   await reed.click();
   await reed.click();
-  await page.waitForFunction(()=>{
-    const panel=document.getElementById('quadrat-preview');
-    return panel&&!panel.hidden&&panel.querySelectorAll('.glyph-ink-svg text').length===2;
-  },null,{timeout:30000});
-  const preview=await page.locator('#quadrat-preview .glyph-ink-svg text').allTextContents();
-  assert.deepEqual(preview,['𓇋','𓇋'],'Live quadrat uses the chosen native Unicode signs');
+   assert.equal(await page.locator('#quadrat-preview').count(),0,
+     'The unrequested secondary preview should not exist');
+   assert.equal(await page.locator('#composer').textContent(),'𓇋𓇋',
+     'The normal composer shows exactly the sequence entered');
+   const keyboardLayout=await page.evaluate(()=>{
+     const numerals=document.getElementById('numbers');
+     const keys=document.getElementById('keys');
+     const panel=document.getElementById('keyboard-panel');
+     const footer=document.querySelector('#editor-screen .bottom-bar');
+     return {
+       numeralCount:numerals.querySelectorAll('button').length,
+       numeralsFirst:numerals.getBoundingClientRect().bottom<=keys.getBoundingClientRect().top+2,
+       gap:footer.getBoundingClientRect().top-panel.getBoundingClientRect().bottom
+     };
+   });
+   assert.equal(keyboardLayout.numeralCount,15,'All 15 numeral keys remain');
+   assert.ok(keyboardLayout.numeralsFirst,'Numerals appear above all sign keys');
+   assert.ok(keyboardLayout.gap>=-3&&keyboardLayout.gap<=12,
+     'Keyboard sits immediately above footer, without wasted gap');
   await page.locator('#save-personal-word').click();
   await page.locator('#manage-personal-words').click();
   const ownSaved=page.locator('#personal-words-list .personal-item');

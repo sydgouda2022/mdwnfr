@@ -1,7 +1,6 @@
 import {save,load,list,remove,loadProfile,updateProfile} from './storage.js';
 import {createKeyboardFromData} from './vendor/hieroglyphic/keyboard_api.mjs';
 import {NO_MIRROR_HIEROGLYPHS,mirrorSign,reverseVisualQuadrat} from './hieroglyph_facing.mjs';
-import {fitQuadrat} from './quadrat_preview.mjs';
 import {buildEgyptianPalette,normalizeColour} from './editor_controls.mjs';
 
 /* All document and typesetting decisions go through the Python RPC worker.
@@ -2889,7 +2888,7 @@ function drawKeys(){
 window.addEventListener('resize',()=>{if(!editorScreen.hidden&&keyboardColumns&&columnCount()!==keyboardColumns)drawKeys();});
 
 function typeSign(sign){if(commitPending)return;buffer.push(sign);renderComposer();}
-let predVersion=0,previewTimer=null,commitPending=false;
+let predVersion=0,commitPending=false;
 // Prediction requests are handled by the headless keyboard worker.
 function renderComposer(){
  const table=selectedTable();
@@ -2897,8 +2896,6 @@ function renderComposer(){
   ? `Compose table cell ${String.fromCharCode(65+selectedTableCell.column)}${selectedTableCell.row+1}`
   : editingId?'Edit selected word':'Compose a word';
  const area=$('composer');area.replaceChildren();
- const preview=$('quadrat-preview');preview.hidden=true;preview.replaceChildren();
- if(previewTimer!==null){clearTimeout(previewTimer);previewTimer=null;}
  if(buffer.length)area.append(facingSequenceNode(buffer));
  $('suggestion-toolbar').hidden=!buffer.length;
  $('suggestions').hidden=!buffer.length;
@@ -2912,21 +2909,6 @@ function renderComposer(){
  showSuggestions([{signs:buffer,source:'user'}].filter(x=>x.signs.length));
  const current=++predVersion;
  if(!buffer.length)return;
- // The preview ONLY renders the coordinates produced by Python compose().
- if(buffer.length>1&&buffer.length<=64){
-  const signs=buffer.slice();
-  previewTimer=setTimeout(()=>{
-   previewTimer=null;
-   rpc('compose',{signs,width:20}).then(answer=>{
-    if(current!==predVersion||!doc)return;
-    const geometry=fitQuadrat(answer.quadrat);
-    const word=document.createElement('div');word.className='quadrat-preview-word';
-    word.style.width=geometry.width+'px';word.style.height=geometry.height+'px';
-    drawQuadratInk(word,geometry,'#153f70',false);
-    preview.replaceChildren(word);preview.hidden=false;
-   }).catch(error=>{if(current===predVersion)status('Word preview: '+error.message,true);});
-  },90);
- }
  keyboardSuggest(0,8).then(answer=>{
   if(current!==predVersion)return;
   showSuggestions(answer.suggestions);

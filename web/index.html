@@ -261,7 +261,6 @@
     <aside class="composer-section keyboard-panel" id="keyboard-panel" aria-label="Hieroglyphic keyboard" hidden>
       <div class="composer-top"><div class="composer-title" id="composer-title">Compose a word</div><button id="clear" type="button" class="flat-button">Clear</button><button id="backspace" type="button" class="flat-button" title="Erase one sign">⌫</button></div>
       <div id="composer" class="composer" aria-label="Uncommitted hieroglyphic signs"></div>
-      <div id="quadrat-preview" class="quadrat-preview" aria-hidden="true" hidden></div>
       <div class="suggestion-toolbar" id="suggestion-toolbar" hidden><span>Spelling suggestions</span><button type="button" id="save-personal-word" disabled>Save to My Words</button><button type="button" id="manage-personal-words">My Words</button><button type="button" id="expand-predictions" aria-expanded="false" disabled>More suggestions</button></div>
       <div class="suggestions" id="suggestions" hidden></div>
       <div id="personal-words-list" hidden aria-label="Manage My Words"></div><div class="expanded-predictions" id="expanded-predictions" aria-label="Expanded spelling suggestions" hidden>
@@ -269,7 +268,8 @@
         <button id="more-predictions" type="button" hidden>Load more</button>
       </div>
       <div class="keyboard-tabs"><button class="tab active" data-tab="unilaterals">Unilaterals</button><button class="tab" data-tab="bilaterals">Bilaterals</button><button class="tab" data-tab="trilaterals">Trilaterals</button></div>
-      <div id="keys" class="keys"></div><div class="numbers-label">EGYPTIAN NUMERALS</div><div id="numbers" class="numbers"></div>
+      <div id="numbers" class="numbers" role="group" aria-label="Egyptian numerals"></div>
+      <div id="keys" class="keys"></div>
     </aside>
     <footer class="bottom-bar"><span id="wordcount">0 words</span><span id="revision">Revision 0</span><div class="zoom-control"><label for="zoom">Zoom</label><select id="zoom"><option value="fit-page">Fit Page</option><option value="fit-width">Fit Page Width</option><option value="1">100%</option><option value="1.5">150%</option><option value="2">200%</option></select></div></footer>
   </section>
