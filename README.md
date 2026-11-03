@@ -12,6 +12,9 @@ actions for Rename and Delete. Documents and learning preferences are saved
 locally in the canonical `mdwnfr-documents` IndexedDB database. No earlier
 document database is opened or migrated. Clearing site data erases this data.
 
+A source-structure test in CI rejects retired UI components, duplicate control IDs,
+missing control references and alternate application entrypoints.
+
 The editor stores a sequence of identified quadrats and other objects. Python
 authorizes every transaction and determines page, column, silhouette and glyph
 geometry. The browser renders the resulting positions and handles touch.
