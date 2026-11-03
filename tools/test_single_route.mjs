@@ -7,6 +7,23 @@ const html=read('web/index.html');
 const app=read('web/app.js');
 const boot=read('web/boot.mjs');
 const api=read('core/mdwnfr/api.py');
+const css=read('web/style.css');
+// CSS is not validated by Node's syntax checker. A partial comment removal
+// can silently hide an entire suffix of an otherwise well-formed stylesheet.
+const comments=[...css.matchAll(/\/\*|\*\//g)].map(m=>m[0]);
+let open=false;
+for(const part of comments){
+ if(part==='/*')assert.ok(!open,'Nested or unterminated CSS comment');
+ else assert.ok(open,'CSS comment closes without opening');
+ open=part==='/*';
+}
+assert.ok(!open,'Unterminated CSS comment');
+const withoutComments=css.replace(/\/\*[\s\S]*?\*\//g,'');
+assert.equal((withoutComments.match(/\{/g)||[]).length,
+ (withoutComments.match(/\}/g)||[]).length,'CSS braces are unbalanced');
+for(const retired of ['.table-grid-editor','.toolgroup','.sidebar','.art-resize.top-left'])
+ assert.ok(!css.includes(retired),'Retired CSS selector returned: '+retired);
+
 
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]);
 const unique=new Set(ids);

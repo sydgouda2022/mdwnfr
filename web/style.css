@@ -133,7 +133,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .range-handle[data-edge="start"]{border-radius:50% 50% 25% 50%;}
 .range-handle[data-edge="end"]{border-radius:25% 50% 50% 50%;}
 .range-handle:active{cursor:grabbing;}
-/* 0.1.5: one fixed prediction strip{font-size:11px;color:#7d602a;padding:4px 8px;background:#fff8e7;border:1px solid #e5d5b7;border-radius:7px;margin:5px 0}
+/* Prediction suggestions use one fixed keyboard strip. */
 .suggestion-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:7px;font-size:11px;color:#587083;flex-wrap:wrap}
 .suggestion-toolbar button,.expanded-predictions>button{border:1px solid #d3e0eb;background:#f1f6fb;color:#254f76;border-radius:8px;padding:6px 9px;font-size:11px;cursor:pointer}
 .suggestion-toolbar button:disabled{opacity:.4}
