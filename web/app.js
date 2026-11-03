@@ -1257,8 +1257,9 @@ for(const id of ['insert-table-rows','insert-table-columns',
  $(id).addEventListener('input',scheduleInsertTableSpec);
 for(const input of $('insert-screen-cartouche').querySelectorAll('input[type=radio]'))
  input.addEventListener('change',()=>{
-  if(insertDraft?.kind==='cartouche'&&input.checked){
-   insertDraft.object.orientation=input.value;requestInsertPreview();
+  const draft=insertDraft;
+  if(draft?.kind==='cartouche'&&draft.object&&input.checked){
+   draft.object.orientation=input.value;requestInsertPreview();
   }
  });
 $('insert-image-choose').onclick=()=>$('insert-image-file').click();

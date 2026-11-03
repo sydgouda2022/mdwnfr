@@ -34,6 +34,27 @@ try{
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
   const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   try{
+   // A fresh visitor can receive old HTML while a newly installed worker
+   // already owns the current app code. Boot must reload before importing JS.
+   const fresh=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+   const first=await fresh.newPage();
+   const freshErrors=[];
+   first.on('pageerror',e=>freshErrors.push(e.message));
+   let staleServed=false;
+   await first.route(base+'/',async route=>{
+    if(!staleServed){
+     staleServed=true;
+     await route.fulfill({status:200,contentType:'text/html',body:stale});
+    }else await route.continue();
+   });
+   try{
+    await first.goto(base+'/');
+    await first.waitForFunction(()=>document.getElementById('create-document')?.disabled===false,
+      null,{timeout:180000});
+    assert.ok(staleServed,'Test must first serve old HTML');
+    assert.notEqual(await first.locator('meta[name="mdwnfr-build"]').getAttribute('content'),'old-release');
+    assert.deepEqual(freshErrors,[],'First install must not combine old DOM and fresh JS');
+   }finally{await fresh.close();}
    await page.goto(base+'/release-test.html');
    await page.evaluate(async()=>{
     await navigator.serviceWorker.register('/release-test-sw.js',{scope:'/'});
