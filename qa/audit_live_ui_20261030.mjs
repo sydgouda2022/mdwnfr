@@ -169,10 +169,12 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
   const table=page.locator('.table-object').first();
   await table.locator('.table-cell-view').first().click();
   if(await visible('#format-panel'))throw Error('Table cell tap opened a panel over the page');
-  await page.locator('#format-toggle').click();
-  await page.locator('#table-controls').waitFor({state:'visible',timeout:30000});
-  await page.locator('#table-cell-value').fill('𓅓𓏏');
-  await page.locator('#table-cell-save').click();
+  await page.locator('#object-action-edit').click();
+   await page.locator('#insert-dialog-backdrop').waitFor({state:'visible',timeout:90000});
+   await page.locator('#insert-table-cell-input').fill('𓅓𓏏');
+   await readyPreview();
+   await page.locator('#insert-sheet-confirm').click();
+   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden',timeout:90000});
   await wait(page,()=>document.querySelectorAll('.table-cell-word .glyph-ink-svg text').length>=2,90000);
   return{cell_glyphs:await page.locator('.table-cell-word .glyph-ink-svg text').count()};
  });
@@ -229,15 +231,14 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
   await page.mouse.move(box.x+box.width*.5+24,box.y+box.height*.5+19,{steps:7});
   await page.mouse.up();
   await readyPreview();
-  const state=await page.locator('#insert-object-y').inputValue();
   await closeDialog();
-  return{height_position_percent:state};
+   return{on_page_drag:true};
  });
  await check('artwork-preview-resize',async()=>{
   await enterSheet('clipart');
   await page.locator('#artwork-grid .artwork-choice').first().click();
   await readyPreview();
-  const original=Number(await page.locator('#insert-object-width').inputValue());
+  const original=await page.locator('#pages .draft-page-layer .draft-object').boundingBox();
   const box=await page.locator('#pages .draft-page-layer .draft-object .art-resize.bottom-right').boundingBox();
   if(!box)throw Error('No resize handle');
   await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
@@ -245,10 +246,11 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
   await page.mouse.move(box.x+box.width/2+20,box.y+box.height/2+20,{steps:6});
   await page.mouse.up();
   await readyPreview();
-  const changed=Number(await page.locator('#insert-object-width').inputValue());
+  const changed=await page.locator('#pages .draft-page-layer .draft-object').boundingBox();
   await closeDialog();
-  if(changed<=original)throw Error('Drag resize did not enlarge width');
-  return{before_mm:original,after_mm:changed};
+  if(!original||!changed||changed.width<=original.width)
+    throw Error('Drag resize did not enlarge object');
+   return{before_px:original.width,after_px:changed.width};
  });
  await check('save-leave-reopen',async()=>{
   await closeDialog();

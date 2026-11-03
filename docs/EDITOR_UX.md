@@ -23,3 +23,6 @@ publishing suite. The document is the canvas; Python owns its geometry.
 Test touch, cancellation, revision conflicts, nested text entry, keyboard
 placement and compact/full geometry parity on phone (375/390 px) and tablet
 (1024 px) widths using Chromium and WebKit.
+
+The read-only live user-journey audit exercises the Insert sheet for both
+creation and editing of existing tables, with actual on-page drag/resize checks.

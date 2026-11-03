@@ -162,6 +162,10 @@ try{
   await page.locator('#insert-table').click();
   await page.locator('#insert-dialog-backdrop').waitFor({state:'visible'});
   await page.locator('#insert-sheet-confirm').waitFor({state:'visible'});
+  assert.equal(await page.locator('#insert-glyph-tabs button').count(),3,
+    'Nested input uses the same three sign pages');
+  assert.equal(await page.locator('#insert-glyph-numbers .numkey').count(),15,
+    'Nested input keeps all Egyptian numerals on the first row');
   await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm').disabled,
     null,{timeout:90000});
   await page.locator('#insert-sheet-confirm').click();

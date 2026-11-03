@@ -116,7 +116,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .coming-soon{margin:8px 0 0;color:#8193a4;font-size:10px;line-height:1.5}
 .history-tools{display:flex;gap:9px}.history-tools button{flex:1;border:1px solid #dfe6eb;background:#f2f6f9;padding:8px;border-radius:9px;color:#476987}
 .visually-hidden{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
-/* User's original vector owl button from old MdwNfr. */
+/* Movable hieroglyph keyboard launcher. */
 .keyboard-launcher{position:fixed;bottom:44px;left:18px;z-index:70;width:58px;height:58px;border:0;border-radius:50%;background:transparent;padding:0;box-shadow:0 5px 15px #2140602b;touch-action:none;display:grid;place-items:center}
 .keyboard-launcher img{width:100%;height:100%;border-radius:50%;pointer-events:none}
 .keyboard-launcher.is-active{outline:3px solid #b58e4d;outline-offset:2px}
@@ -178,7 +178,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .expanded-grid button.user-choice{background:#eaf2fa;border-color:#8fb2d1}
 .expanded-predictions>button{margin-top:8px;width:100%}
 
-/* 0.1.10: placeholder surfaces are geometry-only until an on-demand page request. */
+/* Unloaded page shells contain geometry placeholders until detail is requested. */
 .page-shell:not(:has(.paper)){background:var(--paper);box-shadow:0 4px 18px #243a5422;border:1px solid #e3e1d9;}
 
 /* Artwork remains independent of logical word composition. */
@@ -227,11 +227,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .table-cell-word .sign{position:absolute;line-height:1;display:block;white-space:nowrap;user-select:none}
 .table-cell-error{font-size:10px;color:#b32436;padding:2px;overflow:hidden}
 
-.table-controls
-.table-controls label{display:grid;gap:4px}
-.table-controls input,.table-controls textarea{box-sizing:border-box;width:100%;font-family:inherit;border:1px solid #bdccda;border-radius:5px;padding:5px;background:#fff}
 
-.table-buttons button,#table-cell-save{padding:5px;min-width:0}
 
 .table-grid-editor button{min-width:0;min-height:26px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border:1px solid #bccbd5;background:#fafbfc;border-radius:4px;font-family:inherit}
 .table-grid-editor button.current{border:2px solid #285b91;background:#e8f3f9}
@@ -249,8 +245,6 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .cartouche-word{position:absolute;pointer-events:none}
 .cartouche-word .sign{position:absolute;white-space:nowrap;line-height:1;display:block;user-select:none}
 
-.cartouche-controls textarea{width:100%;min-height:55px;font-family:var(--gfont),sans-serif;font-size:17px;border:1px solid #cedde7;border-radius:8px;padding:7px}
-.cartouche-controls 
 
 /* Editor writing surface and native hieroglyph keyboard layout. */
 
@@ -308,7 +302,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .suggestions .evidence-tag,.expanded-grid .evidence-tag{position:absolute;right:4px;bottom:2px;font:600 9px system-ui,sans-serif;color:#426582;background:#e8f1f5;padding:1px 3px;border-radius:3px}
 
 /* Single approved square icon. */
-.library-logo,.editor-app-icon{border:0!important;box-shadow:none!important;background:transparent!important;object-fit:cover}
+.editor-app-icon{border:0!important;box-shadow:none!important;background:transparent!important;object-fit:cover}
 [hidden]{display:none!important}
 
 /* Rendered glyph ink always comes from canonical Python geometry. */
@@ -358,7 +352,6 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .object-inspector label{font-size:13px;overflow-wrap:anywhere}
 .object-inspector input,.object-inspector select,.object-inspector textarea{font-size:16px;max-width:100%;min-height:44px}
 .object-inspector .clipart-note{display:none}
-.object-inspector .table-buttons button{min-width:44px;min-height:44px}
 .object-inspector .artwork-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 /* Contextual document actions: close to the writing surface, never a
    blocking dialog. Avoid the keyboard launcher at the phone's lower-left. */
