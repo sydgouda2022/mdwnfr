@@ -831,6 +831,7 @@ function closeInsertSheet(){
  if(previous&&!previous.basePaper&&Number.isInteger(previous.pageIndex))
   void renderPageDetails(previous.pageIndex);
  $('insert-dialog-backdrop').hidden=true;
+ $('pages').style.paddingBottom='';
  $('insert-sheet-confirm').disabled=true;
  if(previous&&!previous.gestureOnly&&insertReturnFocus){
   const focus=insertReturnFocus.isConnected&&insertReturnFocus.getClientRects().length?insertReturnFocus:$('format-toggle');
@@ -860,6 +861,9 @@ async function beginInsertSheet(kind,existingId=null){
  $('object-quick-actions').hidden=true;
  $('word-quick-actions').hidden=true;
  $('insert-dialog-backdrop').hidden=false;
+ // At readable phone zoom, permit the viewport to bring on-page object
+ // handles above the non-modal picker without changing document geometry.
+ if(innerWidth<=720)$('pages').style.paddingBottom='max(42dvh,330px)';
  $('insert-sheet-title').textContent=(original?'Edit ':'Insert ')+
   ({clipart:'Clip Art',image:'Image',table:'Table',cartouche:'Cartouche'}[kind]);
  $('insert-sheet-confirm').textContent='Done';
@@ -1023,6 +1027,16 @@ function showDraftPage(d,page,placement){
   d.firstPositionShown=true;
   // Do not zoom the entire page into a tiny duplicate inspector.
   slot.shell.scrollIntoView({behavior:'auto',block:'nearest',inline:'nearest'});
+  if(innerWidth<=720){
+   requestAnimationFrame(()=>{
+    if(insertDraft!==d||d.dragging||!actual.isConnected)return;
+    const sheet=$('insert-sheet').getBoundingClientRect();
+    const handle=actual.querySelector('.art-resize.bottom-right')||actual;
+    const bounds=handle.getBoundingClientRect();
+    const overlap=bounds.bottom-sheet.top+18;
+    if(overlap>0)$('canvas-area').scrollTop+=overlap;
+   });
+  }
  }
 }
 function draftObjectPointerDown(e,d){
