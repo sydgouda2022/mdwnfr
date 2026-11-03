@@ -13,10 +13,13 @@ page.on('pageerror',e=>errors.push(e.message));
 page.setDefaultTimeout(30000);
 try{
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
-  assert.deepEqual(await page.locator('.library-toolbar > button').evaluateAll(
-    buttons=>buttons.map(button=>button.id)),['create-document'],
-    'Documents toolbar must expose only New Document');
-  assert.equal(await page.locator('#import-file').count(),0,
+  assert.equal(await page.locator('.library-toolbar > button').count(),0);
+   assert.equal(await page.locator('#create-document').getAttribute('aria-label'),'New document');
+   assert.equal((await page.locator('#create-document').textContent()).trim(),'');
+   assert.equal(await page.locator('.library-wordmark').textContent(),'𓌃𓄤𓂋𓆑');
+   const fab=await page.locator('#create-document').boundingBox();
+   assert.ok(fab&&fab.x>280&&fab.y>690,'The + button must float bottom-right');
+   assert.equal(await page.locator('#import-file').count(),0,
     'Removed document-import controls must not survive in the page');
   await page.waitForFunction(()=>document.querySelector('#create-document')?.disabled===false,
     {timeout:180000});
@@ -134,10 +137,14 @@ try{
   await page.locator('#library').click();
   await page.locator('#library-screen').waitFor({state:'visible',timeout:45000});
   await page.locator('#doc-list .document-open').first().waitFor({state:'visible'});
-  assert.deepEqual(await page.locator('#doc-list .document-actions button').evaluateAll(
-    buttons=>buttons.map(button=>button.textContent.trim())),['Rename','Delete'],
-    'Document cards expose only Rename and Delete');
-  await page.reload({waitUntil:'domcontentloaded',timeout:30000});
+  const more=page.locator('#doc-list .document-more').first();
+   assert.equal(await more.getAttribute('aria-expanded'),'false');
+   await more.click();
+   assert.deepEqual(await page.locator('#doc-list .document-menu:not([hidden]) button').allTextContents(),['Rename','Delete']);
+   await page.locator('.library-toolbar h2').click();
+   assert.equal(await page.locator('#doc-list .document-menu:not([hidden])').count(),0);
+   assert.equal(await page.locator('#doc-list .document-preview').count(),1);
+   await page.reload({waitUntil:'domcontentloaded',timeout:30000});
   await page.waitForFunction(()=>document.querySelector('#create-document')?.disabled===false,
     null,{timeout:180000});
   await page.locator('#doc-list .document-open').first().click();

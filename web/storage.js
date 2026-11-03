@@ -47,11 +47,30 @@ function pruneSnapshotMetadata(records,now,protectedKey=null){
 }
 
 let connection=null;
+// A small indexed Unicode snippet enables previews without loading embedded images.
+function previewWords(items){
+ const words=[];
+ function collect(arr){
+  if(!Array.isArray(arr))return;
+  for(const item of arr){
+   if(words.length>=12)break;
+   if(item.type==='word'&&Array.isArray(item.signs)){
+    const sequence=item.signs.filter(x=>typeof x==='string').slice(0,16).join('');
+    if(sequence)words.push(sequence);
+   }else if(item.type==='cartouche')collect(item.items);
+   else if(item.type==='table'&&Array.isArray(item.rows))
+    for(const row of item.rows)for(const cell of row){if(words.length>=12)break;collect(cell.items);}
+  }
+ }
+ collect(items);return words;
+}
 const summary=doc=>({id:doc.id,name:doc.name,revision:doc.revision,
-  surface:doc.surface,direction:doc.direction,
-  item_count:Array.isArray(doc.items)?doc.items.length:0,
-  word_count:Array.isArray(doc.items)?doc.items.filter(item=>item.type==='word').length:0,
-  created_at:doc.created_at||'',updated_at:doc.updated_at||''});
+ surface:doc.surface,direction:doc.direction,
+ item_count:Array.isArray(doc.items)?doc.items.length:0,
+ word_count:Array.isArray(doc.items)?doc.items.filter(item=>item.type==='word').length:0,
+ preview_words:previewWords(doc.items),
+ created_at:doc.created_at||'',updated_at:doc.updated_at||''});
+
 function database(){
  if(connection)return connection;
  connection=new Promise((resolve,reject)=>{

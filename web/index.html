@@ -17,28 +17,17 @@
 <div class="app" id="app">
   <!-- The Documents library is always the first screen. No editor is instantiated until open/create. -->
   <section id="library-screen" class="library-screen" aria-labelledby="library-title">
-    <header class="library-header">
-      <div class="library-header-inner">
-        <img class="library-logo" src="/icons/app-192.png" alt="" aria-hidden="true"/>
-        <div class="library-heading"><div class="library-overline">MDWNFR</div><h1 id="library-title">Documents</h1></div>
-        <span id="library-state" class="library-status" role="status">Loading documents…</span>
-      </div>
-    </header>
-    <main class="library-main">
-      <div class="library-toolbar">
-        <div><h2>My Documents</h2><p>Stored privately on this device</p></div>
-        <button id="create-document" class="create-document" type="button" disabled aria-label="Create a new document"><span class="create-plus" aria-hidden="true">+</span><span>New Document</span></button>
-      </div>
-      <p class="library-error" id="library-error" role="alert" hidden></p>
-      <p class="lexicon-notice" id="lexicon-notice" role="status" hidden></p>
-      <p class="lexicon-notice" id="offline-notice" role="status" hidden></p>
-      <div class="library-empty" id="library-empty" hidden>
-        <div class="library-empty-icon" aria-hidden="true">𓏞</div>
-        <h3>No documents yet</h3><p>Create your first hieroglyphic document using the + button.</p>
-      </div>
-      <div class="document-grid" id="doc-list" aria-label="Saved documents"></div>
-    </main>
-  </section>
+ <header class="library-header"><div class="library-header-inner"><span class="library-wordmark" lang="egy" aria-label="MdwNfr">𓌃𓄤𓂋𓆑</span><h1 id="library-title">Documents</h1><span id="library-state" class="library-status visually-hidden" role="status">Preparing editor…</span></div></header>
+ <main class="library-main">
+  <div class="library-toolbar"><h2>Recent</h2><span id="library-count" class="library-count" aria-live="polite"></span></div>
+  <p class="library-error" id="library-error" role="alert" hidden></p>
+  <p class="lexicon-notice" id="lexicon-notice" role="status" hidden></p>
+  <p class="lexicon-notice" id="offline-notice" role="status" hidden></p>
+  <div class="library-empty" id="library-empty" hidden><div class="library-empty-icon" aria-hidden="true">𓏞</div><h3>No documents yet</h3><p>Tap + to create your first document.</p></div>
+  <div class="document-grid" id="doc-list" aria-label="Recent documents"></div>
+ </main>
+ <button id="create-document" type="button" class="create-document library-create-fab" disabled aria-label="New document" title="New document"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+</section>
 
   <section id="editor-screen" class="editor-screen" aria-label="Hieroglyphic text editor" hidden>
     <header class="topbar editor-topbar">
