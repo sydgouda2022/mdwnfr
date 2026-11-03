@@ -440,8 +440,8 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         left = slot * width
         clearance = object_clearance_mm(width)
         nearby = [ob for ob in obstacles
-                  if ob[5] - clearance < left + width
-                  and ob[5] + ob[3] + clearance > left]
+                  if ob[4] - clearance < left + width
+                  and ob[4] + ob[2] + clearance > left]
 
         # A genuine jump in word origin represents artwork-separated sectors.
         # Tiny (five-decimal) serialization differences do not create sectors.
@@ -581,7 +581,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         lane_x=slot*width
         clearance=object_clearance_mm(width)
         nearby=[ob for ob in obstacles
-                if ob[5]-clearance<lane_x+width and ob[5]+ob[3]+clearance>lane_x]
+                if ob[4]-clearance<lane_x+width and ob[4]+ob[2]+clearance>lane_x]
         allowed=free_word_starts(shape,column_left=lane_x,
             top=top,bottom=bottom,clearance=clearance,obstacles=nearby,
             ink_expansion=max((g.font_size for g in shape.signs),default=0)*.006
