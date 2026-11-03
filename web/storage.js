@@ -187,7 +187,7 @@ async function mutateDocument(id,doc,expectedRevision=undefined){
      const canCapture=eligible&&bytes<=MAX_SNAPSHOT_BYTES;
      if(eligible&&bytes>MAX_SNAPSHOT_BYTES&&bytes<=MAX_LARGE_SNAPSHOT_BYTES)
       largeCandidate={document:previousDocument,at:now,bytes};
-     const updatedIndex={...summary(doc),created_at:oldIndex?.created_at||doc.created_at||new Date(now).toISOString(),updated_at:new Date(now).toISOString(),last_snapshot_at:oldIndex?.last_snapshot_at||0};
+     const updatedIndex={...summary(doc),...(oldIndex?.deleted_at?{deleted_at:oldIndex.deleted_at}:{}),created_at:oldIndex?.created_at||doc.created_at||new Date(now).toISOString(),updated_at:new Date(now).toISOString(),last_snapshot_at:oldIndex?.last_snapshot_at||0};
      docs.put(doc);
      if(canCapture){
       const key=snapshotKey(id,now),bytes=snapshotBytes(previousDocument);
