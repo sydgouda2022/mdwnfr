@@ -219,7 +219,7 @@ def reconcile_symbol_ids(existing: dict, signs: list[str]) -> list[str]:
 def validate_nested_position(obj: dict) -> None:
     """Layout preferences only; document objects never contain page coordinates.
 
-    0 is the legacy top/leading alignment. A relative alignment is stable when
+    Relative alignment is stable when
     the paper size or global typography changes.
     """
     offset = obj.get('x_offset_mm', 0.0)

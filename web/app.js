@@ -726,7 +726,6 @@ function renderPagesOverview(){
  panel.onscroll=virtual?()=>{if(!scheduled){scheduled=true;requestAnimationFrame(paintThumbnails);}}:null;
  paintThumbnails();
 }
-// Legacy v4 artwork is data only; the editor does not import any v4 code.
 async function ensureArtworkCatalog(){
  if(artworkEntries)return artworkEntries;
  const response=await fetch('/artwork/catalog.json',{cache:'force-cache'});

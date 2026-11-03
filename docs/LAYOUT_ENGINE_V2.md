@@ -3,7 +3,7 @@
 The document is an ordered array of persistent objects. Every object has an ID, a type and content-specific properties. Objects do not store page, column, line or viewport coordinates.
 
 - A text word is a quadrat object. Its signs are native Egyptian Unicode characters and its symbol_ids identify the corresponding symbol atoms in reading order. Editing preserves matching atom IDs and creates new IDs only for inserted glyphs.
-- Imported pre-v2 words without symbol_ids are still accepted. Atom IDs are derived deterministically from word ID and symbol index until an edit materializes them. Validation never mutates existing files.
+- All words require permanent symbol_ids. Documents lacking glyph IDs are rejected, not repaired.
 - Clip art, embedded images, tables and cartouches are persistent objects with unique IDs. Tables and cartouches contain their own word/quadrat IDs. Children are typeset within their owners.
 - Every non-text object exposes a measured silhouette and the same quarter-column clearance. It is a writing-region obstacle, not a permanently owned block of columns.
 - Quadrats are visited in stream order. The compositor finds the first fitting reading lane and legal origin, testing actual glyph ink against placed silhouettes. A gap is valid only when a whole quadrat cannot fit or filling it would violate sequence.

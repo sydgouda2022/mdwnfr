@@ -1,5 +1,5 @@
 /* One device-local IndexedDB. Library browsing never loads embedded image data.
-   No legacy migrations or old data conversion. */
+   Only the current canonical document schema is accepted. */
 const DB='mdwnfr-canonical-v1';
 const STORE='documents';
 const PROFILE='writing-profile';

@@ -14,13 +14,9 @@ from mdwnfr.layout import layout_document
 from mdwnfr.layout_sync import summarize_layout
 
 class QuadratWorkflowTests(unittest.TestCase):
-    def test_native_geometry_matches_rpc_without_reordering(self):
+    def test_native_geometry_retains_sign_order(self):
         for spelling in [['𓅓','𓏏'],['𓅓','𓏏','𓈖'],['𓅓','𓏏','𓈖','𓂋','𓊪']]:
-            response=json.loads(handle_json(json.dumps({
-                'method':'compose','signs':spelling,'width':20
-            },ensure_ascii=False)))
-            self.assertTrue(response['ok'],response)
-            shape=response['quadrat']
+            shape=compose(spelling,20).payload()
             self.assertEqual(shape,compose(spelling,20).payload())
             self.assertEqual([x['sign'] for x in shape['signs']],spelling)
             self.assertGreater(shape['height'],0)

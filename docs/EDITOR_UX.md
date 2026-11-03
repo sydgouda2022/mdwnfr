@@ -16,7 +16,7 @@ publishing suite. The document is the canvas; Python owns its geometry.
   numerals at the top. On phones it must leave writing space visible.
   The movable launcher retains reliable tap versus drag behavior.
 - **Object manipulation:** use on-page gestures and 44px handles with the
-  quarter-column silhouette clearance contract. No UI-only wrap decisions.
+  quarter-column silhouette clearance contract. No UI-only wrap decisions. Every image has one exact 256×256 opacity mask; old row-envelope approximations are not supported.
 - **Offline:** a complete Pyodide/font/lexicon installation is required.
   No account or remote user-document storage exists.
 

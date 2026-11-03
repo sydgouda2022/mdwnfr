@@ -226,13 +226,13 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .table-cell-word{position:absolute}
 .table-cell-word .sign{position:absolute;line-height:1;display:block;white-space:nowrap;user-select:none}
 .table-cell-error{font-size:10px;color:#b32436;padding:2px;overflow:hidden}
-.table-controls{margin:10px 0;border:1px solid #d6e1e9;border-radius:10px;padding:9px;display:grid;gap:8px;font-size:11px}
+
 .table-controls
 .table-controls label{display:grid;gap:4px}
 .table-controls input,.table-controls textarea{box-sizing:border-box;width:100%;font-family:inherit;border:1px solid #bdccda;border-radius:5px;padding:5px;background:#fff}
-.table-buttons{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
+
 .table-buttons button,#table-cell-save{padding:5px;min-width:0}
-.table-grid-editor{display:grid;gap:3px;max-height:220px;overflow:auto}
+
 .table-grid-editor button{min-width:0;min-height:26px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border:1px solid #bccbd5;background:#fafbfc;border-radius:4px;font-family:inherit}
 .table-grid-editor button.current{border:2px solid #285b91;background:#e8f3f9}
 
@@ -248,9 +248,9 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .cartouche-outline path{fill:none;stroke:#93672f;stroke-linejoin:round;stroke-linecap:round}
 .cartouche-word{position:absolute;pointer-events:none}
 .cartouche-word .sign{position:absolute;white-space:nowrap;line-height:1;display:block;user-select:none}
-.cartouche-controls{display:grid;gap:9px;margin:12px 0;font-size:12px;color:#355674}
+
 .cartouche-controls textarea{width:100%;min-height:55px;font-family:var(--gfont),sans-serif;font-size:17px;border:1px solid #cedde7;border-radius:8px;padding:7px}
-.cartouche-controls .table-buttons{display:flex;gap:8px}
+.cartouche-controls 
 
 /* Editor writing surface and native hieroglyph keyboard layout. */
 
@@ -311,7 +311,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .library-logo,.editor-app-icon{border:0!important;box-shadow:none!important;background:transparent!important;object-fit:cover}
 [hidden]{display:none!important}
 
-/* The composed preview draws Python-provided sign rectangles without reflow. */
+/* Rendered glyph ink always comes from canonical Python geometry. */
 
 
 .glyph-ink-svg{position:absolute;inset:0;display:block;width:100%;height:100%;overflow:visible;pointer-events:none}
@@ -459,7 +459,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .insert-action:disabled{opacity:.45;cursor:default}
 .insert-primary{background:#133b67;border-color:#133b67;color:white}
 .insert-sheet-footer{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:sticky;bottom:-12px;padding:8px 0 0;background:#fbfaf5}
-.insert-placement{display:none!important} /* Position and size are direct on-page gestures. */
+ /* Position and size are direct on-page gestures. */
 .insert-content-editor{display:grid;gap:6px;border-top:1px solid #d9e3eb;padding-top:8px}
 .insert-screen textarea{width:100%;min-height:62px;resize:vertical;border:1px solid #b8cad9;border-radius:10px;padding:8px;color:#142f4f;background:#fff;font:21px/1.5 var(--gfont);box-sizing:border-box}
 .insert-table-cell-grid{display:grid;grid-template-columns:repeat(var(--draft-cols,2),minmax(0,1fr));gap:3px;max-height:125px;overflow:auto}

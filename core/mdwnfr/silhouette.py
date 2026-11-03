@@ -237,9 +237,8 @@ def silhouettes_collide(first: dict, second: dict, clearance: float) -> bool:
     between the outer edges of occupied pixel cells; this conservative raster
     approximation never treats transparent holes as solid rectangles.
 
-    A missing/legacy mask falls back to rectangular clearance rather than
-    allowing unchecked overlaps. Mirroring is applied to pixels, not to the
-    rectangular envelope. Objects are not moved or resized by this function.
+    Both masks are mandatory. Mirroring applies to pixels, not bounding boxes.
+    Collision detection does not modify either object.
     """
     if clearance < 0:
         raise ValueError('Clearance must not be negative')

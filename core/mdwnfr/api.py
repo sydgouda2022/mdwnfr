@@ -1,10 +1,8 @@
 """JSON RPC boundary shared by native tests and browser Pyodide bridge."""
 from __future__ import annotations
 import json
-from .document import new_document, transaction, assert_document
+from .document import new_document, transaction
 from .layout import LayoutSession
-from .quadrat import compose
-from .history import recorded_transaction
 from .session import DocumentSession
 from .layout_sync import LayoutDocumentSession
 
@@ -25,8 +23,6 @@ def handle(request: dict) -> dict:
         return {"document":new_document(request.get("name","Untitled"))}
     if name=="transact":
         return {"document":transaction(request["document"],request["action"])}
-    if name=="transact_recorded":
-        return recorded_transaction(request["document"],request["action"])
     if name=="layout_open":
         return _layout_document_session.open(request["document"], request.get("metrics"),
                                              request.get("summary_only", False))
@@ -43,11 +39,6 @@ def handle(request: dict) -> dict:
     if name=="layout":
         layout, stats = _layout_session.calculate(request["document"], request.get("metrics"))
         return {"layout": layout, "layout_stats": stats}
-    if name=="compose":
-        return {"quadrat":compose(request["signs"],request["width"],request.get("metrics")).payload()}
-    if name=="validate":
-        assert_document(request["document"])
-        return {"valid":True}
     raise ValueError(f"Unknown RPC: {name}")
 
 

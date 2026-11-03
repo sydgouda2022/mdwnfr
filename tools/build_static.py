@@ -1,7 +1,4 @@
-"""Build a no-Node, Cloudflare-Pages-ready static folder from source.
-
-Deliberately never copies prior application code or an unrelated local DB.
-"""
+"""Build the single static Cloudflare Workers asset bundle from source."""
 from pathlib import Path
 from shutil import copy2
 import hashlib, json

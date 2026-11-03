@@ -16,7 +16,7 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCK = ROOT / "keyboard-lock.json"
-AGENT = {"User-Agent": "four-stream-migration-audit"}
+AGENT = {"User-Agent": "mdwnfr-keyboard-sync"}
 PREFIX = "https://raw.githubusercontent.com/{repo}/{sha}/{path}"
 
 def digest(b):
