@@ -118,15 +118,6 @@ def _apply_delta_in_place(document: dict, change: dict, revision: int) -> None:
     document['revision'] = revision
 
 
-def apply_canonical_delta(document: dict, change: dict, revision: int) -> dict:
-    """Replay one delta immutably, preserving all permanent object IDs."""
-    candidate = document.copy()
-    candidate['items'] = document['items'].copy()
-    _apply_delta_in_place(candidate, change, revision)
-    assert_document(candidate)
-    return candidate
-
-
 class LayoutDocumentSession:
     """One document/layout snapshot per worker; strict revision-gap recovery."""
     def __init__(self):

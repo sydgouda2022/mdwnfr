@@ -30,6 +30,8 @@ independent edit and layout workers to keep the writing surface responsive.
 
 ## Run and publish
 
+The application version is defined once in `pyproject.toml`.
+
 CI requires Python 3.12, Node 24, pinned Pyodide, and the licensed hieroglyph
 font. The build fingerprints **all** packaged assets and refuses incomplete
 offline installation manifests. All application editing and prediction happen
