@@ -659,6 +659,7 @@ let keyboardWasDragged=false;
   }catch(_){}
  }
  requestAnimationFrame(restore);
+ window.addEventListener('mdwnfr-editor-open',restore);
  window.addEventListener('resize',()=>{restore();constrain();});
  window.visualViewport?.addEventListener('resize',constrain);
  owl.addEventListener('pointerdown',e=>{
@@ -1895,6 +1896,7 @@ function showEditor(){
  if(insertDraft)closeInsertSheet();
  libraryScreen.hidden=true;editorScreen.hidden=false;closePanels();
  document.title='MdwNfr — '+doc.name;
+ requestAnimationFrame(()=>window.dispatchEvent(new Event('mdwnfr-editor-open')));
 }
 function setLibraryBusy(value){
  libraryBusy=value;$('create-document').disabled=value||!ready;
