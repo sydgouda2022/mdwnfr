@@ -38,7 +38,7 @@ verified against the current hash and complete offline inventory. A git push
 or successful CI check alone does not mean a new build is live.
 
 See `docs/EDITOR_UX.md`, `docs/KEYBOARD_INTEGRATION.md`,
-`docs/LAYOUT_ENGINE_V2.md`, `docs/RECOVERY_AND_CLIPBOARD.md`, and
+`docs/LAYOUT_ENGINE.md`, `docs/RECOVERY_AND_CLIPBOARD.md`, and
 `docs/DEPLOYMENT.md` for current contracts and limitations.
 
 Emergency unsaved JSON downloads do not currently have a restore/import UI.

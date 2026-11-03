@@ -88,8 +88,7 @@ def stage(name, sha):
         raise ValueError("Upstream spelling count regression")
     files = {
         "web/lexicon/lexicon.json": catalog,
-        "web/lexicon/manifest.json": manifest_bytes,
-        "web/lexicon/coverage.json": get("release/coverage.json")
+        "web/lexicon/manifest.json": manifest_bytes
     }
     for module in ("keyboard_api.mjs", "keyboard_search.mjs",
                    "keyboard_catalog.js", "lexicon_install.mjs"):

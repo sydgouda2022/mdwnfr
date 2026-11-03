@@ -1,4 +1,4 @@
-# MdwNfr Layout Engine 2 — object sequence contract
+# MdwNfr canonical layout engine — object sequence contract
 
 The document is an ordered array of persistent objects. Every object has an ID, a type and content-specific properties. Objects do not store page, column, line or viewport coordinates.
 
@@ -16,7 +16,7 @@ Current documents contain persistent symbol_ids for every word. Compact page det
 
 Performance: Changes after a proven independent fixed-paper page boundary reuse the unchanged preceding pages and recompose only the remaining stream; otherwise layout reflows from the beginning. Cached quadrat composition is retained. Inside a pass, the compositor reuses legal glyph origins for repeated spellings within unchanged obstacle fields, indexes completed word ink by reading column when evaluating artwork anchors, and intersects divider spans with a linear sweep. These are **search optimizations only**: they must not change the canonical layout geometry or introduce another wrapping engine. Identical streams reuse their completed snapshots.
 
-Use `PYTHONPATH=core python tools/benchmark_layout_v2.py --words 2000 --artworks 8` to record full layout, midstream insertion, and compact projection timings on comparable hardware. The Python unit suite checks indexed-anchor and divider parity against unindexed reference calculations and verifies large mixed-document order and full/compact equivalence. Performance numbers are diagnostic, not fixed CI gates, because runners vary.
+Use `PYTHONPATH=core python tools/benchmark_layout.py --words 2000 --artworks 8` to record full layout, midstream insertion, and compact projection timings on comparable hardware. The Python unit suite checks indexed-anchor and divider parity against unindexed reference calculations and verifies large mixed-document order and full/compact equivalence. Performance numbers are diagnostic, not fixed CI gates, because runners vary.
 
 
 ## Completed-page prefix reuse
@@ -36,7 +36,7 @@ reused column count and first recomputed object index reported explicitly.
 All original object IDs, symbols and glyph ink geometry remain authoritative.
 
 Benchmark a late edit on a multi-page document with:
-`PYTHONPATH=core python tools/benchmark_layout_v2.py --surface A4 --font-size 18 --words 1000 --artworks 4 --edit-at 0.9`.
+`PYTHONPATH=core python tools/benchmark_layout.py --surface A4 --font-size 18 --words 1000 --artworks 4 --edit-at 0.9`.
 This measures incremental and full recomposition independently and checks
 the results for exact equality, but timing varies with hardware. Compact and
 detailed page parity and invalidation scenarios are covered by
@@ -59,7 +59,7 @@ affect layout and invalidate this path. There is no new persisted format or
 independent browser geometry. This optimization also works on papyrus because
 it does not depend on finished-page boundaries.
 
-Run `PYTHONPATH=core python tools/benchmark_layout_v2.py --surface papyrus --words 900 --artworks 6 --edit-kind color --require-style-reuse`
+Run `PYTHONPATH=core python tools/benchmark_layout.py --surface papyrus --words 900 --artworks 6 --edit-kind color --require-style-reuse`
 to compare the edit cost against a full composition, with exact geometry parity
 checked each time.
 
@@ -77,7 +77,7 @@ browser wrapping rules, saved positions or compatibility layer.
 The regression test `qa/test_silhouette_projection_cache.py` directly compares
 the cached calculation against the original row-by-row method for real
 Bennu, Horus and Amun masks, including LTR/RTL document reflow. Benchmark
-using `PYTHONPATH=core python tools/benchmark_layout_v2.py --surface papyrus --words 900 --artworks 6 --edit-kind insert`.
+using `PYTHONPATH=core python tools/benchmark_layout.py --surface papyrus --words 900 --artworks 6 --edit-kind insert`.
 The benchmark reports the projection cache hits and misses alongside
 end-to-end layout timings. The numerical speedup depends on the document
 and font geometry; it is not a fixed contractual threshold.

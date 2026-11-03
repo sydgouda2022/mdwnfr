@@ -1,7 +1,7 @@
 """Reproducible layout throughput and geometry benchmark (no pass/fail timing gate).
 
 Run from the repo root:
-  PYTHONPATH=core python tools/benchmark_layout_v2.py --words 2000 --artworks 8
+  PYTHONPATH=core python tools/benchmark_layout.py --words 2000 --artworks 8
 
 Uses actual deterministic document models and real silhouette data. Timings
 depend on CPU and should be compared on the same environment and Python.
