@@ -100,6 +100,16 @@ class ObjectSequenceLayout(unittest.TestCase):
         undone=transaction(result['document'],result['undo'])
         self.assertEqual(undone['items'][0]['symbol_ids'],ids)
 
+    def test_paper_to_papyrus_has_one_canonical_margin(self):
+        from mdwnfr.document import transaction, assert_document
+        doc=new_document('Single papyrus margin')
+        doc=transaction(doc,{'op':'set_document','margins_mm':
+            {'top':12,'bottom':24,'left':20,'right':8}})
+        changed=transaction(doc,{'op':'set_document','surface':'papyrus'})
+        self.assertEqual(changed['margins_mm'],
+            {'top':20,'bottom':20,'left':20,'right':20})
+        assert_document(changed)
+
     def test_missing_symbol_ids_are_rejected(self):
         from mdwnfr.document import assert_document, DocumentError
         doc=new_document('Strict glyph identity')

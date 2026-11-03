@@ -636,10 +636,13 @@ def transaction(document: dict, action: dict) -> dict:
         if not 80 <= float(result["papyrus_height_mm"]) <= 2000:
             raise DocumentError("Papyrus height outside allowed range")
         if result['surface'] == 'papyrus':
-            # Canonicalize every edited/surface-switched papyrus. Pre-existing
-            # asymmetric documents still open; validation reads them using
-            # the same effective symmetric margins without silent mutation.
-            result['margins_mm'] = validated_margins(result)
+            # A papyrus has one margin on every side. Convert the current
+            # editing choice explicitly before validating the new document.
+            raw = result['margins_mm']
+            if not isinstance(raw, dict) or set(raw) != set(DEFAULT_MARGINS_MM):
+                raise DocumentError('All four page margins are required')
+            edge = raw['left']
+            result['margins_mm'] = {name: edge for name in DEFAULT_MARGINS_MM}
     else:
         raise DocumentError(f"Unknown command: {op}")
     result["revision"] += 1
