@@ -2998,6 +2998,62 @@ async function deleteDocument(id){
  catch(e){showLibraryError('Could not delete document: '+e.message);}
  finally{setLibraryBusy(false);}
 }
+const BACKUP_FORMAT='mdwnfr-document';
+const BACKUP_MAX_BYTES=120*1024*1024;
+function downloadEditableBackup(record){
+ if(!record)throw Error('No document to export');
+ const payload=JSON.stringify({format:BACKUP_FORMAT,schema:1,document:record});
+ const safeName=(record.name||'document').replace(/[^a-z0-9_-]+/gi,'-').slice(0,60)||'document';
+ const url=URL.createObjectURL(new Blob([payload],{type:'application/json'}));
+ const anchor=document.createElement('a');anchor.href=url;anchor.download=safeName+'.mdwnfr';
+ document.body.append(anchor);anchor.click();anchor.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+$('library-import').onclick=()=>$('library-import-file').click();
+$('library-import-file').onchange=async event=>{
+ const file=event.target.files?.[0];event.target.value='';
+ if(!file||!ready||libraryBusy)return;
+ setLibraryBusy(true);showLibraryError();
+ try{
+  if(file.size>BACKUP_MAX_BYTES)throw Error('Backup exceeds the 120 MiB file limit');
+  const value=JSON.parse(await file.text());
+  // The raw form is supported for emergency backups produced by MdwNfr.
+  const record=value?.format===BACKUP_FORMAT&&value.schema===1?value.document:value;
+  if(record?.schema!==1||!Array.isArray(record?.items))
+   throw Error('Not a current MdwNfr document backup');
+  const response=await rpc('import_document',{document:record});
+  await save(response.document,null);
+  await renderDocList();
+ }catch(error){showLibraryError('Import failed: '+error.message);}
+ finally{setLibraryBusy(false);}
+};
+async function showTrash(){
+ const panel=$('library-trash-dialog'),root=$('library-trash-items');
+ const entries=await listTrash();root.replaceChildren();
+ if(!entries.length)root.textContent='Trash is empty.';
+ for(const entry of entries){
+  const row=document.createElement('div');row.className='trash-entry';
+  const title=document.createElement('strong');title.textContent=entry.name;
+  const restore=document.createElement('button');restore.type='button';restore.textContent='Restore';
+  restore.onclick=async()=>{try{await restoreFromTrash(entry.id,entry.revision);await renderDocList();await showTrash();}
+   catch(error){showLibraryError('Restore failed: '+error.message);}};
+  const purge=document.createElement('button');purge.type='button';purge.textContent='Delete forever';
+  purge.onclick=async()=>{
+   panel.hidden=true;
+   const decision=await modal({title:'Delete permanently?',description:'Delete “'+entry.name+'” and its local checkpoints permanently?',action:'Delete forever',destructive:true});
+   if(decision.confirmed){try{await remove(entry.id,entry.revision);}
+    catch(error){showLibraryError('Permanent deletion failed: '+error.message);}}
+   await showTrash();
+  };
+  row.append(title,restore,purge);root.append(row);
+ }
+ panel.hidden=false;$('library-trash-close').focus();
+}
+$('library-trash').onclick=()=>{void showTrash().catch(e=>showLibraryError('Trash unavailable: '+e.message));};
+$('library-trash-close').onclick=()=>$('library-trash-dialog').hidden=true;
+$('library-trash-dialog').addEventListener('click',e=>{
+ if(e.target===$('library-trash-dialog'))$('library-trash-dialog').hidden=true;
+});
 function closeLibraryMenus(){
  for(const more of document.querySelectorAll('#doc-list .document-more')){
   more.setAttribute('aria-expanded','false');
@@ -3108,17 +3164,10 @@ async function showOfflineReadiness(){
 }
 if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('controllerchange',()=>{void showOfflineReadiness();});
 
-// Export an unsaved conflict copy with a new document ID so it can be
-// retained as an emergency external copy; the current library has no importer.
+// Emergency backups use the current schema and the same validated import path.
 function downloadUnsavedDocumentCopy(){
- if(!doc)throw new Error('No document to export');
- const copy={...structuredClone(doc),id:crypto.randomUUID().replaceAll('-',''),
-  name:(doc.name+' (recovered)').slice(0,120),revision:0};
- const url=URL.createObjectURL(new Blob([JSON.stringify(copy,null,2)],{type:'application/json'}));
- const link=document.createElement('a');link.href=url;
- link.download='mdwnfr-recovery-'+copy.id+'.mdwnfr.json';
- document.body.append(link);link.click();link.remove();
- setTimeout(()=>URL.revokeObjectURL(url),60000);
+ if(!doc)throw Error('No document to export');
+ downloadEditableBackup(doc);
 }
 $('export-unsaved').onclick=()=>{try{downloadUnsavedDocumentCopy();}catch(e){status('Recovery export failed: '+e.message,true);}};
 window.addEventListener('beforeunload',event=>{
