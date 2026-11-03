@@ -9,19 +9,6 @@ DEST=ROOT/'dist'
 if DEST.exists():rmtree(DEST)
 copytree(ROOT/'web',DEST,ignore=ignore_patterns('__pycache__','*.pyc','.DS_Store'))
 copytree(ROOT/'core',DEST/'core',ignore=ignore_patterns('__pycache__','*.pyc','.DS_Store'))
-# Startup can detect when a newly activated worker owns a different HTML schema.
-# Hash source bytes before inserting the marker, avoiding a circular fingerprint.
-# Fingerprint the entire deployed source, including layout, storage and runtime.
-digest=hashlib.sha256()
-for asset in sorted(p for p in DEST.rglob('*') if p.is_file()):
-    digest.update(asset.relative_to(DEST).as_posix().encode('utf-8'))
-    digest.update(b'\0')
-    digest.update(hashlib.sha256(asset.read_bytes()).digest())
-release=digest.hexdigest()[:16]
-index=DEST/'index.html'
-index.write_text(index.read_text(encoding='utf-8').replace(
-    'name="mdwnfr-build" content="development"',
-    f'name="mdwnfr-build" content="{release}"'),encoding='utf-8')
 # The runtime is self-hosted. A release without the licensed font is invalid.
 font=ROOT/'web/assets/fonts/hieroglyphs.woff2'
 if not font.is_file() or font.stat().st_size<1000 or font.read_bytes()[:4]!=b'wOF2':
@@ -76,6 +63,22 @@ print('Built:',DEST)
 runtime=inspect()
 (DEST/'runtime-status.json').write_text(json.dumps(runtime,sort_keys=True,separators=(',',':')),encoding='utf-8')
 print('Offline runtime:', 'READY' if runtime['offline_ready'] else 'NOT READY (development/CDN only)')
+
+# Runtime status, pinned keyboard metadata and the verified artwork catalog
+# are part of the release. Hash only after generating these deterministic
+# files, but before writing release-specific HTML and service-worker data,
+# which would otherwise create a circular fingerprint.
+digest=hashlib.sha256()
+for asset in sorted(p for p in DEST.rglob('*') if p.is_file()):
+    digest.update(asset.relative_to(DEST).as_posix().encode('utf-8'))
+    digest.update(b'\0')
+    digest.update(hashlib.sha256(asset.read_bytes()).digest())
+release=digest.hexdigest()[:16]
+index=DEST/'index.html'
+index.write_text(index.read_text(encoding='utf-8').replace(
+    'name="mdwnfr-build" content="development"',
+    f'name="mdwnfr-build" content="{release}"'),encoding='utf-8')
+
 
 # Publish an integrity-checked atomic offline precache inventory.
 from offline_publication import publish
