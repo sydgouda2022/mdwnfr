@@ -655,7 +655,7 @@ class ArtworkWordFlow(unittest.TestCase):
         # Two 2-mm opaque legs, with a genuinely transparent 12-mm channel.
         bits=((1<<32)-1)<<224 | (1<<32)-1
         mask=base64.b64encode(bits.to_bytes(32,'big')*256).decode('ascii')
-        obstacle=(None,None,mask,width,80,0,'normal',20)
+        obstacle=(None,mask,width,80,0,'normal',20)
         q=compose(['𓏺'],width)
         clear=object_clearance_mm(width)
         self.assertEqual(clear,width/4)
@@ -675,7 +675,7 @@ class ArtworkWordFlow(unittest.TestCase):
         edge=g.x+g.width+clear
         def fits(x):
             starts=free_word_starts(q,column_left=0,top=18,bottom=100,
-                clearance=clear,obstacles=[(None,None,solid_object_mask(),4,80,x,'normal',18)])
+                clearance=clear,obstacles=[(None,solid_object_mask(),4,80,x,'normal',18)])
             return any(a<=40<=b for a,b in starts)
         self.assertTrue(fits(edge))
         self.assertFalse(fits(edge-.1))
