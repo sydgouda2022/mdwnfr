@@ -18,7 +18,7 @@ for(const [name,engine,width,height] of [
  page.on('pageerror',error=>errors.push(error.message));
  const read=()=>page.evaluate(async()=>{
   const db=await new Promise((ok,bad)=>{
-   const r=indexedDB.open('mdwnfr-canonical-v1',1);
+   const r=indexedDB.open('mdwnfr-documents',1);
    r.onsuccess=()=>ok(r.result);r.onerror=()=>bad(r.error);
   });
   try{return await new Promise((ok,bad)=>{
@@ -54,7 +54,7 @@ for(const [name,engine,width,height] of [
   // stable ID; the Python engine still validates and composes the result.
   await page.evaluate(async()=>{
    const db=await new Promise((ok,bad)=>{
-    const r=indexedDB.open('mdwnfr-canonical-v1',1);
+    const r=indexedDB.open('mdwnfr-documents',1);
     r.onsuccess=()=>ok(r.result);r.onerror=()=>bad(r.error);
    });
    try{

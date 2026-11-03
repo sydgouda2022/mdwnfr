@@ -13,7 +13,7 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
    await page.locator('#create-document').click();
    await page.locator('#editor-screen').waitFor({state:'visible'});
    const saved=()=>page.evaluate(async()=>{
-    const db=await new Promise((ok,bad)=>{const r=indexedDB.open('mdwnfr-canonical-v1',1);r.onsuccess=()=>ok(r.result);r.onerror=()=>bad(r.error)});
+    const db=await new Promise((ok,bad)=>{const r=indexedDB.open('mdwnfr-documents',1);r.onsuccess=()=>ok(r.result);r.onerror=()=>bad(r.error)});
     try{return await new Promise((ok,bad)=>{
      const r=db.transaction('documents','readonly').objectStore('documents').getAll();
      r.onsuccess=()=>ok(r.result[0]);r.onerror=()=>bad(r.error)
