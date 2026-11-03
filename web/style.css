@@ -550,3 +550,17 @@ button:disabled{opacity:.42;cursor:not-allowed}
  .editor-screen .bottom-bar #revision{display:none}
 }
 @media(max-height:670px){.keyboard-panel{height:min(48dvh,315px)}.keyboard-panel .key{height:34px}}
+
+/* Unified share menu; maintain clearance for movable keyboard activation icon. */
+.share-panel{top:calc(70px + env(safe-area-inset-top));right:12px;width:min(290px,calc(100vw - 24px));padding:10px 14px 14px;border-radius:17px;background:#fff;z-index:35;box-shadow:0 16px 35px #12334e29}
+.share-panel .floating-panel-heading{margin-bottom:6px}
+.share-action{display:block;text-align:left;width:100%;min-height:44px;padding:9px 11px;border:0;border-radius:9px;background:#fff;color:#21496b;font-weight:600}
+.share-action:hover,.share-action:focus-visible{background:#eef4f8}
+.share-note{font-size:11px;line-height:1.4;color:#718497;margin:10px 3px 0}
+.keyboard-panel{bottom:calc(101px + env(safe-area-inset-bottom))}
+@media(max-width:720px){.editor-topbar{gap:1px}.editor-topbar .icon-control{min-width:40px;width:40px;padding:7px}.editor-topbar .doc-title{font-size:14px}.share-panel{top:calc(64px + env(safe-area-inset-top));right:6px}.keyboard-panel{bottom:calc(99px + env(safe-area-inset-bottom))}}
+@media print{
+ .editor-topbar,.bottom-bar,.keyboard-launcher,.keyboard-panel,.floating-panel,.dialog-backdrop,.object-quick-actions,.edit-menu,.insert-dialog-backdrop,.range-handle{display:none!important}
+ html,body,.app,.editor-screen,.workspace,.canvas-area{height:auto!important;max-height:none!important;overflow:visible!important;background:white!important}
+ .editor-screen .pages{gap:0}.editor-screen .page-shell{break-after:page;filter:none}.editor-screen .paper{border:0;transform:none!important}
+}

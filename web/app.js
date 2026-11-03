@@ -535,8 +535,8 @@ let libraryBusy=false;
 const libraryScreen=$('library-screen');
 const editorScreen=$('editor-screen');
 // Exactly one floating inspector is visible at a time; panels never resize the page.
-const PANELS={pages:'pages-panel',format:'format-panel',keyboard:'keyboard-panel'};
-const TRIGGERS={pages:'pages-toggle',format:'format-toggle',keyboard:'keyboard-toggle'};
+const PANELS={pages:'pages-panel',format:'format-panel',keyboard:'keyboard-panel',share:'share-panel'};
+const TRIGGERS={pages:'pages-toggle',format:'format-toggle',keyboard:'keyboard-toggle',share:'share-toggle'};
 let activePanel=null;
 let selectedColour='#1f4ba8';
 function setFormatView(view='main'){
@@ -568,6 +568,18 @@ for(const kind of Object.keys(TRIGGERS)){
   switchPanel(kind);
  });
 }
+
+function textForSharing(items){
+ return (items||[]).map(item=>{
+  if(item.type==='word')return (item.signs||[]).map(s=>typeof s==='string'?s:(s.glyph||s.sign||'')).join('');
+  if(item.type==='cartouche')return '𓍹'+textForSharing(item.items)+'𓍺';
+  if(item.type==='table')return (item.rows||[]).map(row=>row.map(cell=>textForSharing(cell.items)).join('\t')).join('\n');
+  return '';
+ }).filter(Boolean).join(' ');
+}
+$('share-copy').onclick=async()=>{if(!doc)return;try{await navigator.clipboard.writeText(textForSharing(doc.items));status('Text copied');closePanels();}catch(e){status('Copy failed: '+e.message,true);}};
+$('share-native').onclick=async()=>{if(!doc)return;try{const text=textForSharing(doc.items);if(navigator.share)await navigator.share({title:doc.name,text});else{await navigator.clipboard.writeText(text);status('Sharing unavailable: text copied');}closePanels();}catch(e){if(e.name!=='AbortError')status('Share failed: '+e.message,true);}};
+$('share-print').onclick=()=>{closePanels();window.print();};
 document.addEventListener('pointerdown',e=>{
  if(!e.target.closest('#edit-menu'))hideEditMenu();
  if(!activePanel||editorScreen.hidden)return;
