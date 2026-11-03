@@ -48,6 +48,16 @@ function pruneSnapshotMetadata(records,now,protectedKey=null){
 
 let connection=null;
 // A small indexed Unicode snippet enables previews without loading embedded images.
+export function countWords(items){
+ if(!Array.isArray(items))return 0;
+ return items.reduce((total,item)=>{
+  if(item.type==='word')return total+1;
+  if(item.type==='cartouche')return total+countWords(item.items);
+  if(item.type==='table')return total+(item.rows||[]).reduce((sum,row)=>sum+
+   row.reduce((n,cell)=>n+(cell.mode==='text'?countWords(cell.items):0),0),0);
+  return total;
+ },0);
+}
 function previewWords(items){
  const words=[];
  function collect(arr){
@@ -67,7 +77,8 @@ function previewWords(items){
 const summary=doc=>({id:doc.id,name:doc.name,revision:doc.revision,
  surface:doc.surface,direction:doc.direction,
  item_count:Array.isArray(doc.items)?doc.items.length:0,
- word_count:Array.isArray(doc.items)?doc.items.filter(item=>item.type==='word').length:0,
+ word_count:countWords(doc.items),
+ object_types:[...new Set((doc.items||[]).filter(item=>item.type!=='word').map(item=>item.type))],
  preview_words:previewWords(doc.items),
  created_at:doc.created_at||'',updated_at:doc.updated_at||''});
 
@@ -266,7 +277,36 @@ export async function restoreSnapshot(id,key,expectedRevision=undefined){
  });
 }
 export async function load(id){return operation('readonly',s=>s.get(id));}
-export async function list(){return operation('readonly',s=>s.getAll(),INDEX);}
+export async function list(){
+ return (await operation('readonly',s=>s.getAll(),INDEX)).filter(item=>!item.deleted_at);
+}
+export async function listTrash(){
+ return (await operation('readonly',s=>s.getAll(),INDEX)).filter(item=>!!item.deleted_at);
+}
+// Trash is a flag on the current metadata index, so moving into Trash never
+// rewrites a validated document or destroys its existing recovery snapshots.
+async function changeTrash(id,expectedRevision,deleted){
+ const db=await database();
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction([STORE,INDEX],'readwrite');
+  const docReq=tx.objectStore(STORE).get(id),index=tx.objectStore(INDEX),indexReq=index.get(id);
+  let done=0;
+  function ready(){
+   if(++done!==2)return;
+   const doc=docReq.result,summary=indexReq.result;
+   if(!doc||!summary||doc.revision!==expectedRevision){tx.abort();return;}
+   if(deleted)summary.deleted_at=new Date().toISOString();
+   else delete summary.deleted_at;
+   index.put(summary);
+  }
+  docReq.onsuccess=ready;indexReq.onsuccess=ready;
+  tx.oncomplete=()=>resolve();
+  tx.onerror=()=>reject(tx.error||Error('Trash update failed'));
+  tx.onabort=()=>reject(Error('Document changed in another tab; reload and try again'));
+ });
+}
+export async function moveToTrash(id,revision){return changeTrash(id,revision,true);}
+export async function restoreFromTrash(id,revision){return changeTrash(id,revision,false);}
 export async function remove(id,expectedRevision){return mutateDocument(id,null,expectedRevision);}
 export async function loadProfile(){return (await operation('readonly',s=>s.get('profile'),PROFILE))||null;}
 // Atomic cross-tab profile operations: every change starts from persisted data.
