@@ -565,7 +565,7 @@ function closePanels(){if(activePanel)switchPanel(null);}
 function keepWritingTargetVisible(){
  if(activePanel!=='keyboard'||editorScreen.hidden)return;
  const canvas=$('canvas-area'),panel=$('keyboard-panel');
- const target=canvas.querySelector('.word.selected,.insertion-caret,.word');
+ const target=canvas.querySelector('.word.selected')||canvas.querySelector('.insertion-caret')||[...canvas.querySelectorAll('.word')].at(-1);
  if(!target)return;
  const box=target.getBoundingClientRect(),area=canvas.getBoundingClientRect();
  const limit=Math.min(area.bottom,panel.getBoundingClientRect().top)-14;
