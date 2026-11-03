@@ -49,7 +49,8 @@ let selectionAnchorId=null,selectionFocusId=null;
 let internalClipboard=null;
 const RICH_MIME='application/x-mdwnfr-fragment+json';
 let suppressWordClick=false,suppressPaperClick=false;
-let buffer=[],activeGroup='unilaterals',zoom=1,zoomChoice='fit-page',layoutVersion=0;
+let buffer=[],activeGroup='unilaterals',zoom=1,zoomChoice=innerWidth<=720?'1':'fit-page',layoutVersion=0;
+let alignInitialWritingSurface=false;
 let queuedLayout=null,layoutInFlight=false;
 // Python layout worker owns a revisioned shadow document. Ordinary edits send
 // only editor-authorized deltas; never transfer the full document for reflow.
@@ -557,9 +558,22 @@ function switchPanel(name=null){
  }
  if(activePanel==='pages')renderPagesOverview();
  if(activePanel==='format')updateFormatState();
+ if(activePanel==='keyboard')requestAnimationFrame(keepWritingTargetVisible);
  updateObjectQuickActions();
 }
 function closePanels(){if(activePanel)switchPanel(null);}
+function keepWritingTargetVisible(){
+ if(activePanel!=='keyboard'||editorScreen.hidden)return;
+ const canvas=$('canvas-area'),panel=$('keyboard-panel');
+ const target=canvas.querySelector('.word.selected,.insertion-caret,.word');
+ if(!target)return;
+ const box=target.getBoundingClientRect(),area=canvas.getBoundingClientRect();
+ const limit=Math.min(area.bottom,panel.getBoundingClientRect().top)-14;
+ if(box.bottom>limit)canvas.scrollTop+=box.bottom-limit+12;
+ else if(box.top<area.top+8)canvas.scrollTop-=area.top+8-box.top;
+ if(box.right>area.right-14)canvas.scrollLeft+=box.right-area.right+24;
+ else if(box.left<area.left+14)canvas.scrollLeft-=area.left+24-box.left;
+}
 // Switch icons own their clicks. Any click/tap outside the active panel closes it.
 for(const kind of Object.keys(TRIGGERS)){
  $(TRIGGERS[kind]).addEventListener('click',()=>{
@@ -620,6 +634,33 @@ let keyboardWasDragged=false;
 // Optional draggable owl, with normal tap semantics preserved.
 {
  const owl=$('keyboard-toggle');let drag=null;
+ const POSITION_KEY='mdwnfr-keyboard-launcher-position';
+ function constrain(){
+  if(!owl.style.left&&!owl.style.top)return;
+  const rect=owl.getBoundingClientRect();
+  owl.style.left=Math.max(8,Math.min(innerWidth-owl.offsetWidth-8,parseFloat(owl.style.left)||rect.left))+'px';
+  owl.style.top=Math.max(8,Math.min(innerHeight-owl.offsetHeight-8,parseFloat(owl.style.top)||rect.top))+'px';
+  owl.style.bottom='auto';
+ }
+ function restore(){
+  try{
+   const point=JSON.parse(localStorage.getItem(POSITION_KEY)||'null');
+   if(!point||!Number.isFinite(point.x)||!Number.isFinite(point.y))return;
+   owl.style.left=Math.round(Math.max(0,Math.min(1,point.x))*(innerWidth-owl.offsetWidth))+'px';
+   owl.style.top=Math.round(Math.max(0,Math.min(1,point.y))*(innerHeight-owl.offsetHeight))+'px';
+   constrain();
+  }catch(_){}
+ }
+ function remember(){
+  try{const rect=owl.getBoundingClientRect();
+   localStorage.setItem(POSITION_KEY,JSON.stringify({
+    x:rect.left/Math.max(1,innerWidth-rect.width),
+    y:rect.top/Math.max(1,innerHeight-rect.height)}));
+  }catch(_){}
+ }
+ requestAnimationFrame(restore);
+ window.addEventListener('resize',()=>{restore();constrain();});
+ window.visualViewport?.addEventListener('resize',constrain);
  owl.addEventListener('pointerdown',e=>{
   if(e.button!==0)return;
   const rect=owl.getBoundingClientRect();
@@ -636,7 +677,7 @@ let keyboardWasDragged=false;
  });
  owl.addEventListener('pointerup',e=>{
   if(drag?.id===e.pointerId){
-   if(drag.moved){keyboardWasDragged=true;setTimeout(()=>{keyboardWasDragged=false;},0);}
+   if(drag.moved){keyboardWasDragged=true;remember();setTimeout(()=>{keyboardWasDragged=false;},0);}
    drag=null;
   }
  });
@@ -1978,7 +2019,7 @@ async function openDocument(id){
   resetLayoutSynchronization();repairedDetailRevisions.clear();doc=entry;
   persistedDocumentId=entry.id;persistedRevision=entry.revision;selectedTableCell=null;selectedId=null;selectionAnchorId=null;selectionFocusId=null;editingId=null;buffer=[];canUndo=false;canRedo=false;layoutCache=null;
   caretIndex=doc.items.length;
-  showEditor();refreshZoomOptions();setUiFromDoc();drawKeys();renderComposer();
+  showEditor();alignInitialWritingSurface=true;refreshZoomOptions();setUiFromDoc();drawKeys();renderComposer();
   await reflow();
  }catch(e){
   showLibrary();showLibraryError('Unable to open document: '+e.message);
@@ -2265,6 +2306,10 @@ function paint(layout){
   renderPageDetails(0);
  }
  scrollArea.scrollTop=previousTop;scrollArea.scrollLeft=previousLeft;
+ if(alignInitialWritingSurface){
+  alignInitialWritingSurface=false;
+  if(innerWidth<=720&&doc?.direction==='rtl')scrollArea.scrollLeft=scrollArea.scrollWidth;
+ }
  if(doc?.surface==='papyrus'&&doc.direction==='rtl'&&previousLeft===0&&previousTop===0){
   // The first RTL column is at the right-hand edge of the long papyrus.
   scrollArea.scrollLeft=scrollArea.scrollWidth;
@@ -2891,7 +2936,7 @@ async function commit(candidate){
 }
 $('clear').onclick=()=>{if(commitPending)return;buffer=[];editingId=null;renderComposer();};
 $('backspace').onclick=()=>{if(commitPending)return;buffer.pop();renderComposer();};
-for(const tab of document.querySelectorAll('.tab'))tab.onclick=()=>{activeGroup=tab.dataset.tab;drawKeys();};
+for(const tab of document.querySelectorAll('.tab'))tab.onclick=()=>{activeGroup=tab.dataset.tab;drawKeys();requestAnimationFrame(keepWritingTargetVisible);};
 $('zoom').onchange=e=>{zoomChoice=e.target.value;repaintCurrentLayout();};
 window.addEventListener('resize',()=>{if(!editorScreen.hidden&&zoomChoice.startsWith('fit-'))repaintCurrentLayout();});
 $('docname').onchange=async e=>{const name=e.target.value.trim();if(!name){e.target.value=doc.name;return;}await apply({op:'set_document',name});if(doc)document.title='MdwNfr — '+doc.name;};
