@@ -23,7 +23,7 @@
   },
   "profiles": {
     "𓀀": {
-      "width_em": 0.7999999999999999,
+      "width_em": 0.8,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -39,7 +39,7 @@
       "needs_review": true
     },
     "𓀂": {
-      "width_em": 0.7999999999999999,
+      "width_em": 0.8,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -55,7 +55,7 @@
       "needs_review": true
     },
     "𓀄": {
-      "width_em": 0.8099999999999999,
+      "width_em": 0.81,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -87,7 +87,7 @@
       "needs_review": false
     },
     "𓀈": {
-      "width_em": 0.9455239999999999,
+      "width_em": 0.945524,
       "height_em": 0.993,
       "shape": "squareish",
       "size": "normal",
@@ -95,7 +95,7 @@
       "needs_review": false
     },
     "𓀉": {
-      "width_em": 1.0490000000000002,
+      "width_em": 1.049,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -127,7 +127,7 @@
       "needs_review": false
     },
     "𓀍": {
-      "width_em": 0.9519999999999998,
+      "width_em": 0.952,
       "height_em": 1.068,
       "shape": "squareish",
       "size": "normal",
@@ -151,7 +151,7 @@
       "needs_review": false
     },
     "𓀐": {
-      "width_em": 1.2730000000000001,
+      "width_em": 1.273,
       "height_em": 0.936951,
       "shape": "squareish",
       "size": "normal",
@@ -167,7 +167,7 @@
       "needs_review": false
     },
     "𓀒": {
-      "width_em": 1.1880000000000002,
+      "width_em": 1.188,
       "height_em": 0.624263,
       "shape": "wide",
       "size": "normal",
@@ -175,7 +175,7 @@
       "needs_review": false
     },
     "𓀓": {
-      "width_em": 0.7364799999999999,
+      "width_em": 0.73648,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -184,7 +184,7 @@
     },
     "𓀔": {
       "width_em": 0.735,
-      "height_em": 1.0019999999999998,
+      "height_em": 1.002,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -199,7 +199,7 @@
       "needs_review": true
     },
     "𓀖": {
-      "width_em": 0.6709999999999999,
+      "width_em": 0.671,
       "height_em": 1.005,
       "shape": "tall",
       "size": "normal",
@@ -208,14 +208,14 @@
     },
     "𓀗": {
       "width_em": 0.717,
-      "height_em": 1.0039999999999998,
+      "height_em": 1.004,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": true
     },
     "𓀘": {
-      "width_em": 0.7639999999999999,
+      "width_em": 0.764,
       "height_em": 1.003,
       "shape": "squareish",
       "size": "normal",
@@ -223,7 +223,7 @@
       "needs_review": true
     },
     "𓀙": {
-      "width_em": 0.7538889999999999,
+      "width_em": 0.753889,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -231,7 +231,7 @@
       "needs_review": true
     },
     "𓀚": {
-      "width_em": 0.8109999999999999,
+      "width_em": 0.811,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -255,7 +255,7 @@
       "needs_review": false
     },
     "𓀝": {
-      "width_em": 0.7749999999999999,
+      "width_em": 0.775,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -271,7 +271,7 @@
       "needs_review": true
     },
     "𓀟": {
-      "width_em": 0.6869999999999999,
+      "width_em": 0.687,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -343,7 +343,7 @@
       "needs_review": false
     },
     "𓀨": {
-      "width_em": 0.8909999999999999,
+      "width_em": 0.891,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -359,7 +359,7 @@
       "needs_review": false
     },
     "𓀪": {
-      "width_em": 0.9319999999999999,
+      "width_em": 0.932,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -367,7 +367,7 @@
       "needs_review": false
     },
     "𓀫": {
-      "width_em": 1.0530000000000002,
+      "width_em": 1.053,
       "height_em": 1.001044,
       "shape": "squareish",
       "size": "normal",
@@ -431,7 +431,7 @@
       "needs_review": false
     },
     "𓀳": {
-      "width_em": 0.6280830000000001,
+      "width_em": 0.628083,
       "height_em": 0.995,
       "shape": "tall",
       "size": "normal",
@@ -439,7 +439,7 @@
       "needs_review": false
     },
     "𓀴": {
-      "width_em": 0.7839999999999999,
+      "width_em": 0.784,
       "height_em": 0.995,
       "shape": "squareish",
       "size": "normal",
@@ -455,7 +455,7 @@
       "needs_review": false
     },
     "𓀶": {
-      "width_em": 0.6300830000000001,
+      "width_em": 0.630083,
       "height_em": 1.016,
       "shape": "tall",
       "size": "normal",
@@ -463,7 +463,7 @@
       "needs_review": true
     },
     "𓀷": {
-      "width_em": 0.7839999999999999,
+      "width_em": 0.784,
       "height_em": 1.016,
       "shape": "squareish",
       "size": "normal",
@@ -471,7 +471,7 @@
       "needs_review": false
     },
     "𓀸": {
-      "width_em": 0.6399999999999999,
+      "width_em": 0.64,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -511,7 +511,7 @@
       "needs_review": true
     },
     "𓀽": {
-      "width_em": 0.9259999999999999,
+      "width_em": 0.926,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -519,7 +519,7 @@
       "needs_review": false
     },
     "𓀾": {
-      "width_em": 0.31599999999999995,
+      "width_em": 0.316,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -551,7 +551,7 @@
       "needs_review": false
     },
     "𓁂": {
-      "width_em": 0.7889999999999999,
+      "width_em": 0.789,
       "height_em": 1.008,
       "shape": "squareish",
       "size": "normal",
@@ -567,7 +567,7 @@
       "needs_review": true
     },
     "𓁄": {
-      "width_em": 0.9129999999999999,
+      "width_em": 0.913,
       "height_em": 1.01,
       "shape": "squareish",
       "size": "normal",
@@ -575,7 +575,7 @@
       "needs_review": false
     },
     "𓁅": {
-      "width_em": 0.9039999999999999,
+      "width_em": 0.904,
       "height_em": 1.048,
       "shape": "squareish",
       "size": "normal",
@@ -583,7 +583,7 @@
       "needs_review": false
     },
     "𓁆": {
-      "width_em": 0.5369999999999999,
+      "width_em": 0.537,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -591,7 +591,7 @@
       "needs_review": false
     },
     "𓁇": {
-      "width_em": 0.5369999999999999,
+      "width_em": 0.537,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -607,7 +607,7 @@
       "needs_review": false
     },
     "𓁉": {
-      "width_em": 1.0290000000000001,
+      "width_em": 1.029,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -623,7 +623,7 @@
       "needs_review": false
     },
     "𓁋": {
-      "width_em": 0.7839999999999999,
+      "width_em": 0.784,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -631,7 +631,7 @@
       "needs_review": false
     },
     "𓁌": {
-      "width_em": 0.5169999999999999,
+      "width_em": 0.517,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -639,7 +639,7 @@
       "needs_review": false
     },
     "𓁍": {
-      "width_em": 0.7573780000000001,
+      "width_em": 0.757378,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -655,7 +655,7 @@
       "needs_review": true
     },
     "𓁏": {
-      "width_em": 0.8959999999999999,
+      "width_em": 0.896,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -671,7 +671,7 @@
       "needs_review": false
     },
     "𓁑": {
-      "width_em": 0.7889999999999999,
+      "width_em": 0.789,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -679,7 +679,7 @@
       "needs_review": false
     },
     "𓁒": {
-      "width_em": 0.6479999999999999,
+      "width_em": 0.648,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -687,7 +687,7 @@
       "needs_review": true
     },
     "𓁓": {
-      "width_em": 0.6479999999999999,
+      "width_em": 0.648,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -703,7 +703,7 @@
       "needs_review": true
     },
     "𓁕": {
-      "width_em": 0.6529999999999999,
+      "width_em": 0.653,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -711,7 +711,7 @@
       "needs_review": true
     },
     "𓁖": {
-      "width_em": 0.6689999999999999,
+      "width_em": 0.669,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -831,7 +831,7 @@
       "needs_review": true
     },
     "𓁥": {
-      "width_em": 0.47400000000000003,
+      "width_em": 0.474,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -839,7 +839,7 @@
       "needs_review": false
     },
     "𓁦": {
-      "width_em": 0.49000000000000005,
+      "width_em": 0.49,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -847,7 +847,7 @@
       "needs_review": false
     },
     "𓁧": {
-      "width_em": 0.5339999999999999,
+      "width_em": 0.534,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -863,7 +863,7 @@
       "needs_review": true
     },
     "𓁩": {
-      "width_em": 0.6310830000000001,
+      "width_em": 0.631083,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -879,7 +879,7 @@
       "needs_review": true
     },
     "𓁫": {
-      "width_em": 0.6459999999999999,
+      "width_em": 0.646,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -887,7 +887,7 @@
       "needs_review": true
     },
     "𓁬": {
-      "width_em": 0.6459999999999999,
+      "width_em": 0.646,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -895,7 +895,7 @@
       "needs_review": true
     },
     "𓁭": {
-      "width_em": 0.6409999999999999,
+      "width_em": 0.641,
       "height_em": 1.016,
       "shape": "tall",
       "size": "normal",
@@ -959,7 +959,7 @@
       "needs_review": false
     },
     "𓁵": {
-      "width_em": 0.6300830000000001,
+      "width_em": 0.630083,
       "height_em": 1.016,
       "shape": "tall",
       "size": "normal",
@@ -975,7 +975,7 @@
       "needs_review": false
     },
     "𓁷": {
-      "width_em": 0.6459999999999999,
+      "width_em": 0.646,
       "height_em": 0.616,
       "shape": "squareish",
       "size": "compact",
@@ -984,7 +984,7 @@
     },
     "𓁸": {
       "width_em": 1.081,
-      "height_em": 0.5680000000000001,
+      "height_em": 0.568,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -992,7 +992,7 @@
     },
     "𓁹": {
       "width_em": 1.125,
-      "height_em": 0.32799999999999996,
+      "height_em": 0.328,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -1008,7 +1008,7 @@
     },
     "𓁻": {
       "width_em": 1.125,
-      "height_em": 0.4570000000000001,
+      "height_em": 0.457,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -1016,7 +1016,7 @@
     },
     "𓁼": {
       "width_em": 1.125,
-      "height_em": 0.40099999999999997,
+      "height_em": 0.401,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -1040,14 +1040,14 @@
     },
     "𓁿": {
       "width_em": 1.125,
-      "height_em": 0.8029999999999999,
+      "height_em": 0.803,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓂀": {
-      "width_em": 1.1500000000000001,
+      "width_em": 1.15,
       "height_em": 0.96,
       "shape": "squareish",
       "size": "normal",
@@ -1055,7 +1055,7 @@
       "needs_review": false
     },
     "𓂁": {
-      "width_em": 0.6389999999999999,
+      "width_em": 0.639,
       "height_em": 0.400778,
       "shape": "wide",
       "size": "compact",
@@ -1080,14 +1080,14 @@
     },
     "𓂄": {
       "width_em": 0.706,
-      "height_em": 0.39799999999999996,
+      "height_em": 0.398,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": true
     },
     "𓂅": {
-      "width_em": 1.0230000000000001,
+      "width_em": 1.023,
       "height_em": 0.79,
       "shape": "squareish",
       "size": "normal",
@@ -1095,7 +1095,7 @@
       "needs_review": false
     },
     "𓂆": {
-      "width_em": 0.28400000000000003,
+      "width_em": 0.284,
       "height_em": 0.991,
       "shape": "tall",
       "size": "normal",
@@ -1111,8 +1111,8 @@
       "needs_review": false
     },
     "𓂈": {
-      "width_em": 0.5139999999999999,
-      "height_em": 0.7010000000000001,
+      "width_em": 0.514,
+      "height_em": 0.701,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "tall",
@@ -1136,7 +1136,7 @@
     },
     "𓂋": {
       "width_em": 1.079,
-      "height_em": 0.28600000000000003,
+      "height_em": 0.286,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -1176,7 +1176,7 @@
     },
     "𓂐": {
       "width_em": 0.818,
-      "height_em": 0.9239999999999999,
+      "height_em": 0.924,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -1184,15 +1184,15 @@
     },
     "𓂑": {
       "width_em": 0.605,
-      "height_em": 0.48300000000000004,
+      "height_em": 0.483,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
       "needs_review": false
     },
     "𓂒": {
-      "width_em": 0.8109999999999999,
-      "height_em": 0.9410000000000001,
+      "width_em": 0.811,
+      "height_em": 0.941,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -1215,15 +1215,15 @@
       "needs_review": true
     },
     "𓂕": {
-      "width_em": 1.0330000000000001,
-      "height_em": 0.9339999999999999,
+      "width_em": 1.033,
+      "height_em": 0.934,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓂖": {
-      "width_em": 0.6419999999999999,
+      "width_em": 0.642,
       "height_em": 1.012,
       "shape": "tall",
       "size": "normal",
@@ -1239,7 +1239,7 @@
       "needs_review": false
     },
     "𓂘": {
-      "width_em": 0.7859999999999999,
+      "width_em": 0.786,
       "height_em": 1.005,
       "shape": "squareish",
       "size": "normal",
@@ -1247,7 +1247,7 @@
       "needs_review": false
     },
     "𓂙": {
-      "width_em": 0.8889999999999999,
+      "width_em": 0.889,
       "height_em": 0.998,
       "shape": "squareish",
       "size": "normal",
@@ -1255,7 +1255,7 @@
       "needs_review": false
     },
     "𓂚": {
-      "width_em": 1.0510000000000002,
+      "width_em": 1.051,
       "height_em": 0.905,
       "shape": "squareish",
       "size": "normal",
@@ -1264,7 +1264,7 @@
     },
     "𓂛": {
       "width_em": 1.116,
-      "height_em": 0.8190000000000001,
+      "height_em": 0.819,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -1279,7 +1279,7 @@
       "needs_review": false
     },
     "𓂝": {
-      "width_em": 1.4080000000000001,
+      "width_em": 1.408,
       "height_em": 0.58,
       "shape": "wide",
       "size": "normal",
@@ -1287,7 +1287,7 @@
       "needs_review": false
     },
     "𓂞": {
-      "width_em": 1.4080000000000001,
+      "width_em": 1.408,
       "height_em": 0.6,
       "shape": "wide",
       "size": "normal",
@@ -1295,7 +1295,7 @@
       "needs_review": false
     },
     "𓂟": {
-      "width_em": 1.4080000000000001,
+      "width_em": 1.408,
       "height_em": 0.58,
       "shape": "wide",
       "size": "normal",
@@ -1303,7 +1303,7 @@
       "needs_review": false
     },
     "𓂠": {
-      "width_em": 1.4080000000000001,
+      "width_em": 1.408,
       "height_em": 0.58,
       "shape": "wide",
       "size": "normal",
@@ -1319,7 +1319,7 @@
       "needs_review": false
     },
     "𓂢": {
-      "width_em": 1.4280000000000002,
+      "width_em": 1.428,
       "height_em": 0.658,
       "shape": "wide",
       "size": "normal",
@@ -1327,7 +1327,7 @@
       "needs_review": true
     },
     "𓂣": {
-      "width_em": 1.4080000000000001,
+      "width_em": 1.408,
       "height_em": 0.591,
       "shape": "wide",
       "size": "normal",
@@ -1343,7 +1343,7 @@
       "needs_review": true
     },
     "𓂥": {
-      "width_em": 1.4360000000000002,
+      "width_em": 1.436,
       "height_em": 0.855,
       "shape": "wide",
       "size": "normal",
@@ -1376,7 +1376,7 @@
     },
     "𓂩": {
       "width_em": 1.474,
-      "height_em": 0.49699999999999994,
+      "height_em": 0.497,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -1391,7 +1391,7 @@
       "needs_review": false
     },
     "𓂫": {
-      "width_em": 1.2930000000000001,
+      "width_em": 1.293,
       "height_em": 0.57,
       "shape": "wide",
       "size": "normal",
@@ -1399,7 +1399,7 @@
       "needs_review": false
     },
     "𓂬": {
-      "width_em": 1.1660000000000001,
+      "width_em": 1.166,
       "height_em": 0.656,
       "shape": "wide",
       "size": "normal",
@@ -1415,7 +1415,7 @@
       "needs_review": false
     },
     "𓂮": {
-      "width_em": 0.5609999999999999,
+      "width_em": 0.561,
       "height_em": 1.220205,
       "shape": "tall",
       "size": "normal",
@@ -1440,7 +1440,7 @@
     },
     "𓂱": {
       "width_em": 0.609,
-      "height_em": 1.2941049999999998,
+      "height_em": 1.294105,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -1448,7 +1448,7 @@
     },
     "𓂲": {
       "width_em": 0.609,
-      "height_em": 1.2941049999999998,
+      "height_em": 1.294105,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -1456,7 +1456,7 @@
     },
     "𓂳": {
       "width_em": 0.844,
-      "height_em": 1.2941049999999998,
+      "height_em": 1.294105,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "square",
@@ -1464,22 +1464,22 @@
     },
     "𓂴": {
       "width_em": 0.844,
-      "height_em": 1.2941049999999998,
+      "height_em": 1.294105,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓂵": {
-      "width_em": 0.5199999999999999,
-      "height_em": 1.2941429999999998,
+      "width_em": 0.52,
+      "height_em": 1.294143,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓂶": {
-      "width_em": 1.5290000000000001,
+      "width_em": 1.529,
       "height_em": 1.220205,
       "shape": "squareish",
       "size": "normal",
@@ -1488,14 +1488,14 @@
     },
     "𓂷": {
       "width_em": 1.373095,
-      "height_em": 0.33599999999999997,
+      "height_em": 0.336,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓂸": {
-      "width_em": 1.3760000000000001,
+      "width_em": 1.376,
       "height_em": 0.494,
       "shape": "wide",
       "size": "normal",
@@ -1503,7 +1503,7 @@
       "needs_review": false
     },
     "𓂹": {
-      "width_em": 1.3760000000000001,
+      "width_em": 1.376,
       "height_em": 1.256,
       "shape": "squareish",
       "size": "normal",
@@ -1511,7 +1511,7 @@
       "needs_review": false
     },
     "𓂺": {
-      "width_em": 1.5750000000000002,
+      "width_em": 1.575,
       "height_em": 0.591,
       "shape": "wide",
       "size": "normal",
@@ -1551,16 +1551,16 @@
       "needs_review": false
     },
     "𓂿": {
-      "width_em": 1.5670000000000002,
-      "height_em": 1.3099999999999998,
+      "width_em": 1.567,
+      "height_em": 1.31,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓃀": {
-      "width_em": 0.7999999999999999,
-      "height_em": 1.2939999999999998,
+      "width_em": 0.8,
+      "height_em": 1.294,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "square",
@@ -1568,7 +1568,7 @@
     },
     "𓃁": {
       "width_em": 1.452,
-      "height_em": 1.2939999999999998,
+      "height_em": 1.294,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -1576,15 +1576,15 @@
     },
     "𓃂": {
       "width_em": 1.08,
-      "height_em": 1.2939999999999998,
+      "height_em": 1.294,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓃃": {
-      "width_em": 1.5230000000000001,
-      "height_em": 1.3079999999999998,
+      "width_em": 1.523,
+      "height_em": 1.308,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -1592,7 +1592,7 @@
     },
     "𓃄": {
       "width_em": 1.417,
-      "height_em": 1.3079999999999998,
+      "height_em": 1.308,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -1600,7 +1600,7 @@
     },
     "𓃅": {
       "width_em": 1.463,
-      "height_em": 1.3079999999999998,
+      "height_em": 1.308,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -1608,22 +1608,22 @@
     },
     "𓃆": {
       "width_em": 1.488,
-      "height_em": 0.5760000000000001,
+      "height_em": 0.576,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓃇": {
-      "width_em": 0.5309999999999999,
-      "height_em": 1.1059999999999999,
+      "width_em": 0.531,
+      "height_em": 1.106,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓃈": {
-      "width_em": 1.6560000000000001,
+      "width_em": 1.656,
       "height_em": 0.881,
       "shape": "wide",
       "size": "normal",
@@ -1640,7 +1640,7 @@
     },
     "𓃊": {
       "width_em": 0.364,
-      "height_em": 0.8360000000000001,
+      "height_em": 0.836,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -1648,7 +1648,7 @@
     },
     "𓃋": {
       "width_em": 0.834,
-      "height_em": 0.8360000000000001,
+      "height_em": 0.836,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -1656,23 +1656,23 @@
     },
     "𓃌": {
       "width_em": 0.834,
-      "height_em": 0.8360000000000001,
+      "height_em": 0.836,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓃍": {
-      "width_em": 1.3050000000000002,
-      "height_em": 0.8360000000000001,
+      "width_em": 1.305,
+      "height_em": 0.836,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓃎": {
-      "width_em": 1.3050000000000002,
-      "height_em": 0.8360000000000001,
+      "width_em": 1.305,
+      "height_em": 0.836,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
@@ -1680,7 +1680,7 @@
     },
     "𓃏": {
       "width_em": 1.776,
-      "height_em": 0.8360000000000001,
+      "height_em": 0.836,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
@@ -1688,14 +1688,14 @@
     },
     "𓃐": {
       "width_em": 1.776,
-      "height_em": 0.8360000000000001,
+      "height_em": 0.836,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓃑": {
-      "width_em": 1.3050000000000002,
+      "width_em": 1.305,
       "height_em": 1.307,
       "shape": "squareish",
       "size": "normal",
@@ -1711,7 +1711,7 @@
       "needs_review": false
     },
     "𓃓": {
-      "width_em": 1.2570000000000001,
+      "width_em": 1.257,
       "height_em": 0.761,
       "shape": "wide",
       "size": "normal",
@@ -1727,7 +1727,7 @@
       "needs_review": true
     },
     "𓃕": {
-      "width_em": 1.0760610000000002,
+      "width_em": 1.076061,
       "height_em": 1.018,
       "shape": "squareish",
       "size": "normal",
@@ -1735,7 +1735,7 @@
       "needs_review": false
     },
     "𓃖": {
-      "width_em": 1.1260000000000001,
+      "width_em": 1.126,
       "height_em": 0.78,
       "shape": "wide",
       "size": "normal",
@@ -1815,8 +1815,8 @@
       "needs_review": false
     },
     "𓃠": {
-      "width_em": 0.9189999999999999,
-      "height_em": 1.0699999999999998,
+      "width_em": 0.919,
+      "height_em": 1.07,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -1831,7 +1831,7 @@
       "needs_review": false
     },
     "𓃢": {
-      "width_em": 1.1900000000000002,
+      "width_em": 1.19,
       "height_em": 0.97,
       "shape": "squareish",
       "size": "normal",
@@ -1887,7 +1887,7 @@
       "needs_review": false
     },
     "𓃩": {
-      "width_em": 1.0330000000000001,
+      "width_em": 1.033,
       "height_em": 1.121,
       "shape": "squareish",
       "size": "normal",
@@ -1895,7 +1895,7 @@
       "needs_review": false
     },
     "𓃪": {
-      "width_em": 1.0690000000000002,
+      "width_em": 1.069,
       "height_em": 1.127,
       "shape": "squareish",
       "size": "normal",
@@ -1903,7 +1903,7 @@
       "needs_review": false
     },
     "𓃫": {
-      "width_em": 1.1800000000000002,
+      "width_em": 1.18,
       "height_em": 0.752,
       "shape": "wide",
       "size": "normal",
@@ -1952,14 +1952,14 @@
     },
     "𓃱": {
       "width_em": 0.584727,
-      "height_em": 1.2870000000000001,
+      "height_em": 1.287,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓃲": {
-      "width_em": 1.1380000000000001,
+      "width_em": 1.138,
       "height_em": 1.229,
       "shape": "squareish",
       "size": "normal",
@@ -1984,14 +1984,14 @@
     },
     "𓃵": {
       "width_em": 1.175,
-      "height_em": 1.2209999999999999,
+      "height_em": 1.221,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓃶": {
-      "width_em": 1.1860000000000002,
+      "width_em": 1.186,
       "height_em": 1.22,
       "shape": "squareish",
       "size": "normal",
@@ -2000,7 +2000,7 @@
     },
     "𓃷": {
       "width_em": 1.207,
-      "height_em": 0.8851180000000001,
+      "height_em": 0.885118,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -2008,7 +2008,7 @@
     },
     "𓃸": {
       "width_em": 1.145,
-      "height_em": 0.8931180000000001,
+      "height_em": 0.893118,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -2031,7 +2031,7 @@
       "needs_review": false
     },
     "𓃻": {
-      "width_em": 0.7999999999999999,
+      "width_em": 0.8,
       "height_em": 1.209,
       "shape": "tall",
       "size": "normal",
@@ -2056,7 +2056,7 @@
     },
     "𓃾": {
       "width_em": 0.7,
-      "height_em": 0.7689999999999999,
+      "height_em": 0.769,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -2087,7 +2087,7 @@
       "needs_review": false
     },
     "𓄂": {
-      "width_em": 1.0630000000000002,
+      "width_em": 1.063,
       "height_em": 0.839,
       "shape": "squareish",
       "size": "normal",
@@ -2095,7 +2095,7 @@
       "needs_review": false
     },
     "𓄃": {
-      "width_em": 0.6729999999999999,
+      "width_em": 0.673,
       "height_em": 1.067,
       "shape": "tall",
       "size": "normal",
@@ -2103,8 +2103,8 @@
       "needs_review": true
     },
     "𓄄": {
-      "width_em": 0.6859999999999999,
-      "height_em": 1.0999999999999999,
+      "width_em": 0.686,
+      "height_em": 1.1,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -2112,15 +2112,15 @@
     },
     "𓄅": {
       "width_em": 1.641,
-      "height_em": 0.8330000000000001,
+      "height_em": 0.833,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓄆": {
-      "width_em": 1.3210000000000002,
-      "height_em": 1.0219999999999998,
+      "width_em": 1.321,
+      "height_em": 1.022,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -2191,15 +2191,15 @@
       "needs_review": false
     },
     "𓄏": {
-      "width_em": 1.1360000000000001,
-      "height_em": 0.5980000000000001,
+      "width_em": 1.136,
+      "height_em": 0.598,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓄐": {
-      "width_em": 0.9919999999999999,
+      "width_em": 0.992,
       "height_em": 0.993,
       "shape": "squareish",
       "size": "normal",
@@ -2207,7 +2207,7 @@
       "needs_review": false
     },
     "𓄑": {
-      "width_em": 1.0690000000000002,
+      "width_em": 1.069,
       "height_em": 0.318,
       "shape": "wide",
       "size": "normal",
@@ -2232,7 +2232,7 @@
     },
     "𓄔": {
       "width_em": 0.729,
-      "height_em": 0.5680000000000001,
+      "height_em": 0.568,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "wide",
@@ -2240,14 +2240,14 @@
     },
     "𓄕": {
       "width_em": 0.729,
-      "height_em": 0.5680000000000001,
+      "height_em": 0.568,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": true
     },
     "𓄖": {
-      "width_em": 0.7669999999999999,
+      "width_em": 0.767,
       "height_em": 0.585,
       "shape": "squareish",
       "size": "normal",
@@ -2255,23 +2255,23 @@
       "needs_review": true
     },
     "𓄗": {
-      "width_em": 1.0610000000000002,
-      "height_em": 0.33499999999999996,
+      "width_em": 1.061,
+      "height_em": 0.335,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓄘": {
-      "width_em": 1.0610000000000002,
-      "height_em": 0.33499999999999996,
+      "width_em": 1.061,
+      "height_em": 0.335,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓄙": {
-      "width_em": 0.33940000000000003,
+      "width_em": 0.3394,
       "height_em": 0.979,
       "shape": "tall",
       "size": "normal",
@@ -2280,7 +2280,7 @@
     },
     "𓄚": {
       "width_em": 1.022,
-      "height_em": 0.7949999999999999,
+      "height_em": 0.795,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -2295,7 +2295,7 @@
       "needs_review": false
     },
     "𓄜": {
-      "width_em": 0.5169999999999999,
+      "width_em": 0.517,
       "height_em": 1.005,
       "shape": "tall",
       "size": "normal",
@@ -2303,7 +2303,7 @@
       "needs_review": false
     },
     "𓄝": {
-      "width_em": 1.0190000000000001,
+      "width_em": 1.019,
       "height_em": 1.005,
       "shape": "squareish",
       "size": "normal",
@@ -2327,7 +2327,7 @@
       "needs_review": false
     },
     "𓄠": {
-      "width_em": 0.35500000000000004,
+      "width_em": 0.355,
       "height_em": 0.983,
       "shape": "tall",
       "size": "normal",
@@ -2375,8 +2375,8 @@
       "needs_review": false
     },
     "𓄦": {
-      "width_em": 1.0550000000000002,
-      "height_em": 0.8200000000000001,
+      "width_em": 1.055,
+      "height_em": 0.82,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -2384,14 +2384,14 @@
     },
     "𓄧": {
       "width_em": 1.012,
-      "height_em": 0.41700000000000004,
+      "height_em": 0.417,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓄨": {
-      "width_em": 0.7939999999999999,
+      "width_em": 0.794,
       "height_em": 0.841,
       "shape": "squareish",
       "size": "normal",
@@ -2400,7 +2400,7 @@
     },
     "𓄩": {
       "width_em": 0.733,
-      "height_em": 0.46699999999999997,
+      "height_em": 0.467,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -2424,7 +2424,7 @@
     },
     "𓄬": {
       "width_em": 0.858,
-      "height_em": 0.8260000000000001,
+      "height_em": 0.826,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -2447,8 +2447,8 @@
       "needs_review": false
     },
     "𓄯": {
-      "width_em": 1.0250000000000001,
-      "height_em": 0.7290000000000001,
+      "width_em": 1.025,
+      "height_em": 0.729,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
@@ -2519,7 +2519,7 @@
       "needs_review": false
     },
     "𓄸": {
-      "width_em": 1.0290000000000001,
+      "width_em": 1.029,
       "height_em": 1.03,
       "shape": "squareish",
       "size": "normal",
@@ -2591,7 +2591,7 @@
       "needs_review": false
     },
     "𓅁": {
-      "width_em": 0.9109999999999999,
+      "width_em": 0.911,
       "height_em": 0.996,
       "shape": "squareish",
       "size": "normal",
@@ -2599,7 +2599,7 @@
       "needs_review": false
     },
     "𓅂": {
-      "width_em": 1.2650000000000001,
+      "width_em": 1.265,
       "height_em": 1.016,
       "shape": "squareish",
       "size": "normal",
@@ -2624,7 +2624,7 @@
     },
     "𓅅": {
       "width_em": 1.03,
-      "height_em": 1.0139999999999998,
+      "height_em": 1.014,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -2680,7 +2680,7 @@
     },
     "𓅌": {
       "width_em": 0.983,
-      "height_em": 0.5900000000000001,
+      "height_em": 0.59,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -2704,7 +2704,7 @@
     },
     "𓅏": {
       "width_em": 0.983,
-      "height_em": 0.8829999999999999,
+      "height_em": 0.883,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -2719,7 +2719,7 @@
       "needs_review": false
     },
     "𓅑": {
-      "width_em": 1.0230000000000001,
+      "width_em": 1.023,
       "height_em": 0.981,
       "shape": "squareish",
       "size": "normal",
@@ -2727,7 +2727,7 @@
       "needs_review": false
     },
     "𓅒": {
-      "width_em": 1.4220000000000002,
+      "width_em": 1.422,
       "height_em": 1.009,
       "shape": "wide",
       "size": "normal",
@@ -2775,15 +2775,15 @@
       "needs_review": false
     },
     "𓅘": {
-      "width_em": 0.8929999999999999,
-      "height_em": 1.0259999999999998,
+      "width_em": 0.893,
+      "height_em": 1.026,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓅙": {
-      "width_em": 1.0730000000000002,
+      "width_em": 1.073,
       "height_em": 0.835,
       "shape": "squareish",
       "size": "normal",
@@ -2791,7 +2791,7 @@
       "needs_review": false
     },
     "𓅚": {
-      "width_em": 1.0370000000000001,
+      "width_em": 1.037,
       "height_em": 1.042,
       "shape": "squareish",
       "size": "normal",
@@ -2823,7 +2823,7 @@
       "needs_review": true
     },
     "𓅞": {
-      "width_em": 0.9819999999999999,
+      "width_em": 0.982,
       "height_em": 1.015,
       "shape": "squareish",
       "size": "normal",
@@ -2831,7 +2831,7 @@
       "needs_review": false
     },
     "𓅟": {
-      "width_em": 1.1260000000000001,
+      "width_em": 1.126,
       "height_em": 0.935,
       "shape": "squareish",
       "size": "normal",
@@ -2863,15 +2863,15 @@
       "needs_review": false
     },
     "𓅣": {
-      "width_em": 0.9989999999999999,
-      "height_em": 1.0299999999999998,
+      "width_em": 0.999,
+      "height_em": 1.03,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓅤": {
-      "width_em": 0.8929999999999999,
+      "width_em": 0.893,
       "height_em": 1.005,
       "shape": "squareish",
       "size": "normal",
@@ -2880,14 +2880,14 @@
     },
     "𓅥": {
       "width_em": 0.841,
-      "height_em": 1.0299999999999998,
+      "height_em": 1.03,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓅦": {
-      "width_em": 0.7639999999999999,
+      "width_em": 0.764,
       "height_em": 1.011,
       "shape": "squareish",
       "size": "normal",
@@ -2895,7 +2895,7 @@
       "needs_review": true
     },
     "𓅧": {
-      "width_em": 1.1660000000000001,
+      "width_em": 1.166,
       "height_em": 0.724,
       "shape": "wide",
       "size": "normal",
@@ -2911,7 +2911,7 @@
       "needs_review": false
     },
     "𓅩": {
-      "width_em": 0.9049999999999999,
+      "width_em": 0.905,
       "height_em": 0.636,
       "shape": "wide",
       "size": "normal",
@@ -2919,7 +2919,7 @@
       "needs_review": true
     },
     "𓅪": {
-      "width_em": 1.0350000000000001,
+      "width_em": 1.035,
       "height_em": 0.776,
       "shape": "squareish",
       "size": "normal",
@@ -2943,7 +2943,7 @@
       "needs_review": false
     },
     "𓅭": {
-      "width_em": 1.1500000000000001,
+      "width_em": 1.15,
       "height_em": 1.076,
       "shape": "squareish",
       "size": "normal",
@@ -2951,8 +2951,8 @@
       "needs_review": false
     },
     "𓅮": {
-      "width_em": 1.1600000000000001,
-      "height_em": 1.0739999999999998,
+      "width_em": 1.16,
+      "height_em": 1.074,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -3015,7 +3015,7 @@
       "needs_review": false
     },
     "𓅶": {
-      "width_em": 0.9369999999999999,
+      "width_em": 0.937,
       "height_em": 1.023,
       "shape": "squareish",
       "size": "normal",
@@ -3039,7 +3039,7 @@
       "needs_review": false
     },
     "𓅹": {
-      "width_em": 1.2970000000000002,
+      "width_em": 1.297,
       "height_em": 0.706,
       "shape": "wide",
       "size": "normal",
@@ -3056,14 +3056,14 @@
     },
     "𓅻": {
       "width_em": 1.226,
-      "height_em": 1.1929999999999998,
+      "height_em": 1.193,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓅼": {
-      "width_em": 1.4400000000000002,
+      "width_em": 1.44,
       "height_em": 0.738,
       "shape": "wide",
       "size": "normal",
@@ -3087,7 +3087,7 @@
       "needs_review": false
     },
     "𓅿": {
-      "width_em": 0.7729999999999999,
+      "width_em": 0.773,
       "height_em": 0.864,
       "shape": "squareish",
       "size": "normal",
@@ -3111,7 +3111,7 @@
       "needs_review": true
     },
     "𓆂": {
-      "width_em": 0.48000000000000004,
+      "width_em": 0.48,
       "height_em": 0.699,
       "shape": "tall",
       "size": "compact",
@@ -3119,7 +3119,7 @@
       "needs_review": true
     },
     "𓆃": {
-      "width_em": 1.5250000000000001,
+      "width_em": 1.525,
       "height_em": 0.4,
       "shape": "wide",
       "size": "normal",
@@ -3127,16 +3127,16 @@
       "needs_review": false
     },
     "𓆄": {
-      "width_em": 0.34800000000000003,
-      "height_em": 1.2999999999999998,
+      "width_em": 0.348,
+      "height_em": 1.3,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓆅": {
-      "width_em": 0.5359999999999999,
-      "height_em": 1.2999999999999998,
+      "width_em": 0.536,
+      "height_em": 1.3,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -3152,7 +3152,7 @@
     },
     "𓆇": {
       "width_em": 0.576,
-      "height_em": 0.5990000000000001,
+      "height_em": 0.599,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
@@ -3183,7 +3183,7 @@
       "needs_review": false
     },
     "𓆋": {
-      "width_em": 1.1406669999999999,
+      "width_em": 1.140667,
       "height_em": 0.896,
       "shape": "squareish",
       "size": "normal",
@@ -3191,7 +3191,7 @@
       "needs_review": false
     },
     "𓆌": {
-      "width_em": 1.2682309999999999,
+      "width_em": 1.268231,
       "height_em": 0.569,
       "shape": "wide",
       "size": "normal",
@@ -3207,7 +3207,7 @@
       "needs_review": false
     },
     "𓆎": {
-      "width_em": 1.0150000000000001,
+      "width_em": 1.015,
       "height_em": 0.685,
       "shape": "wide",
       "size": "normal",
@@ -3215,7 +3215,7 @@
       "needs_review": true
     },
     "𓆏": {
-      "width_em": 1.4140000000000001,
+      "width_em": 1.414,
       "height_em": 1.238,
       "shape": "squareish",
       "size": "normal",
@@ -3223,7 +3223,7 @@
       "needs_review": false
     },
     "𓆐": {
-      "width_em": 0.5559999999999999,
+      "width_em": 0.556,
       "height_em": 1.238,
       "shape": "tall",
       "size": "normal",
@@ -3247,7 +3247,7 @@
       "needs_review": false
     },
     "𓆓": {
-      "width_em": 0.9719999999999999,
+      "width_em": 0.972,
       "height_em": 1.012,
       "shape": "squareish",
       "size": "normal",
@@ -3263,7 +3263,7 @@
       "needs_review": false
     },
     "𓆕": {
-      "width_em": 0.9719999999999999,
+      "width_em": 0.972,
       "height_em": 1.012,
       "shape": "squareish",
       "size": "normal",
@@ -3271,7 +3271,7 @@
       "needs_review": false
     },
     "𓆖": {
-      "width_em": 0.9719999999999999,
+      "width_em": 0.972,
       "height_em": 1.012,
       "shape": "squareish",
       "size": "normal",
@@ -3295,7 +3295,7 @@
       "needs_review": true
     },
     "𓆙": {
-      "width_em": 1.1760000000000002,
+      "width_em": 1.176,
       "height_em": 0.734,
       "shape": "wide",
       "size": "normal",
@@ -3312,7 +3312,7 @@
     },
     "𓆛": {
       "width_em": 1.060087,
-      "height_em": 0.5259999999999999,
+      "height_em": 0.526,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -3344,14 +3344,14 @@
     },
     "𓆟": {
       "width_em": 1.272,
-      "height_em": 0.46299999999999997,
+      "height_em": 0.463,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓆠": {
-      "width_em": 0.49400000000000005,
+      "width_em": 0.494,
       "height_em": 0.841,
       "shape": "tall",
       "size": "normal",
@@ -3360,7 +3360,7 @@
     },
     "𓆡": {
       "width_em": 1.228,
-      "height_em": 1.1749999999999998,
+      "height_em": 1.175,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -3375,7 +3375,7 @@
       "needs_review": false
     },
     "𓆣": {
-      "width_em": 0.7949999999999999,
+      "width_em": 0.795,
       "height_em": 1.199,
       "shape": "tall",
       "size": "normal",
@@ -3415,7 +3415,7 @@
       "needs_review": false
     },
     "𓆨": {
-      "width_em": 1.1802860000000002,
+      "width_em": 1.180286,
       "height_em": 0.330421,
       "shape": "wide",
       "size": "normal",
@@ -3448,14 +3448,14 @@
     },
     "𓆬": {
       "width_em": 0.244,
-      "height_em": 1.1320000000000001,
+      "height_em": 1.132,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓆭": {
-      "width_em": 0.49700000000000005,
+      "width_em": 0.497,
       "height_em": 1.141,
       "shape": "tall",
       "size": "normal",
@@ -3463,7 +3463,7 @@
       "needs_review": false
     },
     "𓆮": {
-      "width_em": 0.9319999999999999,
+      "width_em": 0.932,
       "height_em": 1.141,
       "shape": "squareish",
       "size": "normal",
@@ -3471,7 +3471,7 @@
       "needs_review": false
     },
     "𓆯": {
-      "width_em": 1.2505000000000002,
+      "width_em": 1.2505,
       "height_em": 1.141,
       "shape": "squareish",
       "size": "normal",
@@ -3480,7 +3480,7 @@
     },
     "𓆰": {
       "width_em": 0.716,
-      "height_em": 0.8200000000000001,
+      "height_em": 0.82,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -3488,14 +3488,14 @@
     },
     "𓆱": {
       "width_em": 1.266,
-      "height_em": 0.34199999999999997,
+      "height_em": 0.342,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓆲": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.019,
       "shape": "squareish",
       "size": "normal",
@@ -3503,7 +3503,7 @@
       "needs_review": false
     },
     "𓆳": {
-      "width_em": 0.35400000000000004,
+      "width_em": 0.354,
       "height_em": 1.026,
       "shape": "tall",
       "size": "normal",
@@ -3511,7 +3511,7 @@
       "needs_review": false
     },
     "𓆴": {
-      "width_em": 0.35400000000000004,
+      "width_em": 0.354,
       "height_em": 1.026,
       "shape": "tall",
       "size": "normal",
@@ -3527,7 +3527,7 @@
       "needs_review": true
     },
     "𓆶": {
-      "width_em": 0.35400000000000004,
+      "width_em": 0.354,
       "height_em": 1.026,
       "shape": "tall",
       "size": "normal",
@@ -3536,7 +3536,7 @@
     },
     "𓆷": {
       "width_em": 1.183,
-      "height_em": 0.6200000000000001,
+      "height_em": 0.62,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -3544,14 +3544,14 @@
     },
     "𓆸": {
       "width_em": 1.081,
-      "height_em": 0.6649999999999999,
+      "height_em": 0.665,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": true
     },
     "𓆹": {
-      "width_em": 1.0101330000000002,
+      "width_em": 1.010133,
       "height_em": 0.755,
       "shape": "squareish",
       "size": "normal",
@@ -3568,14 +3568,14 @@
     },
     "𓆻": {
       "width_em": 1.174074,
-      "height_em": 0.5349999999999999,
+      "height_em": 0.535,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓆼": {
-      "width_em": 0.35500000000000004,
+      "width_em": 0.355,
       "height_em": 1.089,
       "shape": "tall",
       "size": "normal",
@@ -3591,7 +3591,7 @@
       "needs_review": true
     },
     "𓆾": {
-      "width_em": 1.1380000000000001,
+      "width_em": 1.138,
       "height_em": 1.089,
       "shape": "squareish",
       "size": "normal",
@@ -3599,7 +3599,7 @@
       "needs_review": false
     },
     "𓆿": {
-      "width_em": 1.5290000000000001,
+      "width_em": 1.529,
       "height_em": 1.089,
       "shape": "wide",
       "size": "normal",
@@ -3607,7 +3607,7 @@
       "needs_review": false
     },
     "𓇀": {
-      "width_em": 1.9200000000000002,
+      "width_em": 1.92,
       "height_em": 1.089,
       "shape": "wide",
       "size": "normal",
@@ -3615,7 +3615,7 @@
       "needs_review": false
     },
     "𓇁": {
-      "width_em": 0.6639999999999999,
+      "width_em": 0.664,
       "height_em": 1.088,
       "shape": "tall",
       "size": "normal",
@@ -3623,7 +3623,7 @@
       "needs_review": true
     },
     "𓇂": {
-      "width_em": 0.8969999999999999,
+      "width_em": 0.897,
       "height_em": 1.088,
       "shape": "squareish",
       "size": "normal",
@@ -3631,7 +3631,7 @@
       "needs_review": false
     },
     "𓇃": {
-      "width_em": 0.8969999999999999,
+      "width_em": 0.897,
       "height_em": 1.088,
       "shape": "squareish",
       "size": "normal",
@@ -3648,15 +3648,15 @@
     },
     "𓇅": {
       "width_em": 0.451,
-      "height_em": 1.0959999999999999,
+      "height_em": 1.096,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓇆": {
-      "width_em": 0.9369999999999999,
-      "height_em": 1.0959999999999999,
+      "width_em": 0.937,
+      "height_em": 1.096,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -3703,7 +3703,7 @@
       "needs_review": false
     },
     "𓇌": {
-      "width_em": 0.5559999999999999,
+      "width_em": 0.556,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -3711,15 +3711,15 @@
       "needs_review": false
     },
     "𓇍": {
-      "width_em": 0.41800000000000004,
-      "height_em": 1.0039999999999998,
+      "width_em": 0.418,
+      "height_em": 1.004,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓇎": {
-      "width_em": 0.7909999999999999,
+      "width_em": 0.791,
       "height_em": 1.005,
       "shape": "squareish",
       "size": "normal",
@@ -3735,7 +3735,7 @@
       "needs_review": false
     },
     "𓇐": {
-      "width_em": 0.8979999999999999,
+      "width_em": 0.898,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -3751,7 +3751,7 @@
       "needs_review": false
     },
     "𓇒": {
-      "width_em": 1.1800000000000002,
+      "width_em": 1.18,
       "height_em": 1.002,
       "shape": "squareish",
       "size": "normal",
@@ -3783,7 +3783,7 @@
       "needs_review": false
     },
     "𓇖": {
-      "width_em": 0.7809999999999999,
+      "width_em": 0.781,
       "height_em": 1.006,
       "shape": "squareish",
       "size": "normal",
@@ -3791,7 +3791,7 @@
       "needs_review": false
     },
     "𓇗": {
-      "width_em": 0.7809999999999999,
+      "width_em": 0.781,
       "height_em": 1.002,
       "shape": "squareish",
       "size": "normal",
@@ -3807,7 +3807,7 @@
       "needs_review": false
     },
     "𓇙": {
-      "width_em": 0.7809999999999999,
+      "width_em": 0.781,
       "height_em": 1.005,
       "shape": "squareish",
       "size": "normal",
@@ -3815,7 +3815,7 @@
       "needs_review": false
     },
     "𓇚": {
-      "width_em": 0.6749999999999999,
+      "width_em": 0.675,
       "height_em": 1.104,
       "shape": "tall",
       "size": "normal",
@@ -3887,7 +3887,7 @@
       "needs_review": true
     },
     "𓇣": {
-      "width_em": 0.41600000000000004,
+      "width_em": 0.416,
       "height_em": 1.076,
       "shape": "tall",
       "size": "normal",
@@ -3911,7 +3911,7 @@
       "needs_review": true
     },
     "𓇦": {
-      "width_em": 1.2610000000000001,
+      "width_em": 1.261,
       "height_em": 0.733,
       "shape": "wide",
       "size": "normal",
@@ -3919,8 +3919,8 @@
       "needs_review": true
     },
     "𓇧": {
-      "width_em": 1.2630000000000001,
-      "height_em": 0.9369999999999999,
+      "width_em": 1.263,
+      "height_em": 0.937,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -3951,8 +3951,8 @@
       "needs_review": false
     },
     "𓇫": {
-      "width_em": 0.9049999999999999,
-      "height_em": 0.47800000000000004,
+      "width_em": 0.905,
+      "height_em": 0.478,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -3968,7 +3968,7 @@
     },
     "𓇭": {
       "width_em": 1.294,
-      "height_em": 0.9229999999999999,
+      "height_em": 0.923,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
@@ -3991,7 +3991,7 @@
       "needs_review": false
     },
     "𓇰": {
-      "width_em": 1.1560000000000001,
+      "width_em": 1.156,
       "height_em": 1.162,
       "shape": "squareish",
       "size": "normal",
@@ -3999,7 +3999,7 @@
       "needs_review": false
     },
     "𓇱": {
-      "width_em": 1.1560000000000001,
+      "width_em": 1.156,
       "height_em": 1.169,
       "shape": "squareish",
       "size": "normal",
@@ -4007,7 +4007,7 @@
       "needs_review": false
     },
     "𓇲": {
-      "width_em": 1.1560000000000001,
+      "width_em": 1.156,
       "height_em": 0.818,
       "shape": "wide",
       "size": "normal",
@@ -4023,7 +4023,7 @@
       "needs_review": true
     },
     "𓇴": {
-      "width_em": 1.0750000000000002,
+      "width_em": 1.075,
       "height_em": 0.704,
       "shape": "wide",
       "size": "normal",
@@ -4079,7 +4079,7 @@
       "needs_review": false
     },
     "𓇻": {
-      "width_em": 1.1800000000000002,
+      "width_em": 1.18,
       "height_em": 1.212,
       "shape": "squareish",
       "size": "normal",
@@ -4112,7 +4112,7 @@
     },
     "𓇿": {
       "width_em": 1.274,
-      "height_em": 0.20500000000000002,
+      "height_em": 0.205,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -4127,7 +4127,7 @@
       "needs_review": false
     },
     "𓈁": {
-      "width_em": 1.1280000000000001,
+      "width_em": 1.128,
       "height_em": 0.242,
       "shape": "wide",
       "size": "normal",
@@ -4151,7 +4151,7 @@
       "needs_review": false
     },
     "𓈄": {
-      "width_em": 1.3940000000000001,
+      "width_em": 1.394,
       "height_em": 0.434,
       "shape": "wide",
       "size": "normal",
@@ -4183,7 +4183,7 @@
       "needs_review": false
     },
     "𓈈": {
-      "width_em": 1.3010000000000002,
+      "width_em": 1.301,
       "height_em": 0.508,
       "shape": "wide",
       "size": "normal",
@@ -4200,14 +4200,14 @@
     },
     "𓈊": {
       "width_em": 1.06,
-      "height_em": 0.44999999999999996,
+      "height_em": 0.45,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓈋": {
-      "width_em": 1.1840000000000002,
+      "width_em": 1.184,
       "height_em": 0.602,
       "shape": "wide",
       "size": "normal",
@@ -4215,7 +4215,7 @@
       "needs_review": false
     },
     "𓈌": {
-      "width_em": 1.1840000000000002,
+      "width_em": 1.184,
       "height_em": 0.979,
       "shape": "squareish",
       "size": "normal",
@@ -4223,7 +4223,7 @@
       "needs_review": false
     },
     "𓈍": {
-      "width_em": 1.2530000000000001,
+      "width_em": 1.253,
       "height_em": 0.713,
       "shape": "wide",
       "size": "normal",
@@ -4256,7 +4256,7 @@
     },
     "𓈑": {
       "width_em": 0.757,
-      "height_em": 0.9359999999999999,
+      "height_em": 0.936,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -4271,7 +4271,7 @@
       "needs_review": false
     },
     "𓈓": {
-      "width_em": 0.7909999999999999,
+      "width_em": 0.791,
       "height_em": 0.181,
       "shape": "wide",
       "size": "normal",
@@ -4360,7 +4360,7 @@
     },
     "𓈞": {
       "width_em": 0.574,
-      "height_em": 0.5770000000000001,
+      "height_em": 0.577,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
@@ -4368,22 +4368,22 @@
     },
     "𓈟": {
       "width_em": 0.574,
-      "height_em": 0.5770000000000001,
+      "height_em": 0.577,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
       "needs_review": false
     },
     "𓈠": {
-      "width_em": 1.1300000000000001,
-      "height_em": 1.1549999999999998,
+      "width_em": 1.13,
+      "height_em": 1.155,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓈡": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.003059,
       "shape": "squareish",
       "size": "normal",
@@ -4391,15 +4391,15 @@
       "needs_review": false
     },
     "𓈢": {
-      "width_em": 1.1300000000000001,
-      "height_em": 1.1989999999999998,
+      "width_em": 1.13,
+      "height_em": 1.199,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓈣": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.214,
       "shape": "squareish",
       "size": "normal",
@@ -4407,7 +4407,7 @@
       "needs_review": false
     },
     "𓈤": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.228,
       "shape": "squareish",
       "size": "normal",
@@ -4415,7 +4415,7 @@
       "needs_review": false
     },
     "𓈥": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.210083,
       "shape": "squareish",
       "size": "normal",
@@ -4431,23 +4431,23 @@
       "needs_review": false
     },
     "𓈧": {
-      "width_em": 1.1300000000000001,
-      "height_em": 1.2229999999999999,
+      "width_em": 1.13,
+      "height_em": 1.223,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓈨": {
-      "width_em": 1.1920000000000002,
-      "height_em": 1.2129999999999999,
+      "width_em": 1.192,
+      "height_em": 1.213,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓈩": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.218,
       "shape": "squareish",
       "size": "normal",
@@ -4479,7 +4479,7 @@
       "needs_review": false
     },
     "𓈭": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.158,
       "shape": "squareish",
       "size": "normal",
@@ -4487,15 +4487,15 @@
       "needs_review": false
     },
     "𓈮": {
-      "width_em": 1.1300000000000001,
-      "height_em": 1.1789999999999998,
+      "width_em": 1.13,
+      "height_em": 1.179,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓈯": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.184,
       "shape": "squareish",
       "size": "normal",
@@ -4511,7 +4511,7 @@
       "needs_review": false
     },
     "𓈱": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.186,
       "shape": "squareish",
       "size": "normal",
@@ -4519,8 +4519,8 @@
       "needs_review": false
     },
     "𓈲": {
-      "width_em": 1.1300000000000001,
-      "height_em": 1.1869999999999998,
+      "width_em": 1.13,
+      "height_em": 1.187,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -4528,7 +4528,7 @@
     },
     "𓈳": {
       "width_em": 1.131,
-      "height_em": 1.2149999999999999,
+      "height_em": 1.215,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -4536,14 +4536,14 @@
     },
     "𓈴": {
       "width_em": 1.145,
-      "height_em": 1.2149999999999999,
+      "height_em": 1.215,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓈵": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.152,
       "shape": "squareish",
       "size": "normal",
@@ -4551,15 +4551,15 @@
       "needs_review": false
     },
     "𓈶": {
-      "width_em": 1.1300000000000001,
-      "height_em": 1.2009999999999998,
+      "width_em": 1.13,
+      "height_em": 1.201,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓈷": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.212,
       "shape": "squareish",
       "size": "normal",
@@ -4567,7 +4567,7 @@
       "needs_review": false
     },
     "𓈸": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.168,
       "shape": "squareish",
       "size": "normal",
@@ -4575,15 +4575,15 @@
       "needs_review": false
     },
     "𓈹": {
-      "width_em": 1.1300000000000001,
-      "height_em": 1.1669999999999998,
+      "width_em": 1.13,
+      "height_em": 1.167,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓈺": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.05,
       "shape": "squareish",
       "size": "normal",
@@ -4591,7 +4591,7 @@
       "needs_review": false
     },
     "𓈻": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.057,
       "shape": "squareish",
       "size": "normal",
@@ -4599,7 +4599,7 @@
       "needs_review": false
     },
     "𓈼": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.21,
       "shape": "squareish",
       "size": "normal",
@@ -4607,7 +4607,7 @@
       "needs_review": false
     },
     "𓈽": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.153,
       "shape": "squareish",
       "size": "normal",
@@ -4615,7 +4615,7 @@
       "needs_review": false
     },
     "𓈾": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.172,
       "shape": "squareish",
       "size": "normal",
@@ -4623,7 +4623,7 @@
       "needs_review": false
     },
     "𓈿": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.198,
       "shape": "squareish",
       "size": "normal",
@@ -4631,7 +4631,7 @@
       "needs_review": false
     },
     "𓉀": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.149,
       "shape": "squareish",
       "size": "normal",
@@ -4647,7 +4647,7 @@
       "needs_review": false
     },
     "𓉂": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.2,
       "shape": "squareish",
       "size": "normal",
@@ -4655,23 +4655,23 @@
       "needs_review": false
     },
     "𓉃": {
-      "width_em": 1.1300000000000001,
-      "height_em": 1.1629999999999998,
+      "width_em": 1.13,
+      "height_em": 1.163,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓉄": {
-      "width_em": 1.1300000000000001,
-      "height_em": 1.1769999999999998,
+      "width_em": 1.13,
+      "height_em": 1.177,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓉅": {
-      "width_em": 1.1380000000000001,
+      "width_em": 1.138,
       "height_em": 1.192,
       "shape": "squareish",
       "size": "normal",
@@ -4679,7 +4679,7 @@
       "needs_review": false
     },
     "𓉆": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.013,
       "shape": "squareish",
       "size": "normal",
@@ -4687,7 +4687,7 @@
       "needs_review": false
     },
     "𓉇": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.216,
       "shape": "squareish",
       "size": "normal",
@@ -4696,14 +4696,14 @@
     },
     "𓉈": {
       "width_em": 1.127,
-      "height_em": 1.1729999999999998,
+      "height_em": 1.173,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓉉": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.208,
       "shape": "squareish",
       "size": "normal",
@@ -4712,30 +4712,30 @@
     },
     "𓉊": {
       "width_em": 1.121,
-      "height_em": 1.1929999999999998,
+      "height_em": 1.193,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓉋": {
-      "width_em": 1.1300000000000001,
-      "height_em": 1.1669999999999998,
+      "width_em": 1.13,
+      "height_em": 1.167,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓉌": {
-      "width_em": 1.1300000000000001,
-      "height_em": 1.1769999999999998,
+      "width_em": 1.13,
+      "height_em": 1.177,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓉍": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.192,
       "shape": "squareish",
       "size": "normal",
@@ -4743,15 +4743,15 @@
       "needs_review": false
     },
     "𓉎": {
-      "width_em": 1.1300000000000001,
-      "height_em": 1.1749999999999998,
+      "width_em": 1.13,
+      "height_em": 1.175,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓉏": {
-      "width_em": 1.1300000000000001,
+      "width_em": 1.13,
       "height_em": 1.13,
       "shape": "squareish",
       "size": "normal",
@@ -4760,14 +4760,14 @@
     },
     "𓉐": {
       "width_em": 1.28,
-      "height_em": 0.6890000000000001,
+      "height_em": 0.689,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": true
     },
     "𓉑": {
-      "width_em": 0.9029999999999999,
+      "width_em": 0.903,
       "height_em": 1.117,
       "shape": "squareish",
       "size": "normal",
@@ -4775,7 +4775,7 @@
       "needs_review": false
     },
     "𓉒": {
-      "width_em": 0.9029999999999999,
+      "width_em": 0.903,
       "height_em": 1.161,
       "shape": "squareish",
       "size": "normal",
@@ -4791,7 +4791,7 @@
       "needs_review": false
     },
     "𓉔": {
-      "width_em": 1.0230000000000001,
+      "width_em": 1.023,
       "height_em": 0.867,
       "shape": "squareish",
       "size": "normal",
@@ -4816,7 +4816,7 @@
     },
     "𓉗": {
       "width_em": 0.741,
-      "height_em": 1.2269999999999999,
+      "height_em": 1.227,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "square",
@@ -4824,7 +4824,7 @@
     },
     "𓉘": {
       "width_em": 0.504,
-      "height_em": 1.2269999999999999,
+      "height_em": 1.227,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -4832,7 +4832,7 @@
     },
     "𓉙": {
       "width_em": 0.504,
-      "height_em": 1.2269999999999999,
+      "height_em": 1.227,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -4840,7 +4840,7 @@
     },
     "𓉚": {
       "width_em": 0.504,
-      "height_em": 1.2269999999999999,
+      "height_em": 1.227,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -4848,7 +4848,7 @@
     },
     "𓉛": {
       "width_em": 0.504,
-      "height_em": 1.2269999999999999,
+      "height_em": 1.227,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -4856,7 +4856,7 @@
     },
     "𓉜": {
       "width_em": 0.504,
-      "height_em": 1.2269999999999999,
+      "height_em": 1.227,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -4864,7 +4864,7 @@
     },
     "𓉝": {
       "width_em": 0.504,
-      "height_em": 1.2269999999999999,
+      "height_em": 1.227,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -4872,7 +4872,7 @@
     },
     "𓉞": {
       "width_em": 0.741,
-      "height_em": 1.2269999999999999,
+      "height_em": 1.227,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "square",
@@ -4880,7 +4880,7 @@
     },
     "𓉟": {
       "width_em": 1.213,
-      "height_em": 1.2269999999999999,
+      "height_em": 1.227,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -4895,32 +4895,32 @@
       "needs_review": false
     },
     "𓉡": {
-      "width_em": 1.2910000000000001,
-      "height_em": 1.2269999999999999,
+      "width_em": 1.291,
+      "height_em": 1.227,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓉢": {
-      "width_em": 1.2910000000000001,
-      "height_em": 1.2269999999999999,
+      "width_em": 1.291,
+      "height_em": 1.227,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓉣": {
-      "width_em": 1.2910000000000001,
-      "height_em": 1.2269999999999999,
+      "width_em": 1.291,
+      "height_em": 1.227,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓉤": {
-      "width_em": 1.1280000000000001,
-      "height_em": 1.2269999999999999,
+      "width_em": 1.128,
+      "height_em": 1.227,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -4943,7 +4943,7 @@
       "needs_review": false
     },
     "𓉧": {
-      "width_em": 1.1580000000000001,
+      "width_em": 1.158,
       "height_em": 1.232,
       "shape": "squareish",
       "size": "normal",
@@ -4951,7 +4951,7 @@
       "needs_review": false
     },
     "𓉨": {
-      "width_em": 1.1580000000000001,
+      "width_em": 1.158,
       "height_em": 1.232,
       "shape": "squareish",
       "size": "normal",
@@ -4960,7 +4960,7 @@
     },
     "𓉩": {
       "width_em": 1.119,
-      "height_em": 1.2269999999999999,
+      "height_em": 1.227,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -4968,7 +4968,7 @@
     },
     "𓉪": {
       "width_em": 1.339,
-      "height_em": 1.0030000000000001,
+      "height_em": 1.003,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -4983,23 +4983,23 @@
       "needs_review": false
     },
     "𓉬": {
-      "width_em": 1.1280000000000001,
-      "height_em": 1.2269999999999999,
+      "width_em": 1.128,
+      "height_em": 1.227,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓉭": {
-      "width_em": 1.4060000000000001,
-      "height_em": 1.2269999999999999,
+      "width_em": 1.406,
+      "height_em": 1.227,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓉮": {
-      "width_em": 0.9089999999999999,
+      "width_em": 0.909,
       "height_em": 1.134,
       "shape": "squareish",
       "size": "normal",
@@ -5031,8 +5031,8 @@
       "needs_review": false
     },
     "𓉲": {
-      "width_em": 1.1640000000000001,
-      "height_em": 0.9380000000000001,
+      "width_em": 1.164,
+      "height_em": 0.938,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -5048,7 +5048,7 @@
     },
     "𓉴": {
       "width_em": 0.838,
-      "height_em": 1.1640000000000001,
+      "height_em": 1.164,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -5096,7 +5096,7 @@
     },
     "𓉺": {
       "width_em": 0.312,
-      "height_em": 1.0779999999999998,
+      "height_em": 1.078,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -5111,7 +5111,7 @@
       "needs_review": false
     },
     "𓉼": {
-      "width_em": 0.28200000000000003,
+      "width_em": 0.282,
       "height_em": 1.228,
       "shape": "tall",
       "size": "normal",
@@ -5136,7 +5136,7 @@
     },
     "𓉿": {
       "width_em": 1.266,
-      "height_em": 0.30800000000000005,
+      "height_em": 0.308,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -5144,14 +5144,14 @@
     },
     "𓊀": {
       "width_em": 0.817,
-      "height_em": 1.1600000000000001,
+      "height_em": 1.16,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓊁": {
-      "width_em": 0.9279999999999999,
+      "width_em": 0.928,
       "height_em": 1.112,
       "shape": "squareish",
       "size": "normal",
@@ -5167,7 +5167,7 @@
       "needs_review": false
     },
     "𓊃": {
-      "width_em": 1.2590000000000001,
+      "width_em": 1.259,
       "height_em": 0.183,
       "shape": "wide",
       "size": "normal",
@@ -5176,14 +5176,14 @@
     },
     "𓊄": {
       "width_em": 1.098,
-      "height_em": 0.7120000000000001,
+      "height_em": 0.712,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": true
     },
     "𓊅": {
-      "width_em": 0.5219999999999999,
+      "width_em": 0.522,
       "height_em": 1.17,
       "shape": "tall",
       "size": "normal",
@@ -5192,7 +5192,7 @@
     },
     "𓊆": {
       "width_em": 0.63,
-      "height_em": 1.1440000000000001,
+      "height_em": 1.144,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -5200,14 +5200,14 @@
     },
     "𓊇": {
       "width_em": 0.63,
-      "height_em": 1.1440000000000001,
+      "height_em": 1.144,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": true
     },
     "𓊈": {
-      "width_em": 0.41800000000000004,
+      "width_em": 0.418,
       "height_em": 1.145,
       "shape": "tall",
       "size": "normal",
@@ -5215,7 +5215,7 @@
       "needs_review": false
     },
     "𓊉": {
-      "width_em": 0.41800000000000004,
+      "width_em": 0.418,
       "height_em": 1.145,
       "shape": "tall",
       "size": "normal",
@@ -5223,7 +5223,7 @@
       "needs_review": false
     },
     "𓊊": {
-      "width_em": 1.2810000000000001,
+      "width_em": 1.281,
       "height_em": 0.931,
       "shape": "squareish",
       "size": "normal",
@@ -5231,7 +5231,7 @@
       "needs_review": false
     },
     "𓊋": {
-      "width_em": 0.8049999999999999,
+      "width_em": 0.805,
       "height_em": 0.795,
       "shape": "squareish",
       "size": "normal",
@@ -5248,7 +5248,7 @@
     },
     "𓊍": {
       "width_em": 0.822,
-      "height_em": 0.8210000000000001,
+      "height_em": 0.821,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -5256,7 +5256,7 @@
     },
     "𓊎": {
       "width_em": 1.206,
-      "height_em": 0.7030000000000001,
+      "height_em": 0.703,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
@@ -5264,14 +5264,14 @@
     },
     "𓊏": {
       "width_em": 1.292,
-      "height_em": 0.7000000000000001,
+      "height_em": 0.7,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": true
     },
     "𓊐": {
-      "width_em": 1.2550000000000001,
+      "width_em": 1.255,
       "height_em": 0.547,
       "shape": "wide",
       "size": "normal",
@@ -5279,7 +5279,7 @@
       "needs_review": false
     },
     "𓊑": {
-      "width_em": 0.5379999999999999,
+      "width_em": 0.538,
       "height_em": 1.169,
       "shape": "tall",
       "size": "normal",
@@ -5295,8 +5295,8 @@
       "needs_review": false
     },
     "𓊓": {
-      "width_em": 0.5339999999999999,
-      "height_em": 0.7070000000000001,
+      "width_em": 0.534,
+      "height_em": 0.707,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "tall",
@@ -5304,7 +5304,7 @@
     },
     "𓊔": {
       "width_em": 1.245,
-      "height_em": 0.35500000000000004,
+      "height_em": 0.355,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -5312,7 +5312,7 @@
     },
     "𓊕": {
       "width_em": 0.582,
-      "height_em": 0.5820000000000001,
+      "height_em": 0.582,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
@@ -5320,7 +5320,7 @@
     },
     "𓊖": {
       "width_em": 0.582,
-      "height_em": 0.5820000000000001,
+      "height_em": 0.582,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
@@ -5328,7 +5328,7 @@
     },
     "𓊗": {
       "width_em": 0.689,
-      "height_em": 0.6900000000000001,
+      "height_em": 0.69,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
@@ -5351,7 +5351,7 @@
       "needs_review": false
     },
     "𓊚": {
-      "width_em": 1.1620000000000001,
+      "width_em": 1.162,
       "height_em": 0.784,
       "shape": "wide",
       "size": "normal",
@@ -5368,14 +5368,14 @@
     },
     "𓊜": {
       "width_em": 1.333,
-      "height_em": 0.6799999999999999,
+      "height_em": 0.68,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": true
     },
     "𓊝": {
-      "width_em": 1.1640000000000001,
+      "width_em": 1.164,
       "height_em": 0.918,
       "shape": "squareish",
       "size": "normal",
@@ -5384,7 +5384,7 @@
     },
     "𓊞": {
       "width_em": 1.147,
-      "height_em": 0.7070000000000001,
+      "height_em": 0.707,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
@@ -5392,14 +5392,14 @@
     },
     "𓊟": {
       "width_em": 1.108,
-      "height_em": 0.7070000000000001,
+      "height_em": 0.707,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": true
     },
     "𓊠": {
-      "width_em": 1.0150000000000001,
+      "width_em": 1.015,
       "height_em": 0.51,
       "shape": "wide",
       "size": "normal",
@@ -5416,7 +5416,7 @@
     },
     "𓊢": {
       "width_em": 0.306,
-      "height_em": 1.0050000000000001,
+      "height_em": 1.005,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -5424,7 +5424,7 @@
     },
     "𓊣": {
       "width_em": 1.028,
-      "height_em": 1.0050000000000001,
+      "height_em": 1.005,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -5456,22 +5456,22 @@
     },
     "𓊧": {
       "width_em": 0.201,
-      "height_em": 0.8170000000000001,
+      "height_em": 0.817,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓊨": {
-      "width_em": 0.5309999999999999,
-      "height_em": 1.0150000000000001,
+      "width_em": 0.531,
+      "height_em": 1.015,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓊩": {
-      "width_em": 1.1320000000000001,
+      "width_em": 1.132,
       "height_em": 0.725,
       "shape": "wide",
       "size": "normal",
@@ -5503,7 +5503,7 @@
       "needs_review": false
     },
     "𓊭": {
-      "width_em": 1.1400000000000001,
+      "width_em": 1.14,
       "height_em": 0.79,
       "shape": "wide",
       "size": "normal",
@@ -5520,7 +5520,7 @@
     },
     "𓊯": {
       "width_em": 1.179,
-      "height_em": 1.1340000000000001,
+      "height_em": 1.134,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -5535,8 +5535,8 @@
       "needs_review": false
     },
     "𓊱": {
-      "width_em": 0.8079999999999999,
-      "height_em": 0.9400000000000001,
+      "width_em": 0.808,
+      "height_em": 0.94,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -5544,7 +5544,7 @@
     },
     "𓊲": {
       "width_em": 1.264,
-      "height_em": 1.1380000000000001,
+      "height_em": 1.138,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -5591,7 +5591,7 @@
       "needs_review": false
     },
     "𓊸": {
-      "width_em": 0.49100000000000005,
+      "width_em": 0.491,
       "height_em": 0.809,
       "shape": "tall",
       "size": "normal",
@@ -5599,8 +5599,8 @@
       "needs_review": false
     },
     "𓊹": {
-      "width_em": 0.48900000000000005,
-      "height_em": 1.1300000000000001,
+      "width_em": 0.489,
+      "height_em": 1.13,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -5608,7 +5608,7 @@
     },
     "𓊺": {
       "width_em": 0.461,
-      "height_em": 1.1440000000000001,
+      "height_em": 1.144,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -5616,7 +5616,7 @@
     },
     "𓊻": {
       "width_em": 1.122,
-      "height_em": 1.1420000000000001,
+      "height_em": 1.142,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -5679,7 +5679,7 @@
       "needs_review": false
     },
     "𓋃": {
-      "width_em": 0.35700000000000004,
+      "width_em": 0.357,
       "height_em": 1.162,
       "shape": "tall",
       "size": "normal",
@@ -5687,7 +5687,7 @@
       "needs_review": false
     },
     "𓋄": {
-      "width_em": 0.5249999999999999,
+      "width_em": 0.525,
       "height_em": 1.164,
       "shape": "tall",
       "size": "normal",
@@ -5695,7 +5695,7 @@
       "needs_review": false
     },
     "𓋅": {
-      "width_em": 0.6741429999999999,
+      "width_em": 0.674143,
       "height_em": 1.16,
       "shape": "tall",
       "size": "normal",
@@ -5711,7 +5711,7 @@
       "needs_review": false
     },
     "𓋇": {
-      "width_em": 1.0050000000000001,
+      "width_em": 1.005,
       "height_em": 1.181,
       "shape": "squareish",
       "size": "normal",
@@ -5719,7 +5719,7 @@
       "needs_review": false
     },
     "𓋈": {
-      "width_em": 0.5409999999999999,
+      "width_em": 0.541,
       "height_em": 1.189,
       "shape": "tall",
       "size": "normal",
@@ -5727,15 +5727,15 @@
       "needs_review": false
     },
     "𓋉": {
-      "width_em": 1.2970000000000002,
-      "height_em": 0.27799999999999997,
+      "width_em": 1.297,
+      "height_em": 0.278,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓋊": {
-      "width_em": 1.3190000000000002,
+      "width_em": 1.319,
       "height_em": 0.291,
       "shape": "wide",
       "size": "normal",
@@ -5751,7 +5751,7 @@
       "needs_review": false
     },
     "𓋌": {
-      "width_em": 0.9289999999999999,
+      "width_em": 0.929,
       "height_em": 1.145,
       "shape": "squareish",
       "size": "normal",
@@ -5760,14 +5760,14 @@
     },
     "𓋍": {
       "width_em": 0.963,
-      "height_em": 1.1560000000000001,
+      "height_em": 1.156,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓋎": {
-      "width_em": 0.5339999999999999,
+      "width_em": 0.534,
       "height_em": 1.162,
       "shape": "tall",
       "size": "normal",
@@ -5776,7 +5776,7 @@
     },
     "𓋏": {
       "width_em": 0.448,
-      "height_em": 1.1520000000000001,
+      "height_em": 1.152,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -5792,14 +5792,14 @@
     },
     "𓋑": {
       "width_em": 0.582,
-      "height_em": 1.1560000000000001,
+      "height_em": 1.156,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓋒": {
-      "width_em": 1.0570000000000002,
+      "width_em": 1.057,
       "height_em": 1.155,
       "shape": "squareish",
       "size": "normal",
@@ -5807,7 +5807,7 @@
       "needs_review": false
     },
     "𓋓": {
-      "width_em": 0.5319999999999999,
+      "width_em": 0.532,
       "height_em": 1.24,
       "shape": "tall",
       "size": "normal",
@@ -5816,14 +5816,14 @@
     },
     "𓋔": {
       "width_em": 0.708,
-      "height_em": 1.1540000000000001,
+      "height_em": 1.154,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": true
     },
     "𓋕": {
-      "width_em": 1.0570000000000002,
+      "width_em": 1.057,
       "height_em": 1.171,
       "shape": "squareish",
       "size": "normal",
@@ -5839,7 +5839,7 @@
       "needs_review": true
     },
     "𓋗": {
-      "width_em": 1.0570000000000002,
+      "width_em": 1.057,
       "height_em": 1.166,
       "shape": "squareish",
       "size": "normal",
@@ -5847,7 +5847,7 @@
       "needs_review": false
     },
     "𓋘": {
-      "width_em": 0.5519999999999999,
+      "width_em": 0.552,
       "height_em": 1.245,
       "shape": "tall",
       "size": "normal",
@@ -5880,14 +5880,14 @@
     },
     "𓋜": {
       "width_em": 1.171,
-      "height_em": 0.9480000000000001,
+      "height_em": 0.948,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓋝": {
-      "width_em": 0.9039999999999999,
+      "width_em": 0.904,
       "height_em": 0.817,
       "shape": "squareish",
       "size": "normal",
@@ -5904,7 +5904,7 @@
     },
     "𓋟": {
       "width_em": 1.208,
-      "height_em": 1.1600000000000001,
+      "height_em": 1.16,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -5912,7 +5912,7 @@
     },
     "𓋠": {
       "width_em": 1.208,
-      "height_em": 1.1929999999999998,
+      "height_em": 1.193,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -5920,7 +5920,7 @@
     },
     "𓋡": {
       "width_em": 1.014,
-      "height_em": 1.2229999999999999,
+      "height_em": 1.223,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -5952,14 +5952,14 @@
     },
     "𓋥": {
       "width_em": 0.564,
-      "height_em": 1.1239999999999999,
+      "height_em": 1.124,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓋦": {
-      "width_em": 0.9369999999999999,
+      "width_em": 0.937,
       "height_em": 0.639,
       "shape": "wide",
       "size": "normal",
@@ -5976,7 +5976,7 @@
     },
     "𓋨": {
       "width_em": 1.155,
-      "height_em": 1.0319999999999998,
+      "height_em": 1.032,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -5991,7 +5991,7 @@
       "needs_review": false
     },
     "𓋪": {
-      "width_em": 0.5459999999999999,
+      "width_em": 0.546,
       "height_em": 0.546,
       "shape": "squareish",
       "size": "compact",
@@ -6000,7 +6000,7 @@
     },
     "𓋫": {
       "width_em": 0.999,
-      "height_em": 0.6679999999999999,
+      "height_em": 0.668,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -6008,7 +6008,7 @@
     },
     "𓋬": {
       "width_em": 0.754,
-      "height_em": 0.6539999999999999,
+      "height_em": 0.654,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "wide",
@@ -6016,7 +6016,7 @@
     },
     "𓋭": {
       "width_em": 0.832,
-      "height_em": 0.18899999999999997,
+      "height_em": 0.189,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -6031,7 +6031,7 @@
       "needs_review": true
     },
     "𓋯": {
-      "width_em": 0.7639999999999999,
+      "width_em": 0.764,
       "height_em": 0.999,
       "shape": "squareish",
       "size": "normal",
@@ -6040,7 +6040,7 @@
     },
     "𓋰": {
       "width_em": 1.06,
-      "height_em": 0.33499999999999996,
+      "height_em": 0.335,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -6048,7 +6048,7 @@
     },
     "𓋱": {
       "width_em": 0.975,
-      "height_em": 0.29400000000000004,
+      "height_em": 0.294,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -6056,15 +6056,15 @@
     },
     "𓋲": {
       "width_em": 0.849,
-      "height_em": 1.2449999999999999,
+      "height_em": 1.245,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓋳": {
-      "width_em": 1.3230000000000002,
-      "height_em": 1.2449999999999999,
+      "width_em": 1.323,
+      "height_em": 1.245,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -6079,7 +6079,7 @@
       "needs_review": false
     },
     "𓋵": {
-      "width_em": 1.2930000000000001,
+      "width_em": 1.293,
       "height_em": 1.256,
       "shape": "squareish",
       "size": "normal",
@@ -6096,15 +6096,15 @@
     },
     "𓋷": {
       "width_em": 1.1,
-      "height_em": 0.29500000000000004,
+      "height_em": 0.295,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓋸": {
-      "width_em": 0.47700000000000004,
-      "height_em": 1.0319999999999998,
+      "width_em": 0.477,
+      "height_em": 1.032,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -6120,7 +6120,7 @@
     },
     "𓋺": {
       "width_em": 0.722,
-      "height_em": 1.0319999999999998,
+      "height_em": 1.032,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "square",
@@ -6128,7 +6128,7 @@
     },
     "𓋻": {
       "width_em": 0.722,
-      "height_em": 1.0319999999999998,
+      "height_em": 1.032,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "square",
@@ -6136,7 +6136,7 @@
     },
     "𓋼": {
       "width_em": 0.589,
-      "height_em": 1.0319999999999998,
+      "height_em": 1.032,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -6144,7 +6144,7 @@
     },
     "𓋽": {
       "width_em": 0.333,
-      "height_em": 1.0319999999999998,
+      "height_em": 1.032,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -6191,7 +6191,7 @@
       "needs_review": false
     },
     "𓌃": {
-      "width_em": 0.20400000000000001,
+      "width_em": 0.204,
       "height_em": 1.035,
       "shape": "tall",
       "size": "normal",
@@ -6199,7 +6199,7 @@
       "needs_review": false
     },
     "𓌄": {
-      "width_em": 0.47200000000000003,
+      "width_em": 0.472,
       "height_em": 1.035,
       "shape": "tall",
       "size": "normal",
@@ -6207,15 +6207,15 @@
       "needs_review": false
     },
     "𓌅": {
-      "width_em": 0.9339999999999999,
-      "height_em": 1.1669999999999998,
+      "width_em": 0.934,
+      "height_em": 1.167,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓌆": {
-      "width_em": 0.6409999999999999,
+      "width_em": 0.641,
       "height_em": 0.634,
       "shape": "squareish",
       "size": "compact",
@@ -6231,7 +6231,7 @@
       "needs_review": false
     },
     "𓌈": {
-      "width_em": 0.7789999999999999,
+      "width_em": 0.779,
       "height_em": 0.78,
       "shape": "squareish",
       "size": "normal",
@@ -6263,7 +6263,7 @@
       "needs_review": false
     },
     "𓌌": {
-      "width_em": 0.7889999999999999,
+      "width_em": 0.789,
       "height_em": 1.014,
       "shape": "squareish",
       "size": "normal",
@@ -6271,7 +6271,7 @@
       "needs_review": false
     },
     "𓌍": {
-      "width_em": 0.9079999999999999,
+      "width_em": 0.908,
       "height_em": 1.023,
       "shape": "squareish",
       "size": "normal",
@@ -6280,7 +6280,7 @@
     },
     "𓌎": {
       "width_em": 1.06,
-      "height_em": 0.41600000000000004,
+      "height_em": 0.416,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -6303,7 +6303,7 @@
       "needs_review": false
     },
     "𓌑": {
-      "width_em": 0.34400000000000003,
+      "width_em": 0.344,
       "height_em": 1.015,
       "shape": "tall",
       "size": "normal",
@@ -6311,23 +6311,23 @@
       "needs_review": false
     },
     "𓌒": {
-      "width_em": 0.8089999999999999,
-      "height_em": 0.13099999999999995,
+      "width_em": 0.809,
+      "height_em": 0.131,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓌓": {
-      "width_em": 0.8049999999999999,
-      "height_em": 0.15199999999999997,
+      "width_em": 0.805,
+      "height_em": 0.152,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓌔": {
-      "width_em": 0.8019999999999999,
+      "width_em": 0.802,
       "height_em": 0.134,
       "shape": "wide",
       "size": "normal",
@@ -6336,14 +6336,14 @@
     },
     "𓌕": {
       "width_em": 1.101,
-      "height_em": 0.15799999999999997,
+      "height_em": 0.158,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓌖": {
-      "width_em": 0.8099999999999999,
+      "width_em": 0.81,
       "height_em": 0.815,
       "shape": "squareish",
       "size": "normal",
@@ -6351,7 +6351,7 @@
       "needs_review": false
     },
     "𓌗": {
-      "width_em": 0.7959999999999999,
+      "width_em": 0.796,
       "height_em": 0.802,
       "shape": "squareish",
       "size": "normal",
@@ -6367,7 +6367,7 @@
       "needs_review": false
     },
     "𓌙": {
-      "width_em": 0.23399999999999999,
+      "width_em": 0.234,
       "height_em": 1.035,
       "shape": "tall",
       "size": "normal",
@@ -6384,7 +6384,7 @@
     },
     "𓌛": {
       "width_em": 1.1,
-      "height_em": 0.41000000000000003,
+      "height_em": 0.41,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -6415,7 +6415,7 @@
       "needs_review": false
     },
     "𓌟": {
-      "width_em": 0.28800000000000003,
+      "width_em": 0.288,
       "height_em": 1.035,
       "shape": "tall",
       "size": "normal",
@@ -6423,7 +6423,7 @@
       "needs_review": false
     },
     "𓌠": {
-      "width_em": 0.20800000000000002,
+      "width_em": 0.208,
       "height_em": 1.035,
       "shape": "tall",
       "size": "normal",
@@ -6431,7 +6431,7 @@
       "needs_review": false
     },
     "𓌡": {
-      "width_em": 1.2970000000000002,
+      "width_em": 1.297,
       "height_em": 0.523,
       "shape": "wide",
       "size": "normal",
@@ -6447,7 +6447,7 @@
       "needs_review": false
     },
     "𓌣": {
-      "width_em": 0.35500000000000004,
+      "width_em": 0.355,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -6463,7 +6463,7 @@
       "needs_review": false
     },
     "𓌥": {
-      "width_em": 0.5279999999999999,
+      "width_em": 0.528,
       "height_em": 0.998,
       "shape": "tall",
       "size": "normal",
@@ -6496,7 +6496,7 @@
     },
     "𓌩": {
       "width_em": 1.225,
-      "height_em": 1.0659999999999998,
+      "height_em": 1.066,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -6519,7 +6519,7 @@
       "needs_review": true
     },
     "𓌬": {
-      "width_em": 1.1260000000000001,
+      "width_em": 1.126,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -6551,7 +6551,7 @@
       "needs_review": false
     },
     "𓌰": {
-      "width_em": 0.34800000000000003,
+      "width_em": 0.348,
       "height_em": 1.071,
       "shape": "tall",
       "size": "normal",
@@ -6559,16 +6559,16 @@
       "needs_review": false
     },
     "𓌱": {
-      "width_em": 0.24303399999999997,
-      "height_em": 1.0739999999999998,
+      "width_em": 0.243034,
+      "height_em": 1.074,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓌲": {
-      "width_em": 0.5559999999999999,
-      "height_em": 1.0659999999999998,
+      "width_em": 0.556,
+      "height_em": 1.066,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -6599,7 +6599,7 @@
       "needs_review": false
     },
     "𓌶": {
-      "width_em": 1.0710000000000002,
+      "width_em": 1.071,
       "height_em": 1.073,
       "shape": "squareish",
       "size": "normal",
@@ -6616,7 +6616,7 @@
     },
     "𓌸": {
       "width_em": 0.706,
-      "height_em": 1.0819999999999999,
+      "height_em": 1.082,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "square",
@@ -6624,7 +6624,7 @@
     },
     "𓌹": {
       "width_em": 0.372,
-      "height_em": 1.0499999999999998,
+      "height_em": 1.05,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -6632,7 +6632,7 @@
     },
     "𓌺": {
       "width_em": 0.372,
-      "height_em": 1.0499999999999998,
+      "height_em": 1.05,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -6640,7 +6640,7 @@
     },
     "𓌻": {
       "width_em": 1.149,
-      "height_em": 0.46599999999999997,
+      "height_em": 0.466,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -6648,7 +6648,7 @@
     },
     "𓌼": {
       "width_em": 1.099,
-      "height_em": 0.44400000000000006,
+      "height_em": 0.444,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -6672,14 +6672,14 @@
     },
     "𓌿": {
       "width_em": 0.888,
-      "height_em": 1.1789999999999998,
+      "height_em": 1.179,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓍀": {
-      "width_em": 0.8929999999999999,
+      "width_em": 0.893,
       "height_em": 1.161,
       "shape": "squareish",
       "size": "normal",
@@ -6688,7 +6688,7 @@
     },
     "𓍁": {
       "width_em": 1.141,
-      "height_em": 0.8909999999999999,
+      "height_em": 0.891,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -6696,7 +6696,7 @@
     },
     "𓍂": {
       "width_em": 1.151,
-      "height_em": 0.42100000000000004,
+      "height_em": 0.421,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -6711,8 +6711,8 @@
       "needs_review": false
     },
     "𓍄": {
-      "width_em": 1.4060000000000001,
-      "height_em": 1.1513330000000002,
+      "width_em": 1.406,
+      "height_em": 1.151333,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -6728,14 +6728,14 @@
     },
     "𓍆": {
       "width_em": 1.097,
-      "height_em": 0.8879999999999999,
+      "height_em": 0.888,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓍇": {
-      "width_em": 0.9819999999999999,
+      "width_em": 0.982,
       "height_em": 0.607,
       "shape": "wide",
       "size": "normal",
@@ -6743,15 +6743,15 @@
       "needs_review": false
     },
     "𓍈": {
-      "width_em": 0.8019999999999999,
-      "height_em": 0.20700000000000002,
+      "width_em": 0.802,
+      "height_em": 0.207,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓍉": {
-      "width_em": 0.7939999999999999,
+      "width_em": 0.794,
       "height_em": 0.268,
       "shape": "wide",
       "size": "normal",
@@ -6760,7 +6760,7 @@
     },
     "𓍊": {
       "width_em": 0.362,
-      "height_em": 0.6499999999999999,
+      "height_em": 0.65,
       "shape": "tall",
       "size": "compact",
       "quadrat_class": "small",
@@ -6768,7 +6768,7 @@
     },
     "𓍋": {
       "width_em": 0.317,
-      "height_em": 1.0059999999999998,
+      "height_em": 1.006,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -6776,7 +6776,7 @@
     },
     "𓍌": {
       "width_em": 0.317,
-      "height_em": 1.0059999999999998,
+      "height_em": 1.006,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -6791,7 +6791,7 @@
       "needs_review": false
     },
     "𓍎": {
-      "width_em": 0.40900000000000003,
+      "width_em": 0.409,
       "height_em": 0.993,
       "shape": "tall",
       "size": "normal",
@@ -6839,8 +6839,8 @@
       "needs_review": false
     },
     "𓍔": {
-      "width_em": 0.5469999999999999,
-      "height_em": 0.6499999999999999,
+      "width_em": 0.547,
+      "height_em": 0.65,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
@@ -6848,7 +6848,7 @@
     },
     "𓍕": {
       "width_em": 1.131,
-      "height_em": 0.6619999999999999,
+      "height_em": 0.662,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -6863,7 +6863,7 @@
       "needs_review": false
     },
     "𓍗": {
-      "width_em": 0.28300000000000003,
+      "width_em": 0.283,
       "height_em": 1.035,
       "shape": "tall",
       "size": "normal",
@@ -6879,7 +6879,7 @@
       "needs_review": false
     },
     "𓍙": {
-      "width_em": 0.29400000000000004,
+      "width_em": 0.294,
       "height_em": 1.035,
       "shape": "tall",
       "size": "normal",
@@ -6911,7 +6911,7 @@
       "needs_review": false
     },
     "𓍝": {
-      "width_em": 1.0030000000000001,
+      "width_em": 1.003,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -6927,7 +6927,7 @@
       "needs_review": false
     },
     "𓍟": {
-      "width_em": 0.5219999999999999,
+      "width_em": 0.522,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -6959,7 +6959,7 @@
       "needs_review": false
     },
     "𓍣": {
-      "width_em": 0.6519999999999999,
+      "width_em": 0.652,
       "height_em": 0.624,
       "shape": "squareish",
       "size": "compact",
@@ -6967,7 +6967,7 @@
       "needs_review": true
     },
     "𓍤": {
-      "width_em": 0.9979999999999999,
+      "width_em": 0.998,
       "height_em": 0.624,
       "shape": "wide",
       "size": "normal",
@@ -6984,7 +6984,7 @@
     },
     "𓍦": {
       "width_em": 0.846,
-      "height_em": 1.0259999999999998,
+      "height_em": 1.026,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -6992,23 +6992,23 @@
     },
     "𓍧": {
       "width_em": 0.846,
-      "height_em": 1.0259999999999998,
+      "height_em": 1.026,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓍨": {
-      "width_em": 1.1480000000000001,
-      "height_em": 1.0259999999999998,
+      "width_em": 1.148,
+      "height_em": 1.026,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓍩": {
-      "width_em": 1.1480000000000001,
-      "height_em": 1.0259999999999998,
+      "width_em": 1.148,
+      "height_em": 1.026,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -7016,7 +7016,7 @@
     },
     "𓍪": {
       "width_em": 1.451,
-      "height_em": 1.0259999999999998,
+      "height_em": 1.026,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
@@ -7031,7 +7031,7 @@
       "needs_review": false
     },
     "𓍬": {
-      "width_em": 0.5289999999999999,
+      "width_em": 0.529,
       "height_em": 0.624,
       "shape": "squareish",
       "size": "compact",
@@ -7039,7 +7039,7 @@
       "needs_review": false
     },
     "𓍭": {
-      "width_em": 0.7749999999999999,
+      "width_em": 0.775,
       "height_em": 0.848,
       "shape": "squareish",
       "size": "normal",
@@ -7055,7 +7055,7 @@
       "needs_review": false
     },
     "𓍯": {
-      "width_em": 1.0350000000000001,
+      "width_em": 1.035,
       "height_em": 1.019,
       "shape": "squareish",
       "size": "normal",
@@ -7063,7 +7063,7 @@
       "needs_review": false
     },
     "𓍰": {
-      "width_em": 0.5369999999999999,
+      "width_em": 0.537,
       "height_em": 1.005,
       "shape": "tall",
       "size": "normal",
@@ -7088,7 +7088,7 @@
     },
     "𓍳": {
       "width_em": 0.423,
-      "height_em": 1.0179999999999998,
+      "height_em": 1.018,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -7104,7 +7104,7 @@
     },
     "𓍵": {
       "width_em": 0.462,
-      "height_em": 1.0019999999999998,
+      "height_em": 1.002,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -7136,7 +7136,7 @@
     },
     "𓍹": {
       "width_em": 0.503,
-      "height_em": 1.2269999999999999,
+      "height_em": 1.227,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -7144,7 +7144,7 @@
     },
     "𓍺": {
       "width_em": 0.503,
-      "height_em": 1.2269999999999999,
+      "height_em": 1.227,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -7152,14 +7152,14 @@
     },
     "𓍻": {
       "width_em": 0.503,
-      "height_em": 1.2269999999999999,
+      "height_em": 1.227,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓍼": {
-      "width_em": 0.7929999999999999,
+      "width_em": 0.793,
       "height_em": 0.423,
       "shape": "wide",
       "size": "normal",
@@ -7184,7 +7184,7 @@
     },
     "𓍿": {
       "width_em": 0.822,
-      "height_em": 0.23600000000000002,
+      "height_em": 0.236,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -7192,7 +7192,7 @@
     },
     "𓎀": {
       "width_em": 0.847,
-      "height_em": 0.23600000000000002,
+      "height_em": 0.236,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -7200,7 +7200,7 @@
     },
     "𓎁": {
       "width_em": 0.822,
-      "height_em": 0.6709999999999999,
+      "height_em": 0.671,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "wide",
@@ -7215,7 +7215,7 @@
       "needs_review": false
     },
     "𓎃": {
-      "width_em": 0.47200000000000003,
+      "width_em": 0.472,
       "height_em": 1.019,
       "shape": "tall",
       "size": "normal",
@@ -7224,7 +7224,7 @@
     },
     "𓎄": {
       "width_em": 0.264,
-      "height_em": 1.0059999999999998,
+      "height_em": 1.006,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -7248,7 +7248,7 @@
     },
     "𓎇": {
       "width_em": 0.267,
-      "height_em": 0.8349999999999999,
+      "height_em": 0.835,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -7256,7 +7256,7 @@
     },
     "𓎈": {
       "width_em": 0.609,
-      "height_em": 0.8349999999999999,
+      "height_em": 0.835,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "tall",
@@ -7264,7 +7264,7 @@
     },
     "𓎉": {
       "width_em": 0.609,
-      "height_em": 0.8349999999999999,
+      "height_em": 0.835,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "tall",
@@ -7272,7 +7272,7 @@
     },
     "𓎊": {
       "width_em": 0.951,
-      "height_em": 0.8349999999999999,
+      "height_em": 0.835,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -7280,7 +7280,7 @@
     },
     "𓎋": {
       "width_em": 0.951,
-      "height_em": 0.8349999999999999,
+      "height_em": 0.835,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -7288,7 +7288,7 @@
     },
     "𓎌": {
       "width_em": 1.292,
-      "height_em": 0.8349999999999999,
+      "height_em": 0.835,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
@@ -7296,7 +7296,7 @@
     },
     "𓎍": {
       "width_em": 1.292,
-      "height_em": 0.8349999999999999,
+      "height_em": 0.835,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "square",
@@ -7304,7 +7304,7 @@
     },
     "𓎎": {
       "width_em": 0.951,
-      "height_em": 1.0699999999999998,
+      "height_em": 1.07,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -7335,7 +7335,7 @@
       "needs_review": false
     },
     "𓎒": {
-      "width_em": 1.6340000000000001,
+      "width_em": 1.634,
       "height_em": 0.347,
       "shape": "wide",
       "size": "normal",
@@ -7344,7 +7344,7 @@
     },
     "𓎓": {
       "width_em": 0.873,
-      "height_em": 1.0039999999999998,
+      "height_em": 1.004,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -7352,7 +7352,7 @@
     },
     "𓎔": {
       "width_em": 0.959,
-      "height_em": 0.6239999999999999,
+      "height_em": 0.624,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -7368,14 +7368,14 @@
     },
     "𓎖": {
       "width_em": 0.944,
-      "height_em": 0.32499999999999996,
+      "height_em": 0.325,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓎗": {
-      "width_em": 0.23000000000000004,
+      "width_em": 0.23,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -7392,7 +7392,7 @@
     },
     "𓎙": {
       "width_em": 1.157,
-      "height_em": 0.30500000000000005,
+      "height_em": 0.305,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -7400,7 +7400,7 @@
     },
     "𓎚": {
       "width_em": 1.159,
-      "height_em": 0.21100000000000002,
+      "height_em": 0.211,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -7408,7 +7408,7 @@
     },
     "𓎛": {
       "width_em": 0.34,
-      "height_em": 1.0039999999999998,
+      "height_em": 1.004,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -7416,14 +7416,14 @@
     },
     "𓎜": {
       "width_em": 1.051,
-      "height_em": 1.0039999999999998,
+      "height_em": 1.004,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
       "needs_review": false
     },
     "𓎝": {
-      "width_em": 0.49000000000000005,
+      "width_em": 0.49,
       "height_em": 1.003,
       "shape": "tall",
       "size": "normal",
@@ -7439,15 +7439,15 @@
       "needs_review": false
     },
     "𓎟": {
-      "width_em": 0.9539999999999998,
-      "height_em": 0.31100000000000005,
+      "width_em": 0.954,
+      "height_em": 0.311,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓎠": {
-      "width_em": 0.7639999999999999,
+      "width_em": 0.764,
       "height_em": 0.253,
       "shape": "wide",
       "size": "normal",
@@ -7456,15 +7456,15 @@
     },
     "𓎡": {
       "width_em": 0.981,
-      "height_em": 0.28200000000000003,
+      "height_em": 0.282,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓎢": {
-      "width_em": 1.0710000000000002,
-      "height_em": 0.31100000000000005,
+      "width_em": 1.071,
+      "height_em": 0.311,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -7472,14 +7472,14 @@
     },
     "𓎣": {
       "width_em": 1.151,
-      "height_em": 0.40800000000000003,
+      "height_em": 0.408,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓎤": {
-      "width_em": 0.5579999999999999,
+      "width_em": 0.558,
       "height_em": 0.817,
       "shape": "tall",
       "size": "normal",
@@ -7487,8 +7487,8 @@
       "needs_review": false
     },
     "𓎥": {
-      "width_em": 0.5259999999999999,
-      "height_em": 0.7070000000000001,
+      "width_em": 0.526,
+      "height_em": 0.707,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "tall",
@@ -7496,14 +7496,14 @@
     },
     "𓎦": {
       "width_em": 0.583,
-      "height_em": 0.8180000000000001,
+      "height_em": 0.818,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓎧": {
-      "width_em": 0.6459999999999999,
+      "width_em": 0.646,
       "height_em": 0.732,
       "shape": "squareish",
       "size": "normal",
@@ -7511,7 +7511,7 @@
       "needs_review": true
     },
     "𓎨": {
-      "width_em": 0.47600000000000003,
+      "width_em": 0.476,
       "height_em": 1.017,
       "shape": "tall",
       "size": "normal",
@@ -7551,7 +7551,7 @@
       "needs_review": false
     },
     "𓎭": {
-      "width_em": 0.34700000000000003,
+      "width_em": 0.347,
       "height_em": 0.267,
       "shape": "squareish",
       "size": "compact",
@@ -7584,14 +7584,14 @@
     },
     "𓎱": {
       "width_em": 1.082,
-      "height_em": 0.35000000000000003,
+      "height_em": 0.35,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓎲": {
-      "width_em": 0.9539999999999998,
+      "width_em": 0.954,
       "height_em": 0.31,
       "shape": "wide",
       "size": "normal",
@@ -7655,7 +7655,7 @@
       "needs_review": true
     },
     "𓎺": {
-      "width_em": 0.5449999999999999,
+      "width_em": 0.545,
       "height_em": 0.36,
       "shape": "wide",
       "size": "compact",
@@ -7672,7 +7672,7 @@
     },
     "𓎼": {
       "width_em": 0.5,
-      "height_em": 0.43900000000000006,
+      "height_em": 0.439,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
@@ -7680,7 +7680,7 @@
     },
     "𓎽": {
       "width_em": 0.575,
-      "height_em": 0.43400000000000005,
+      "height_em": 0.434,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
@@ -7688,7 +7688,7 @@
     },
     "𓎾": {
       "width_em": 0.575,
-      "height_em": 0.43400000000000005,
+      "height_em": 0.434,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
@@ -7711,7 +7711,7 @@
       "needs_review": false
     },
     "𓏁": {
-      "width_em": 0.48300000000000004,
+      "width_em": 0.483,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -7727,7 +7727,7 @@
       "needs_review": false
     },
     "𓏃": {
-      "width_em": 0.9259999999999999,
+      "width_em": 0.926,
       "height_em": 0.992,
       "shape": "squareish",
       "size": "normal",
@@ -7743,7 +7743,7 @@
       "needs_review": false
     },
     "𓏅": {
-      "width_em": 1.1680000000000001,
+      "width_em": 1.168,
       "height_em": 0.992,
       "shape": "squareish",
       "size": "normal",
@@ -7760,7 +7760,7 @@
     },
     "𓏇": {
       "width_em": 0.459,
-      "height_em": 1.0339999999999998,
+      "height_em": 1.034,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -7775,7 +7775,7 @@
       "needs_review": false
     },
     "𓏉": {
-      "width_em": 0.6459999999999999,
+      "width_em": 0.646,
       "height_em": 0.696,
       "shape": "squareish",
       "size": "compact",
@@ -7791,7 +7791,7 @@
       "needs_review": true
     },
     "𓏋": {
-      "width_em": 0.6589999999999999,
+      "width_em": 0.659,
       "height_em": 0.635,
       "shape": "squareish",
       "size": "compact",
@@ -7800,7 +7800,7 @@
     },
     "𓏌": {
       "width_em": 0.376,
-      "height_em": 0.40800000000000003,
+      "height_em": 0.408,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
@@ -7808,22 +7808,22 @@
     },
     "𓏍": {
       "width_em": 1.228,
-      "height_em": 0.40800000000000003,
+      "height_em": 0.408,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓏎": {
-      "width_em": 0.5609999999999999,
-      "height_em": 1.0039999999999998,
+      "width_em": 0.561,
+      "height_em": 1.004,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓏏": {
-      "width_em": 0.5349999999999999,
+      "width_em": 0.535,
       "height_em": 0.264,
       "shape": "wide",
       "size": "compact",
@@ -7832,15 +7832,15 @@
     },
     "𓏐": {
       "width_em": 0.432,
-      "height_em": 0.7409999999999999,
+      "height_em": 0.741,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": true
     },
     "𓏑": {
-      "width_em": 0.48300000000000004,
-      "height_em": 0.7889999999999999,
+      "width_em": 0.483,
+      "height_em": 0.789,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -7880,7 +7880,7 @@
     },
     "𓏖": {
       "width_em": 0.583,
-      "height_em": 0.5830000000000001,
+      "height_em": 0.583,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
@@ -7888,7 +7888,7 @@
     },
     "𓏗": {
       "width_em": 0.437,
-      "height_em": 0.43700000000000006,
+      "height_em": 0.437,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
@@ -7896,7 +7896,7 @@
     },
     "𓏘": {
       "width_em": 0.61,
-      "height_em": 0.5820000000000001,
+      "height_em": 0.582,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
@@ -7936,14 +7936,14 @@
     },
     "𓏝": {
       "width_em": 1.106,
-      "height_em": 0.27099999999999996,
+      "height_em": 0.271,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
       "needs_review": false
     },
     "𓏞": {
-      "width_em": 0.7749999999999999,
+      "width_em": 0.775,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -7951,7 +7951,7 @@
       "needs_review": false
     },
     "𓏟": {
-      "width_em": 0.7749999999999999,
+      "width_em": 0.775,
       "height_em": 1.001,
       "shape": "squareish",
       "size": "normal",
@@ -7960,7 +7960,7 @@
     },
     "𓏠": {
       "width_em": 1.107,
-      "height_em": 0.37199999999999994,
+      "height_em": 0.372,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -7975,7 +7975,7 @@
       "needs_review": true
     },
     "𓏢": {
-      "width_em": 0.5339999999999999,
+      "width_em": 0.534,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -7999,7 +7999,7 @@
       "needs_review": false
     },
     "𓏥": {
-      "width_em": 0.7659999999999999,
+      "width_em": 0.766,
       "height_em": 0.416,
       "shape": "wide",
       "size": "normal",
@@ -8007,7 +8007,7 @@
       "needs_review": true
     },
     "𓏦": {
-      "width_em": 0.6389999999999999,
+      "width_em": 0.639,
       "height_em": 0.416,
       "shape": "wide",
       "size": "compact",
@@ -8023,7 +8023,7 @@
       "needs_review": true
     },
     "𓏨": {
-      "width_em": 0.6389999999999999,
+      "width_em": 0.639,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -8031,7 +8031,7 @@
       "needs_review": true
     },
     "𓏩": {
-      "width_em": 0.6389999999999999,
+      "width_em": 0.639,
       "height_em": 1.001,
       "shape": "tall",
       "size": "normal",
@@ -8055,7 +8055,7 @@
       "needs_review": false
     },
     "𓏬": {
-      "width_em": 0.16399999999999998,
+      "width_em": 0.164,
       "height_em": 0.691,
       "shape": "tall",
       "size": "compact",
@@ -8063,7 +8063,7 @@
       "needs_review": true
     },
     "𓏭": {
-      "width_em": 0.5409999999999999,
+      "width_em": 0.541,
       "height_em": 0.416,
       "shape": "squareish",
       "size": "compact",
@@ -8079,7 +8079,7 @@
       "needs_review": false
     },
     "𓏯": {
-      "width_em": 0.29000000000000004,
+      "width_em": 0.29,
       "height_em": 0.415,
       "shape": "tall",
       "size": "compact",
@@ -8095,8 +8095,8 @@
       "needs_review": false
     },
     "𓏱": {
-      "width_em": 1.3170000000000002,
-      "height_em": 0.6950000000000001,
+      "width_em": 1.317,
+      "height_em": 0.695,
       "shape": "wide",
       "size": "normal",
       "quadrat_class": "wide",
@@ -8104,7 +8104,7 @@
     },
     "𓏲": {
       "width_em": 0.438,
-      "height_em": 0.6960000000000001,
+      "height_em": 0.696,
       "shape": "tall",
       "size": "compact",
       "quadrat_class": "small",
@@ -8135,7 +8135,7 @@
       "needs_review": false
     },
     "𓏶": {
-      "width_em": 0.6809999999999999,
+      "width_em": 0.681,
       "height_em": 1.194,
       "shape": "tall",
       "size": "normal",
@@ -8144,7 +8144,7 @@
     },
     "𓏷": {
       "width_em": 0.589,
-      "height_em": 0.6880000000000001,
+      "height_em": 0.688,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
@@ -8152,7 +8152,7 @@
     },
     "𓏸": {
       "width_em": 0.435,
-      "height_em": 0.43500000000000005,
+      "height_em": 0.435,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
@@ -8160,14 +8160,14 @@
     },
     "𓏹": {
       "width_em": 0.341,
-      "height_em": 0.42900000000000005,
+      "height_em": 0.429,
       "shape": "squareish",
       "size": "compact",
       "quadrat_class": "small",
       "needs_review": false
     },
     "𓏺": {
-      "width_em": 0.019000000000000003,
+      "width_em": 0.019,
       "height_em": 0.416,
       "shape": "tall",
       "size": "compact",
@@ -8191,7 +8191,7 @@
       "needs_review": false
     },
     "𓏽": {
-      "width_em": 0.49000000000000005,
+      "width_em": 0.49,
       "height_em": 0.416,
       "shape": "squareish",
       "size": "compact",
@@ -8215,7 +8215,7 @@
       "needs_review": false
     },
     "𓐀": {
-      "width_em": 0.49000000000000005,
+      "width_em": 0.49,
       "height_em": 0.943,
       "shape": "tall",
       "size": "normal",
@@ -8223,7 +8223,7 @@
       "needs_review": false
     },
     "𓐁": {
-      "width_em": 0.49000000000000005,
+      "width_em": 0.49,
       "height_em": 0.943,
       "shape": "tall",
       "size": "normal",
@@ -8239,7 +8239,7 @@
       "needs_review": false
     },
     "𓐃": {
-      "width_em": 0.6459999999999999,
+      "width_em": 0.646,
       "height_em": 0.416,
       "shape": "wide",
       "size": "compact",
@@ -8247,15 +8247,15 @@
       "needs_review": true
     },
     "𓐄": {
-      "width_em": 0.41500000000000004,
-      "height_em": 0.01899999999999999,
+      "width_em": 0.415,
+      "height_em": 0.019,
       "shape": "wide",
       "size": "compact",
       "quadrat_class": "small",
       "needs_review": false
     },
     "𓐅": {
-      "width_em": 0.41500000000000004,
+      "width_em": 0.415,
       "height_em": 0.185,
       "shape": "wide",
       "size": "compact",
@@ -8263,7 +8263,7 @@
       "needs_review": false
     },
     "𓐆": {
-      "width_em": 0.41500000000000004,
+      "width_em": 0.415,
       "height_em": 0.351,
       "shape": "squareish",
       "size": "compact",
@@ -8271,7 +8271,7 @@
       "needs_review": false
     },
     "𓐇": {
-      "width_em": 0.41500000000000004,
+      "width_em": 0.415,
       "height_em": 0.517,
       "shape": "squareish",
       "size": "compact",
@@ -8279,7 +8279,7 @@
       "needs_review": false
     },
     "𓐈": {
-      "width_em": 0.9089999999999999,
+      "width_em": 0.909,
       "height_em": 0.351,
       "shape": "wide",
       "size": "normal",
@@ -8287,7 +8287,7 @@
       "needs_review": false
     },
     "𓐉": {
-      "width_em": 0.9089999999999999,
+      "width_em": 0.909,
       "height_em": 0.351,
       "shape": "wide",
       "size": "normal",
@@ -8295,7 +8295,7 @@
       "needs_review": false
     },
     "𓐊": {
-      "width_em": 0.9089999999999999,
+      "width_em": 0.909,
       "height_em": 0.517,
       "shape": "wide",
       "size": "normal",
@@ -8303,7 +8303,7 @@
       "needs_review": false
     },
     "𓐋": {
-      "width_em": 0.9089999999999999,
+      "width_em": 0.909,
       "height_em": 0.517,
       "shape": "wide",
       "size": "normal",
@@ -8311,7 +8311,7 @@
       "needs_review": false
     },
     "𓐌": {
-      "width_em": 1.4020000000000001,
+      "width_em": 1.402,
       "height_em": 0.351,
       "shape": "wide",
       "size": "normal",
@@ -8343,7 +8343,7 @@
       "needs_review": false
     },
     "𓐐": {
-      "width_em": 0.9099999999999999,
+      "width_em": 0.91,
       "height_em": 0.653,
       "shape": "squareish",
       "size": "normal",
@@ -8359,7 +8359,7 @@
       "needs_review": false
     },
     "𓐒": {
-      "width_em": 1.1640000000000001,
+      "width_em": 1.164,
       "height_em": 0.632,
       "shape": "wide",
       "size": "normal",
@@ -8367,7 +8367,7 @@
       "needs_review": true
     },
     "𓐓": {
-      "width_em": 1.0550000000000002,
+      "width_em": 1.055,
       "height_em": 0.419,
       "shape": "wide",
       "size": "normal",
@@ -8375,7 +8375,7 @@
       "needs_review": false
     },
     "𓐔": {
-      "width_em": 1.0550000000000002,
+      "width_em": 1.055,
       "height_em": 0.419,
       "shape": "wide",
       "size": "normal",
@@ -8391,7 +8391,7 @@
       "needs_review": false
     },
     "𓐖": {
-      "width_em": 0.9069999999999999,
+      "width_em": 0.907,
       "height_em": 0.3,
       "shape": "wide",
       "size": "normal",
@@ -8415,7 +8415,7 @@
       "needs_review": false
     },
     "𓐙": {
-      "width_em": 1.1580000000000001,
+      "width_em": 1.158,
       "height_em": 0.254,
       "shape": "wide",
       "size": "normal",
@@ -8439,7 +8439,7 @@
       "needs_review": false
     },
     "𓐜": {
-      "width_em": 1.1780000000000002,
+      "width_em": 1.178,
       "height_em": 0.424,
       "shape": "wide",
       "size": "normal",
@@ -8463,7 +8463,7 @@
       "needs_review": true
     },
     "𓐟": {
-      "width_em": 1.1780000000000002,
+      "width_em": 1.178,
       "height_em": 0.632,
       "shape": "wide",
       "size": "normal",
@@ -8472,7 +8472,7 @@
     },
     "𓐠": {
       "width_em": 1.093,
-      "height_em": 1.1589999999999998,
+      "height_em": 1.159,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -8488,14 +8488,14 @@
     },
     "𓐢": {
       "width_em": 0.468,
-      "height_em": 1.1929999999999998,
+      "height_em": 1.193,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓐣": {
-      "width_em": 0.48000000000000004,
+      "width_em": 0.48,
       "height_em": 1.214,
       "shape": "tall",
       "size": "normal",
@@ -8503,7 +8503,7 @@
       "needs_review": false
     },
     "𓐤": {
-      "width_em": 1.0510000000000002,
+      "width_em": 1.051,
       "height_em": 1.214,
       "shape": "squareish",
       "size": "normal",
@@ -8528,7 +8528,7 @@
     },
     "𓐧": {
       "width_em": 0.959,
-      "height_em": 1.1749999999999998,
+      "height_em": 1.175,
       "shape": "squareish",
       "size": "normal",
       "quadrat_class": "square",
@@ -8551,16 +8551,16 @@
       "needs_review": false
     },
     "𓐪": {
-      "width_em": 0.28500000000000003,
-      "height_em": 1.1949999999999998,
+      "width_em": 0.285,
+      "height_em": 1.195,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
       "needs_review": false
     },
     "𓐫": {
-      "width_em": 0.21800000000000003,
-      "height_em": 1.1949999999999998,
+      "width_em": 0.218,
+      "height_em": 1.195,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -8568,7 +8568,7 @@
     },
     "𓐬": {
       "width_em": 0.342,
-      "height_em": 1.1949999999999998,
+      "height_em": 1.195,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -8584,7 +8584,7 @@
     },
     "𓐮": {
       "width_em": 0.302,
-      "height_em": 1.1949999999999998,
+      "height_em": 1.195,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
@@ -8592,7 +8592,7 @@
     },
     "𓐯": {
       "width_em": 0.503,
-      "height_em": 1.2269999999999999,
+      "height_em": 1.227,
       "shape": "tall",
       "size": "normal",
       "quadrat_class": "tall",
