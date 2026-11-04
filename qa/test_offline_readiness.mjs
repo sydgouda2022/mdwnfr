@@ -15,6 +15,7 @@ const full=[...critical,'/core/mdwnfr/layout.py','/vendor/pyodide/pyodide.asm.da
 async function inspect({entries=full,cached=full,controller=true,complete=true,
  format='mdwnfr-offline-publication-v1',offlineReady=true}={}){
  const notice={hidden:false,textContent:''};
+ const retry={hidden:true,disabled:false};
  const publication={format,complete,assets:entries.map(path=>({path}))};
  const cache={
   match:async path=>path==='/offline-assets.json'?{json:async()=>publication}:null,
@@ -45,4 +46,6 @@ assert.equal((await inspect({controller:false})).hidden,false,
 assert.equal((await inspect({complete:false})).hidden,false);
 assert.equal((await inspect({format:'wrong-format'})).hidden,false);
 assert.equal((await inspect({offlineReady:false})).hidden,false);
-console.log('PASS: offline readiness requires complete verified-release cache inventory');
+assert.match((await inspect({cached:[],entries:full})).textContent,/not installed|incomplete/);
+assert.match((await inspect({offlineReady:false})).textContent,/missing its local Python runtime/);
+console.log('PASS: offline readiness distinguishes complete, incomplete and inactive device installs');
