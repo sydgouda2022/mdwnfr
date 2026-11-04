@@ -37,16 +37,17 @@ class SignShapeSizeProfiles(unittest.TestCase):
 
     def test_user_examples_have_expected_shape_and_size(self):
         profiles = self.data["profiles"]
-        for sign, shape, size in [
-            ("𓅓", "squareish", "normal"),  # G17
-            ("𓇋", "tall", "normal"),       # M17
-            ("𓈖", "wide", "normal"),       # N35
-            ("𓆑", "wide", "normal"),       # I9
-            ("𓊪", "squareish", "compact"), # Q3
+        for sign, shape, size, quadrat_class in [
+            ("𓅓", "squareish", "normal", "square"),  # G17
+            ("𓇋", "tall", "normal", "tall"),        # M17
+            ("𓈖", "wide", "normal", "wide"),        # N35
+            ("𓆑", "wide", "normal", "wide"),        # I9
+            ("𓊪", "squareish", "compact", "small"), # Q3
         ]:
             with self.subTest(sign=sign):
                 self.assertEqual((profiles[sign]["shape"], profiles[sign]["size"]),
                                  (shape, size))
+                self.assertEqual(profiles[sign]["quadrat_class"], quadrat_class)
 
     def test_four_quadrat_classes_match_published_shape_examples(self):
         # The four-way typology follows Polis (2018), pp. 294–295:
