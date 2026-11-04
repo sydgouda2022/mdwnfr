@@ -1,10 +1,9 @@
-"""Deterministic quadrat packing from glyph shape, natural size and ink geometry.
+"""Deterministic quadrat packing from glyph dimensions and ink geometry.
 
-Adjacent signs can occupy separate rows, share a horizontal row, or form
-a tall host beside two vertically stacked companions. Composition preserves
-logical sign order, visible aspect ratios and actual silhouette clearance.
-Internal clearance is 5% of column width; the existing 20% gap between
-finished rows/words remains independent and flexible for paper justification.
+Each sign is classified by its measured width and height relative to a virtual
+quadrat. Composition preserves logical sign order, visible aspect ratios and
+actual silhouette clearance. Internal clearance is 5% of column width; the
+existing 20% gap between finished rows/words remains independent.
 """
 from __future__ import annotations
 from dataclasses import dataclass, asdict
@@ -17,9 +16,8 @@ DATA_PATH=Path(__file__).resolve().parent/'data'/'glyph_geometry.json'
 TALL_BELOW_ASPECT=.70
 WIDE_ABOVE_ASPECT=1.40
 COMPACT_BELOW_EXTENT_EM=.70
-TALL_REVIEW_MARGIN=.07
-WIDE_REVIEW_MARGIN=.14
-SIZE_REVIEW_MARGIN_EM=.07
+QUADRAT_MIN_DIMENSION_EM=.70
+QUADRAT_REVIEW_MARGIN_EM=.07
 INNER_CLEARANCE_RATIO=.05
 GROUP_HEIGHT_RATIO=.75
 VERTICAL_GAP_RATIO=.20
@@ -114,10 +112,20 @@ def classify_sign_bounds(bounds:tuple[float,...]|list[float])->dict:
     shape=('tall' if aspect<TALL_BELOW_ASPECT else
            'wide' if aspect>WIDE_ABOVE_ASPECT else 'squareish')
     size='compact' if extent<COMPACT_BELOW_EXTENT_EM else 'normal'
-    review=(abs(aspect-TALL_BELOW_ASPECT)<=TALL_REVIEW_MARGIN or
-            abs(aspect-WIDE_ABOVE_ASPECT)<=WIDE_REVIEW_MARGIN or
-            abs(extent-COMPACT_BELOW_EXTENT_EM)<=SIZE_REVIEW_MARGIN_EM)
-    return {'shape':shape,'size':size,'needs_review':review}
+    # The historical four-way typology is based on both dimensions of a
+    # virtual quadrat, not aspect ratio plus the longest side alone.
+    broad=width>=QUADRAT_MIN_DIMENSION_EM
+    tall=height>=QUADRAT_MIN_DIMENSION_EM
+    quadrat_class=('square' if broad and tall else
+                   'tall' if tall else
+                   'wide' if broad else 'small')
+    # Flag signs close to either independent dimension boundary for visual
+    # review. Aspect/longest-extent labels remain useful diagnostics only.
+    review=(abs(width-QUADRAT_MIN_DIMENSION_EM)<=QUADRAT_REVIEW_MARGIN_EM or
+            abs(height-QUADRAT_MIN_DIMENSION_EM)<=QUADRAT_REVIEW_MARGIN_EM)
+    return {'width_em':round(width,6),'height_em':round(height,6),
+            'shape':shape,'size':size,'quadrat_class':quadrat_class,
+            'needs_review':review}
 
 
 @lru_cache(maxsize=1)
@@ -204,8 +212,10 @@ def compose(signs:list[str],column_width:float,
         if i+1>=len(signs):
             return None
         first,second=profiles[signs[i]],profiles[signs[i+1]]
-        compatible=(first['size']=='compact' or second['size']=='compact' or
-                    (first['shape']=='tall' and second['shape']=='tall'))
+        compatible=(first['quadrat_class']=='small' or
+                    second['quadrat_class']=='small' or
+                    (first['quadrat_class']=='tall' and
+                     second['quadrat_class']=='tall'))
         if not compatible:
             return None
         indices=(i,i+1)
@@ -253,16 +263,16 @@ def compose(signs:list[str],column_width:float,
         indices=(i,i+1,i+2)
         # Both reading orders are allowed: tall host first or tall host last.
         first,last=profiles[signs[i]],profiles[signs[i+2]]
-        if first['shape']=='tall' and first['size']=='normal':
+        if first['quadrat_class']=='tall':
             host=i
             companions=(i+1,i+2)
-        elif last['shape']=='tall' and last['size']=='normal':
+        elif last['quadrat_class']=='tall':
             host=i+2
             companions=(i,i+1)
         else:
             return None
-        if not all(profiles[signs[j]]['size']=='compact' or
-                   profiles[signs[j]]['shape']=='wide' for j in companions):
+        if not all(profiles[signs[j]]['quadrat_class'] in ('small','wide')
+                   for j in companions):
             return None
         b,c=companions
 

@@ -1,71 +1,91 @@
-# Hieroglyph shape and relative-size inventory (first pass)
+# Hieroglyph shape, size and quadrat classes
 
-This is a **mechanically generated provisional classification of all 1,072 signs** in the one installed Noto Sans Egyptian Hieroglyphs glyph catalogue. It is not yet a historical composition rule, and it does not change the editor compositor.
+This is a **mechanically measured inventory of all 1,072 signs** in the installed Noto Sans Egyptian Hieroglyphs font. It gives the compositor a consistent geometric starting point. It is not a claim that every sign has one fixed size or one mandatory historical placement.
 
-## Two independent metrics
+## The two primary measurements
 
-- **Shape** uses actual visible ink width divided by visible ink height, never an abstract character cell: **tall** below 0.70, **square-ish / semi-square** from 0.70 through 1.40, and **wide** above 1.40.
-- **Relative size** uses the longer visible ink dimension, in the font's em units: **compact** below 0.70 em, **normal** otherwise. We deliberately do **not** classify size by ink area; that would mark naturally wide, short signs as tiny.
+Each sign is measured from its actual visible ink bounds in font-em units:
 
-Every sign has exactly one shape and one size label. The two labels are independent; for example a sign can be **wide + compact**, or **tall + normal**. `needs_review` flags a measurement close to a cutoff; it does **not** mean that all other entries have been reviewed by an Egyptologist.
+- **Width**: visible-ink width relative to one em.
+- **Height**: visible-ink height relative to one em.
 
-## First-pass distribution
+These two dimensions are compared independently with a 0.70 em threshold. That maps directly to the four broad shapes described relative to an ideal quadrat:
 
-| Shape | Normal | Compact | Total |
-| --- | ---: | ---: | ---: |
-| Square-ish / semi-square | 429 | 55 | 484 |
-| Tall / thin | 284 | 16 | 300 |
-| Wide / short | 276 | 12 | 288 |
-| **Total** | **989** | **83** | **1,072** |
+| Quadrat class | Width | Height | Signs |
+| --- | --- | --- | ---: |
+| **Square / full** | At least 0.70 em | At least 0.70 em | 494 |
+| **Tall / narrow** | Below 0.70 em | At least 0.70 em | 275 |
+| **Wide / low** | At least 0.70 em | Below 0.70 em | 220 |
+| **Small / compact** | Below 0.70 em | Below 0.70 em | 83 |
+| **Total** | | | **1,072** |
 
-There are **229 threshold-adjacent signs** flagged for visual review. The remaining classifications are also provisional until the glyph examples have been checked.
+The profile also retains two secondary diagnostics: aspect-ratio shape (`tall`, `squareish`, `wide`) and longest-ink extent (`compact`, `normal`). Those summaries are useful for inspection, but **they do not determine the four quadrat classes**. A sign is small only when both its measured width and height are below the threshold. A narrow sign that is still tall is a tall sign, not a small one.
 
-## Examples
+## Canonical examples
 
-| Gardiner sign | Unicode | Shape | Size |
-| --- | --- | --- | --- |
-| G17 | 𓅓 | square-ish | normal |
-| M17 | 𓇋 | tall | normal |
-| N35 | 𓈖 | wide | normal |
-| I9 | 𓆑 | wide | normal |
-| Q3 | 𓊪 | square-ish | compact |
+| Gardiner sign | Unicode | Width × height (em) | Quadrat class |
+| --- | --- | ---: | --- |
+| G17 | 𓅓 | 1.018 × 1.019 | Square |
+| M17 | 𓇋 | 0.244 × 1.001 | Tall |
+| N35 | 𓈖 | 1.099 × 0.196 | Wide |
+| I9 | 𓆑 | 1.405 × 0.394 | Wide |
+| Q3 | 𓊪 | 0.305 × 0.369 | Small |
 
-Q3 illustrates why size cannot be inferred from shape. It has semi-square proportions but is much smaller in the current font's natural ink dimensions.
+The regression suite also checks published exemplars: G14 and W17 (full/square), P6, R8 and S34 (tall/narrow), D21, T11 and V31 (low/broad), and Q3 and W11 (low/narrow).
 
-## What these labels **do not** mean yet
+## Historical basis and limits
 
-- **Every sign can still appear by itself.** Compact does not mean that the compositor must pair it with something else.
-- The labels do not force vertical or horizontal stacking, enlarge a glyph, or override the word's reading sequence.
-- A sign's permissions to share space **horizontally**, share space **vertically**, or serve as a **tall host** remain a separate next-stage rule, after visual inspection. This avoids repeating the error of equating "narrow" with "the only sign eligible for pairing".
-- Placement still requires an actual silhouette collision and balance test; the catalog is descriptive metadata, not layout instructions.
+Stéphane Polis describes four basic sign shapes relative to an ideal quadrat: tall-and-broad (roughly full quadrat), tall-and-narrow (roughly a vertical half), low-and-broad (roughly a horizontal half), and low-and-narrow (roughly a quarter). He also notes that actual sign sizes vary with the available writing space, that some tall-narrow signs can stand alone, and that the goal is balanced, legible composition. See [Polis, “The Functions and Toposyntax of Ancient Egyptian Hieroglyphs” (2018), pp. 294–295](https://doi.org/10.4000/signata.1920).
+
+The source explicitly cautions that the typology is influenced by standardized fonts and modern typographic habits. The 0.70 em threshold is therefore an engineering boundary for this font, not an ancient fixed measurement. It must be checked against the sign's visible outline and historical examples.
+
+James P. Allen's introduction likewise describes tall, flat and small signs, noting that tall signs often stand alone while other signs are commonly grouped; flat or small signs can also stand alone when centered. See [Allen, *Middle Egyptian*, §1.7 (Cambridge University Press)](https://assets.cambridge.org/97805215/17966/excerpt/9780521517966_excerpt.pdf).
+
+These sources support the four broad visual classes, **not a universal permission table**. A shape label alone cannot prove that a sign must be alone, must be paired, or may only occupy one side of a group. Actual inscriptions show multiple arrangements, insertion and kerning; scribes adapt sign size and position to the surrounding signs and the writing surface.
+
+The 203 entries marked `needs_review` lie within 0.07 em of either 0.70 em dimension boundary and should receive priority in visual review. The remaining entries are also machine-classified; absence of the flag is not Egyptological approval. The font's standardized outlines are a measurement source, not a substitute for period-specific epigraphic examples.
+
+## What the classes mean for the editor
+
+- Every sign remains eligible to appear alone. A standalone sign is centered in its available quadrat.
+- The four classes describe the space a sign can approximately occupy. They do not by themselves force grouping or change spelling order.
+- A small sign can potentially occupy a quarter-quadrat or accompany another sign, but it is not required to attach to a neighbor.
+- A tall sign can stand alone or share a quadrat with smaller signs if the actual silhouettes and historical arrangement permit it.
+- A wide sign can potentially be stacked with another wide sign or combined with smaller signs; its class alone does not guarantee that a particular combination fits.
+- Any future sign-specific restriction such as “always alone” must be supported by inspected historical examples, not inferred solely from its dimensions.
 
 ## Single inventory source
 
-- Runtime input: `core/mdwnfr/data/glyph_geometry.json` (the validated measured glyph outlines).
-- Authoritative thresholds and classification: `core/mdwnfr/quadrat.py` (`classify_sign_bounds`).
-- Review-only generated classification: `core/mdwnfr/data/sign_profiles.json` (not loaded by Pyodide).
+- Runtime measurements: `core/mdwnfr/data/glyph_geometry.json`.
+- Authoritative classifier: `core/mdwnfr/quadrat.py`, `classify_sign_bounds`.
+- Reviewable export: `core/mdwnfr/data/sign_profiles.json` (not a second runtime dependency).
 - Generator: `python tools/build_sign_profiles.py`.
-- Check for any stale inventory: `python tools/build_sign_profiles.py --check`.
-- Integrity and canonical examples: `qa/test_sign_profiles.py`.
+- Consistency check: `python tools/build_sign_profiles.py --check`.
+- Regression tests and canonical examples: `qa/test_sign_profiles.py`.
 
-## Implemented composition rules
+The four-class label is derived from the two primary measurements:
 
-The compositor in `core/mdwnfr/quadrat.py` computes the same classification directly from its already-verified `glyph_geometry.json` data. The generated `sign_profiles.json` is a reviewable export, **not a second runtime dependency**. This prevents older browser workers from failing when they load updated compositor code before acquiring a new optional classification file. Placement uses these rules:
+- `square` = width ≥ 0.70 em and height ≥ 0.70 em.
+- `tall` = width < 0.70 em and height ≥ 0.70 em.
+- `wide` = width ≥ 0.70 em and height < 0.70 em.
+- `small` = width < 0.70 em and height < 0.70 em.
 
-1. Every sign may stand alone, centered at natural visible proportions.
-2. Two consecutive signs may share a horizontal row when one is compact or both are tall, provided the actual silhouettes fit.
-3. A normal-sized tall host followed by two compact or wide companions can form a top/bottom-aligned stack beside the host; the reverse input order is supported as well. The companions fill the host height proportionally to their natural ink heights.
-4. Every internal pair of nearby visible outlines maintains **at least 5% of the column width** as clearance (with scan resolution allowance). The **20% visible-height gap between finished rows** is a separate existing rule.
-5. Every candidate preserves glyph aspect ratios and is centered inside the column. A small, bounded whole-group scale reduction is allowed when a proposed grouping slightly exceeds the column width.
-6. The compositor chooses the valid grouping minimizing total written height for the entire ordered word. If no pairing fits, it uses consecutive standalone rows. The editor does not enforce mandatory pairing or rewrite sign order.
+## Current automatic composition subset
 
-For a 20 mm column, M17 + Q3 + Q3 now uses a 15 mm host, a 1 mm vertical internal gap, and two 7 mm-high Q3 companions, retaining Q3's actual width/height ratio and aligned top/bottom edges.
+The compositor currently supports:
 
-**Scope:** These are deterministic automatic layout heuristics based on measured font geometry, not a claim that every generated grouping is a historically attested spelling. The 229 boundary-adjacent classifications still merit expert visual review. The existing document model, local storage, table/cartouche layout, and page/column justification are unchanged.
+1. A sign on its own row.
+2. Two consecutive signs sharing a horizontal row when the class rules and actual measured silhouettes permit it.
+3. A normal tall host beside two small or wide companions stacked vertically; the companions are proportionally sized to fill the host's height.
+
+Every candidate preserves input order, visible aspect ratio and measured ink clearance. Internal clearance is 5% of column width. The separate natural gap after a finished row is 20% of that row's visible height.
+
+These three automatic patterns are an intentionally limited implementation, **not a complete model of all historically attested hieroglyphic grouping**. The scholarly literature also describes insertion, more general stacking, connecting, combining and kerning. Those require separate design decisions and evidence-based rules before being added to automatic layout.
+
+For a 20 mm column, M17 + Q3 + Q3 uses a 15 mm host, two 7 mm-high Q3 signs, and a 1 mm internal gap (5% of column width). The top and bottom of the stacked Q3 group align with the host.
 
 To run the composition regression suite:
 
 ```sh
 PYTHONPATH=core python -m unittest qa.test_silhouette_spacing qa.test_sign_profiles -v
 ```
-
