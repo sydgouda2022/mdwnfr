@@ -180,7 +180,11 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
         occupied = 0
         for seed in columns:
             span = seed.get('span', 1)
-            if chunk and (seed.get('break_before') or occupied + span > page_capacity):
+            if chunk and (seed.get('break_before') or
+                          occupied >= page_capacity or occupied + span > page_capacity):
+                # Floating objects consume zero slots. Even so, an object
+                # that follows a completely filled page belongs to the next
+                # page, never beyond the physical right/left paper edge.
                 page_chunks.append(chunk)
                 chunk, occupied = [], 0
             chunk.append(seed)
@@ -655,7 +659,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                      {'mask':solid_object_mask()},frag) for frag in fragments]
         raise DocumentError('Unsupported object: '+kind)
 
-    def place_object(item, following_words:bool):
+    def place_object(item):
         """Place one obstacle without consuming a single reading column.
 
         The object is anchored at/after the current reading slot. Its visible
@@ -736,23 +740,6 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                 return None
 
             placement_plan=choose_anchor()
-            if (placement_plan is not None and capacity is not None and
-                following_words and requested==0 and
-                placement_plan[0]+span>=capacity and placement_plan[0]>0):
-                # A new silhouette may fit geometrically in the final few
-                # writing slots while having no text alongside it. When words
-                # still follow, start the artwork on the next page instead
-                # of stranding it at the trailing edge of this one.
-                _, candidate_x, _ = placement_plan
-                clearance=object_clearance_mm(width)
-                preceding=_anchor_word_ink(word_ink_by_slot,candidate_x,iw,
-                                            clearance,width)
-                preceding.extend((slot*width+glyph.x,_y+glyph.y,
-                                  glyph.width,glyph.height)
-                    for _,quadr,_y in pending for glyph in quadr.signs)
-                if not any(px<candidate_x+iw and px+pw>candidate_x
-                           for px,_,pw,_ in preceding):
-                    placement_plan=None
             if placement_plan is None and capacity is not None:
                 page_break=True
                 # The image cannot legally fit on this page. Only in this
@@ -801,12 +788,11 @@ def _layout(doc: dict, glyph_metrics: dict | None,
             # Keep pending quadrats, current slot and their natural y cursor.
             # Their column can continue once the object occupies its contour.
 
-    for position,item in enumerate(doc['items']):
+    for item in doc['items']:
         if item['type']=='word':
             insert_word(item)
         else:
-            place_object(item,any(other['type']=='word'
-                         for other in doc['items'][position+1:]))
+            place_object(item)
     finish_lane()
     pages = _pack_pages(doc,columns,width,page_width,page_height,capacity,compact,nested_masks)
     result = {'document_id':doc['id'],'revision':doc['revision'],
