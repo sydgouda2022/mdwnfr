@@ -122,7 +122,7 @@ for(const [name,engine,width,height,direction] of [
    assert.ok(painted.src?.includes(bird==='horus'?'horus':'bennu'),
     bird+' image must match its canonical artwork ID');
    assert.ok(painted.horizontalColumns>0,
-    bird+' must share horizontal writing area with real text');
+    bird+' must share horizontal writing area with real text: '+JSON.stringify(painted));
    // Python proves precise in-mask clearance. Browser assertions ensure the
    // correctly reused upper/lower space is visible in DOM rather than hidden.
    assert.ok(painted.above>0,bird+' must show text in upper clear sector');
