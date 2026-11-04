@@ -1,10 +1,10 @@
-"""Silhouette-first, deterministic hieroglyphic quadrat composition.
+"""Deterministic quadrat packing from glyph shape, natural size and ink geometry.
 
-Only three reading-order patterns are permitted: one sign, two signs beside
-one another, or one tall sign beside a stack of two smaller signs. Visible
-ink outlines determine clearance; glyphs keep their natural aspect ratios.
-Rows have a 20% visible-height trailing gap, also used across word boundaries.
-The column compositor may justify those gaps without changing glyph ink.
+Adjacent signs can occupy separate rows, share a horizontal row, or form
+a tall host beside two vertically stacked companions. Composition preserves
+logical sign order, visible aspect ratios and actual silhouette clearance.
+Internal clearance is 5% of column width; the existing 20% gap between
+finished rows/words remains independent and flexible for paper justification.
 """
 from __future__ import annotations
 from dataclasses import dataclass, asdict
@@ -14,8 +14,9 @@ from typing import Mapping
 import json, math
 
 DATA_PATH=Path(__file__).resolve().parent/'data'/'glyph_geometry.json'
-NARROW_RATIO=.65
-PAIR_HEIGHT_PARITY=.60
+PROFILE_PATH=Path(__file__).resolve().parent/'data'/'sign_profiles.json'
+INNER_CLEARANCE_RATIO=.05
+GROUP_HEIGHT_RATIO=.75
 VERTICAL_GAP_RATIO=.20
 
 
@@ -93,30 +94,45 @@ def glyph_optical_factors()->dict:
     return _catalogue()[2]
 
 
-def _silhouette_advance(left:list,right:list,w_left:float,h_left:float,
-                        w_right:float,h_right:float)->float:
-    """Nearest facing ink edges at the SAME vertical position, not rectangles.
+@lru_cache(maxsize=1)
+def glyph_profiles()->dict:
+    """Single measured shape/size classification for all shipped signs."""
+    data=json.loads(PROFILE_PATH.read_text(encoding='utf-8'))
+    profiles=data.get('profiles')
+    source=json.loads(DATA_PATH.read_text(encoding='utf-8'))
+    if (data.get('format')!='mdwnfr-sign-shape-size-v1' or
+        data.get('font_sha256')!=source.get('font_sha256') or
+        not isinstance(profiles,dict) or set(profiles)!=set(glyph_geometry())):
+        raise ValueError('Shape/size classification does not match the installed font')
+    return profiles
 
-    The quarter-sum-width gap is retained between visible ink contours.
-    The rounding allowance bounds raster error. Never move glyphs farther
-    apart than the original bounding-box spacing.
+
+def _silhouette_advance(left:list,right:list,w_left:float,h_left:float,
+                        w_right:float,h_right:float,clearance:float)->float:
+    """Minimum horizontal advance for visible ink, sampled at matching heights.
+
+    Interlocking transparent glyph contours may reduce rectangular whitespace,
+    but the required physical ink clearance is never reduced.
     """
-    gap=(w_left+w_right)/4
     high=max(h_left,h_right)
-    max_facing=None
-    for step in range(128):
-        y=(step+.5)*high/128
+    most=None
+    for step in range(256):
+        y=(step+.5)*high/256
         l_y=y-(high-h_left)/2
         r_y=y-(high-h_right)/2
-        if not(0<=l_y<h_left and 0<=r_y<h_right):continue
+        if not (0<=l_y<h_left and 0<=r_y<h_right):
+            continue
         l=left[min(63,int(l_y/h_left*64))]
         r=right[min(63,int(r_y/h_right*64))]
-        if l is None or r is None:continue
+        if l is None or r is None:
+            continue
         facing=l[1]*w_left/64-r[0]*w_right/64
-        max_facing=facing if max_facing is None else max(max_facing,facing)
-    if max_facing is None:
-        return w_left+gap
-    return min(w_left+gap,max_facing+gap+max(w_left,w_right)/64)
+        most=facing if most is None else max(most,facing)
+    if most is None:
+        return w_left+clearance
+    # Raster precision allowance is not a second spacing percentage.
+    return max(0.0,min(w_left+clearance,
+                       most+clearance+max(w_left,w_right)/64))
 
 
 def _shape_ratio(sign:str,glyph_metrics:Mapping[str,object]|None=None)->float:
@@ -144,130 +160,201 @@ def compose(signs:list[str],column_width:float,
     bounds=glyph_geometry()
     ink_scans=glyph_scanlines()
     optics=glyph_optical_factors()
+    profiles=glyph_profiles()
     ratios=[_shape_ratio(s,glyph_metrics) for s in signs]
+    natural_heights=[bounds[s][3]-bounds[s][1] for s in signs]
+    natural_extents=[max(bounds[s][2]-bounds[s][0],
+                         bounds[s][3]-bounds[s][1]) for s in signs]
     boosts=[optics[s] for s in signs]
+    gap=width*INNER_CLEARANCE_RATIO
 
-    # Normal single signs occupy C/2 in visible ink width. Exception:
-    # flat signs may grow uniformly until H>=C/4, but no more than 3C/4
-    # in width. The fixed column pitch is never exceeded. Tall signs
-    # keep their natural ratio, with an absolute height limit of C.
-    # Paired narrow signs retain their original individual size limit.
-    def dimensions(ratio:float,limit:float,boost:float)->tuple[float,float]:
-        target=limit
-        if limit==width/2:
-            base=min(3*width/4,max(width/2,ratio*width/4))
-            # Optically delicate glyphs receive a modest uniform enlargement.
-            # The hard 75%-column limit and tall-sign height cap still apply.
-            target=min(3*width/4,base*boost)
+    # Keep the existing optically corrected standalone presentation.
+    # Small signs are permitted to stand alone and grow proportionally.
+    def single_dimensions(i:int)->tuple[float,float]:
+        ratio=ratios[i]
+        target=min(3*width/4,max(width/2,ratio*width/4))
+        target=min(3*width/4,target*boosts[i])
         h=min(width,target/ratio)
         return ratio*h,h
 
+    # (height, ((sign-index, x, y, width, height), ...)).
+    # All returned coordinates are local to the row and preserve glyph ratios.
     @lru_cache(maxsize=None)
-    def stacked(index:int):
-        """Measure A beside b/c from actual ink scans, not character boxes.
+    def horizontal(i:int):
+        if i+1>=len(signs):
+            return None
+        first,second=profiles[signs[i]],profiles[signs[i+1]]
+        compatible=(first['size']=='compact' or second['size']=='compact' or
+                    (first['shape']=='tall' and second['shape']=='tall'))
+        if not compatible:
+            return None
+        indices=(i,i+1)
+        # Set a common font scale using the dominant sign's natural dimensions.
+        # The partner retains its relative size rather than being promoted to
+        # full reference height merely because it shares the row.
+        anchor=max(indices,key=lambda j:(profiles[signs[j]]['size']=='normal',
+                                         natural_extents[j]))
+        baseline_h=single_dimensions(anchor)[1]
+        scale=min(baseline_h/natural_heights[anchor],
+                  GROUP_HEIGHT_RATIO*width/max(natural_heights[j] for j in indices))
+        original_scale=scale
 
-        A must be tall enough for the two smaller signs and their natural
-        20% gap. The shape-facing advance is sampled over all three ink
-        silhouettes at their actual vertical offsets.
-        """
-        if index+2>=len(signs) or ratios[index]>NARROW_RATIO:
+        def fit(factor:float):
+            h1,h2=(natural_heights[j]*factor for j in indices)
+            w1,w2=(ratios[j]*h for j,h in zip(indices,(h1,h2)))
+            advance=_silhouette_advance(ink_scans[signs[i]],
+                                        ink_scans[signs[i+1]],
+                                        w1,h1,w2,h2,gap)
+            left=min(0.0,advance)
+            right=max(w1,advance+w2)
+            occupied=right-left
+            height=max(h1,h2)
+            placements=((i,-left,(height-h1)/2,w1,h1),
+                        (i+1,advance-left,(height-h2)/2,w2,h2))
+            return occupied,height,placements
+
+        occupied,height,placements=fit(scale)
+        if occupied>width+1e-8:
+            # Shrink uniformly if only a modest correction is required.
+            # Significant reduction is rejected to keep all signs legible.
+            scale*=max(0.0,(width-gap)/(occupied-gap))
+            if scale<original_scale*.70:
+                return None
+            occupied,height,placements=fit(scale)
+        if occupied>width+1e-7:
             return None
-        a=dimensions(ratios[index],width/2,boosts[index])
-        b=dimensions(ratios[index+1],2*width/7,boosts[index+1])
-        c=dimensions(ratios[index+2],2*width/7,boosts[index+2])
-        wa,ha=a;wb,hb=b;wc,hc=c
-        inner_gap=VERTICAL_GAP_RATIO*hb
-        stack_height=hb+inner_gap+hc
-        if stack_height>ha+1e-9:
-            return None
-        by=(ha-stack_height)/2
-        cy=by+hb+inner_gap
-        right_width=max(wb,wc)
-        max_facing=None
-        left_scans=ink_scans[signs[index]]
-        for right_index,(rw,rh),offset in ((index+1,b,by),(index+2,c,cy)):
-            right_scans=ink_scans[signs[right_index]]
-            for step in range(256):
-                sample=(step+.5)*ha/256
-                if not offset<=sample<offset+rh:
-                    continue
-                left=left_scans[min(63,int(sample/ha*64))]
-                right=right_scans[min(63,int((sample-offset)/rh*64))]
-                if left is None or right is None:
-                    continue
-                facing=left[1]*wa/64-right[0]*rw/64
-                max_facing=facing if max_facing is None else max(max_facing,facing)
-        clearance=(wa+right_width)/4
-        advance=(wa+clearance if max_facing is None else
-                 min(wa+clearance,
-                     max_facing+clearance+max(wa,right_width)/64))
-        if advance+right_width>width+1e-9:
-            return None
-        return (ha,advance,right_width,by,cy,(a,b,c))
+        shift=(width-occupied)/2
+        return height,tuple((j,x+shift,y,w,h) for j,x,y,w,h in placements)
 
     @lru_cache(maxsize=None)
-    def choose(index:int)->tuple[float,tuple[tuple[int,...],...]]:
-        if index==len(signs):return 0.0,()
-        _,single_h=dimensions(ratios[index],width/2,boosts[index])
-        rest,candidate=choose(index+1)
-        # Single-sign lines are the default. Use an alternative only when
-        # it fits at natural proportions and genuinely improves height.
-        choices=[(single_h+rest,((index,),)+candidate)]
-        if (index+1<len(signs) and ratios[index]<=NARROW_RATIO and
-            ratios[index+1]<=NARROW_RATIO):
-            h1=dimensions(ratios[index],2*width/7,boosts[index])[1]
-            h2=dimensions(ratios[index+1],2*width/7,boosts[index+1])[1]
-            if min(h1,h2)/max(h1,h2)>=PAIR_HEIGHT_PARITY:
-                rest,candidate=choose(index+2)
-                choices.append((max(h1,h2)+rest,((index,index+1),)+candidate))
-        triple=stacked(index)
-        if triple is not None:
-            rest,candidate=choose(index+3)
-            choices.append((triple[0]+rest,((index,index+1,index+2),)+candidate))
-        return min(choices,key=lambda choice:choice[0])
+    def tall_stack(i:int):
+        if i+2>=len(signs):
+            return None
+        indices=(i,i+1,i+2)
+        # Both reading orders are allowed: tall host first or tall host last.
+        first,last=profiles[signs[i]],profiles[signs[i+2]]
+        if first['shape']=='tall' and first['size']=='normal':
+            host=i
+            companions=(i+1,i+2)
+        elif last['shape']=='tall' and last['size']=='normal':
+            host=i+2
+            companions=(i,i+1)
+        else:
+            return None
+        if not all(profiles[signs[j]]['size']=='compact' or
+                   profiles[signs[j]]['shape']=='wide' for j in companions):
+            return None
+        b,c=companions
 
-    rows=choose(0)[1]
-    heights=[stacked(row[0])[0] if len(row)==3 else
-             max(dimensions(ratios[i],width/2 if len(row)==1 else
-                            2*width/7,boosts[i])[1] for i in row)
-             for row in rows]
-    # One gap after each composed row; no double counting at word boundaries.
-    gaps=[height*VERTICAL_GAP_RATIO for height in heights]
+        def fit(host_height:float):
+            # Exact top/bottom alignment: H_b + G + H_c == H_host.
+            available=host_height-gap
+            if available<=0:
+                return None
+            total=natural_heights[b]+natural_heights[c]
+            hb=available*natural_heights[b]/total
+            hc=available*natural_heights[c]/total
+            wh=ratios[host]*host_height
+            wb,wc=ratios[b]*hb,ratios[c]*hc
+            group_width=max(wb,wc)
+            offsets={b:(group_width-wb)/2,c:(group_width-wc)/2}
+            comp_y={b:0.0,c:hb+gap}
+
+            # Find the smallest valid group advance using facing silhouettes
+            # at *the same y*. The companion glyphs are optically centered
+            # inside their shared width; the host stays aligned top-to-bottom.
+            most=None
+            host_scan=ink_scans[signs[host]]
+            for j,(w,h) in ((b,(wb,hb)),(c,(wc,hc))):
+                scan=ink_scans[signs[j]]
+                y0=comp_y[j]
+                for step in range(256):
+                    y=(step+.5)*host_height/256
+                    if not y0<=y<y0+h:
+                        continue
+                    host_row=host_scan[min(63,int(y/host_height*64))]
+                    comp_row=scan[min(63,int((y-y0)/h*64))]
+                    if host_row is None or comp_row is None:
+                        continue
+                    if host==i:
+                        facing=(host_row[1]*wh/64 -
+                                (offsets[j]+comp_row[0]*w/64))
+                    else:
+                        facing=(offsets[j]+comp_row[1]*w/64 -
+                                host_row[0]*wh/64)
+                    most=facing if most is None else max(most,facing)
+            left_group_width=wh if host==i else group_width
+            advance=(left_group_width+gap if most is None else
+                     max(0.0,min(left_group_width+gap,
+                         most+gap+max(wh,group_width)/64)))
+            xhost=0.0 if host==i else advance
+            xgroup=advance if host==i else 0.0
+            boxes=((host,xhost,0.0,wh,host_height),
+                   (b,xgroup+offsets[b],0.0,wb,hb),
+                   (c,xgroup+offsets[c],comp_y[c],wc,hc))
+            occupied=max(x+w for _,x,_,w,_ in boxes)-min(x for _,x,_,_,_ in boxes)
+            return occupied,boxes
+
+        desired=width*GROUP_HEIGHT_RATIO
+        output=fit(desired)
+        if output is None:
+            return None
+        occupied,boxes=output
+        if occupied>width+1e-8:
+            # A bounded proportional reduction keeps the whole group intact.
+            desired*=max(0.0,(width-gap)/(occupied-gap))
+            if desired<width*.5:
+                return None
+            output=fit(desired)
+            if output is None:
+                return None
+            occupied,boxes=output
+        if occupied>width+1e-7:
+            return None
+        shift=(width-occupied)/2-min(x for _,x,_,_,_ in boxes)
+        # Keep results in logical input order, not the physical drawing order.
+        ordered=tuple(sorted(((j,x+shift,y,w,h) for j,x,y,w,h in boxes),
+                             key=lambda box:box[0]))
+        return desired,ordered
+
+    @lru_cache(maxsize=None)
+    def choose(index:int):
+        if index==len(signs):
+            return (0.0,0,(),())
+        possibilities=[]
+        for length,layout in (
+            (1,(single_dimensions(index)[1],
+                ((index,(width-single_dimensions(index)[0])/2,0.0,
+                  *single_dimensions(index)),))),
+            (2,horizontal(index)),
+            (3,tall_stack(index))):
+            if layout is None:
+                continue
+            row_height,placed=layout
+            remaining,nrows,rows,placements=choose(index+length)
+            cost=row_height*(1+VERTICAL_GAP_RATIO)+remaining
+            possibilities.append((cost,nrows+1,
+                                  ((tuple(range(index,index+length))),)+rows,
+                                  ((row_height,placed),)+placements))
+        # Minimum finished height is an explicit, objective packing decision.
+        # A deterministic grouped-row tie break avoids stranded small signs.
+        return min(possibilities,
+                   key=lambda result:(round(result[0],9),result[1],
+                                      -len(result[2][0])))
+
+    _,_,rows,layouts=choose(0)
+    heights=[h for h,_ in layouts]
+    gaps=[h*VERTICAL_GAP_RATIO for h in heights]
     placed=[None]*len(signs)
     y=0.0
-    for row_number,row in enumerate(rows):
-        row_height=heights[row_number]
-        if len(row)==3:
-            _,advance,right_width,by,cy,dims=stacked(row[0])
-            a,b,c=dims
-            slack=max(0.0,(width-advance-right_width)/2)
-            xs=(slack,
-                slack+advance+(right_width-b[0])/2,
-                slack+advance+(right_width-c[0])/2)
-            offsets=(0.0,by,cy)
-        else:
-            limit=width/2 if len(row)==1 else 2*width/7
-            dims=[dimensions(ratios[i],limit,boosts[i]) for i in row]
-            if len(row)==1:
-                w=dims[0][0]
-                xs=[(width-w)/2]
-            else:
-                w1,w2=dims[0][0],dims[1][0]
-                advance=_silhouette_advance(ink_scans[signs[row[0]]],
-                                            ink_scans[signs[row[1]]],
-                                            w1,dims[0][1],w2,dims[1][1])
-                occupied=w1/2+advance+w2+w2/2
-                slack=max(0.0,width-occupied)/2
-                xs=[slack+w1/2,slack+w1/2+advance]
-            offsets=[(row_height-h)/2 for w,h in dims]
-        for (w,h),x,offset,index in zip(dims,xs,offsets,row):
-            ink_y=y+offset
+    for (row_height,positions),row_gap in zip(layouts,gaps):
+        for index,x,dy,w,h in positions:
+            ink_y=y+dy
             left,bottom,right,top=bounds[signs[index]]
             em=h/(top-bottom)
             placed[index]=SignBox(signs[index],x,ink_y,w,h,em,
-                                  x-left*em,ink_y+top*em)
-        y+=row_height+gaps[row_number]
-
+                                   x-left*em,ink_y+top*em)
+        y+=row_height+row_gap
     return Quadrat(width,y,tuple(placed),tuple(rows),tuple(gaps))
 
 
