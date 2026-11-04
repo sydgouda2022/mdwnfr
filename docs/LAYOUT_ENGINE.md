@@ -19,6 +19,16 @@ Performance: Changes after a proven independent fixed-paper page boundary reuse 
 Use `PYTHONPATH=core python tools/benchmark_layout.py --words 2000 --artworks 8` to record full layout, midstream insertion, and compact projection timings on comparable hardware. The Python unit suite checks indexed-anchor and divider parity against unindexed reference calculations and verifies large mixed-document order and full/compact equivalence. Performance numbers are diagnostic, not fixed CI gates, because runners vary.
 
 
+## Quadrat composition: current agreed rules
+
+- Compose each complete word as one quadrat under the existing word model; do not introduce unagreed word segmentation.
+- The column's nominal width equals two nominal sign widths, and the quadrat uses actual glyph-ink geometry rather than font character cells.
+- Only three automatic patterns exist: a sign on its own row (default); two signs side by side when they fit; or a tall sign beside two smaller vertically stacked signs.
+- Preserve spelling order, glyph identities and natural aspect ratios. The stacked case tests the three actual 2D ink silhouettes at the proper vertical positions before accepting its shared row.
+- Natural vertical spacing is 20% of the preceding visible row height. Within the small-sign stack it is 20% of the first small sign's height. The final row supplies one trailing gap, shared across word boundaries without duplication.
+- The column may distribute leftover space across the quadrat's existing flexible row gaps, but may not alter the symbols or independently invent a different quadrat pattern.
+- Layout geometry is ephemeral. Changing words, font size, surface or constraints reflows from the same ordered content; the browser only paints the calculated result.
+
 ## Completed-page prefix reuse
 
 A later edit may reuse completed pages **only** if the old and new document
