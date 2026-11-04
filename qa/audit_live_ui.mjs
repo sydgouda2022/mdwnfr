@@ -204,6 +204,14 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
   const rect=await cart.boundingBox();
   if(!rect)throw Error('Cartouche is not visible for text entry');
   const x=rect.x+rect.width/2,y=rect.y+rect.height/2;
+  await screenshot('cartouche-before-touch');
+  const hit=await page.evaluate(({x,y})=>{
+   const el=document.elementFromPoint(x,y);
+   return{tag:el?.tagName,classes:el?.getAttribute('class'),
+    objectId:el?.closest('[data-id]')?.getAttribute('data-id'),
+    cartouche:!!el?.closest('.cartouche-object')};
+  },{x,y});
+  console.log('CARTOUCHE_AUDIT_HIT '+JSON.stringify({configuration:config.name,rect,hit}));
   if(config.mobile)await page.touchscreen.tap(x,y);
   else await cart.click();
   await page.locator('#keyboard-panel').waitFor({state:'visible',timeout:15000});
