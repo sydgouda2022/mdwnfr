@@ -26,6 +26,7 @@ const caches={
   const cache=entries.get(k);
   return {
    async match(path){const value=cache.get(path);return value instanceof Response?value.clone():value},
+   async keys(){return [...cache.keys()].map(path=>({url:'https://mdwnfr.example'+path}))},
    async put(path,response){cache.set(path,response)}
   };
  }
