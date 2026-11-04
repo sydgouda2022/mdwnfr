@@ -88,12 +88,12 @@ class VisibleInkComposition(unittest.TestCase):
         # rectangular boxes while their actual ink remains well separated.
         a=[[0,32] for _ in range(64)]
         b=[[32,64] for _ in range(64)]
-        gap=_silhouette_advance(a,b,2.0,4.0,2.0,4.0)
-        self.assertGreater(gap,1.0)  # includes the quarter-sum-width ink gap
+        gap=_silhouette_advance(a,b,2.0,4.0,2.0,4.0,C*.05)
+        self.assertGreaterEqual(gap,C*.05)  # 5% column ink clearance
         self.assertLess(gap,3.0)    # bounding-rectangle gap would be 3.0
         for row_a,row_b in zip(a,b):
             free=(gap+row_b[0]*2/64)-(row_a[1]*2/64)
-            self.assertGreaterEqual(free,(2+2)/4)
+            self.assertGreaterEqual(free,C*.05)
 
     def test_each_glyph_has_nonempty_bounded_silhouette(self):
         for sign,rows in glyph_scanlines().items():
@@ -102,12 +102,12 @@ class VisibleInkComposition(unittest.TestCase):
             for r in rows:
                 if r is not None:self.assertTrue(0<=r[0]<r[1]<=64,sign)
 
-    def test_two_slender_glyphs_share_row_and_gap_is_half_width(self):
+    def test_two_slender_glyphs_share_row_with_five_percent_clearance(self):
         q=compose(list('𓇋𓇋'),C)
         self.assertEqual(q.rows,((0,1),))
         a,b=q.signs
         near(self,a.height,b.height)
-        near(self,b.x-a.x-a.width,(a.width+b.width)/4)
+        self.assertGreaterEqual(b.x-a.x-a.width,C*.05-1e-7)
         near(self,a.y,0.0)
         near(self,q.height-(a.y+a.height),a.height*.20)
         near(self,q.height,1.2*a.height)
@@ -121,12 +121,72 @@ class VisibleInkComposition(unittest.TestCase):
         self.assertEqual(q.rows,((0,1,2),))
         a,b,c=q.signs
         self.assertEqual([g.sign for g in q.signs],list('𓇋𓏏𓏏'))
-        self.assertAlmostEqual(c.y-(b.y+b.height),b.height*.20,places=6)
-        self.assertAlmostEqual((b.y+c.y+c.height)/2, a.height/2,places=6)
+        self.assertAlmostEqual(c.y-(b.y+b.height),C*.05,places=6)
+        self.assertAlmostEqual(b.y,a.y,places=6)
+        self.assertAlmostEqual(c.y+c.height,a.y+a.height,places=6)
         self.assertGreaterEqual(min(g.x for g in q.signs),0)
         self.assertLessEqual(max(g.x+g.width for g in q.signs),C+1e-8)
         self.assertAlmostEqual(q.flexible_gaps[0],a.height*.20,places=6)
         self.assertAlmostEqual(q.height,a.height*1.20,places=6)
+
+
+    def test_m17_two_q3_fill_reference_height_proportionally(self):
+        # 20 mm column; 5% gap; the tall host establishes 15 mm of ink height.
+        q=compose(['𓇋','𓊪','𓊪'],20.0)
+        self.assertEqual(q.rows,((0,1,2),))
+        a,b,c=q.signs
+        near(self,a.height,15.0)
+        near(self,b.height,7.0)
+        near(self,c.height,7.0)
+        near(self,b.width/b.height,(glyph_geometry()['𓊪'][2]-glyph_geometry()['𓊪'][0])/
+             (glyph_geometry()['𓊪'][3]-glyph_geometry()['𓊪'][1]))
+        near(self,b.y,a.y)
+        near(self,c.y+c.height,a.y+a.height)
+        near(self,c.y-b.y-b.height,1.0)
+        self.assertGreater(b.x,a.x)
+        self.assertTrue(all(g.x>=0 and g.x+g.width<=20+1e-7 for g in q.signs))
+        self.assertAlmostEqual((min(g.x for g in q.signs)+max(g.x+g.width for g in q.signs))/2,
+                               10.0,places=6)
+
+    def test_reverse_tall_host_keeps_input_order_and_alignment(self):
+        q=compose(['𓊪','𓊪','𓇋'],20.0)
+        self.assertEqual(q.rows,((0,1,2),))
+        b,c,a=q.signs
+        near(self,a.height,15.0)
+        near(self,b.y,a.y)
+        near(self,c.y+c.height,a.y+a.height)
+        near(self,c.y-b.y-b.height,1.0)
+        self.assertLess(b.x,a.x)
+        self.assertEqual([s.sign for s in q.signs],['𓊪','𓊪','𓇋'])
+
+    def test_compact_sign_alone_remains_valid_and_centered(self):
+        q=compose(['𓊪'],20.0)
+        self.assertEqual(q.rows,((0,),))
+        s=q.signs[0]
+        near(self,s.x,(20-s.width)/2)
+        near(self,s.width/s.height,(glyph_geometry()['𓊪'][2]-glyph_geometry()['𓊪'][0])/
+             (glyph_geometry()['𓊪'][3]-glyph_geometry()['𓊪'][1]))
+
+    def test_compact_sign_can_share_horizontal_row_with_tall(self):
+        q=compose(['𓇋','𓊪'],20.0)
+        self.assertEqual(q.rows,((0,1),))
+        a,b=q.signs
+        self.assertLess(a.x,b.x)
+        self.assertGreaterEqual(b.x-a.x-a.width,20*.05-1e-7)
+        self.assertGreater(a.height,b.height)  # Natural relative size is retained.
+
+    def test_wide_normal_signs_remain_sequential_without_forced_pair(self):
+        q=compose(['𓈖','𓆑'],20.0)
+        self.assertEqual(q.rows,((0,),(1,)))
+        self.assertGreaterEqual(q.signs[1].y,q.signs[0].y+q.signs[0].height)
+
+    def test_all_measured_signs_can_stand_alone_within_column(self):
+        for sign in glyph_geometry():
+            q=compose([sign],20.0)
+            s=q.signs[0]
+            self.assertTrue(0<=s.x<=20 and s.x+s.width<=20+1e-7,sign)
+            self.assertGreater(s.height,0)
+            self.assertTrue(math.isfinite(q.height))
 
     def test_mixed_slender_signs_use_taller_row(self):
         q=compose(list('𓇋𓇄'),C)
