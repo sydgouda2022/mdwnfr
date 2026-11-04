@@ -35,6 +35,12 @@ def inventory() -> dict:
         "rules": {
             "shape": {"tall_below_aspect": TALL_BELOW_ASPECT, "wide_above_aspect": WIDE_ABOVE_ASPECT},
             "size": {"compact_below_longest_ink_dimension_em": COMPACT_BELOW_EXTENT_EM},
+            "quadrat_class": {
+                "square": "squareish + normal",
+                "tall": "tall + normal",
+                "wide": "wide + normal",
+                "small": "compact, regardless of aspect ratio",
+            },
             "review": {
                 "tall_aspect_margin": TALL_REVIEW_MARGIN,
                 "wide_aspect_margin": WIDE_REVIEW_MARGIN,
