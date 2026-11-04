@@ -225,35 +225,39 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
  });
  await check('artwork-preview-drag',async()=>{
   await enterSheet('clipart');
-  await page.locator('#artwork-grid .artwork-choice').first().click();
+  await page.locator('#artwork-search').fill('djed');
+  await page.locator('.artwork-choice[title="Djed — Colored"]').click();
   await readyPreview();
-  const box=await page.locator('#pages .draft-page-layer .draft-object').boundingBox();
-  if(!box)throw Error('No drag target');
-  await page.mouse.move(box.x+box.width*.5,box.y+box.height*.5);
-  await page.mouse.down();
-  await page.mouse.move(box.x+box.width*.5+24,box.y+box.height*.5+19,{steps:7});
-  await page.mouse.up();
+  const grip=await page.locator('#pages .draft-page-layer .draft-object .art-move').boundingBox();
+  if(!grip)throw Error('No visible move grip');
+  const x=grip.x+grip.width/2,y=grip.y+grip.height/2;
+  await page.mouse.move(x,y);await page.mouse.down();
+  await page.mouse.move(x+24,y+19,{steps:7});await page.mouse.up();
+  await screenshot('clipart-after-drag');
   await readyPreview();
   await closeDialog();
-   return{on_page_drag:true};
+  return{on_page_drag:true,handle:'art-move'};
  });
  await check('artwork-preview-resize',async()=>{
   await enterSheet('clipart');
-  await page.locator('#artwork-grid .artwork-choice').first().click();
+  await page.locator('#artwork-search').fill('djed');
+  await page.locator('.artwork-choice[title="Djed — Colored"]').click();
   await readyPreview();
   const original=await page.locator('#pages .draft-page-layer .draft-object').boundingBox();
-  const box=await page.locator('#pages .draft-page-layer .draft-object .art-resize.bottom-right').boundingBox();
-  if(!box)throw Error('No resize handle');
-  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
-  await page.mouse.down();
-  await page.mouse.move(box.x+box.width/2+20,box.y+box.height/2+20,{steps:6});
-  await page.mouse.up();
+  const handle=page.locator('#pages .draft-page-layer .draft-object .art-resize.bottom-right');
+  await handle.waitFor({state:'visible'});
+  const box=await handle.boundingBox();
+  if(!box)throw Error('No visible resize handle');
+  const x=box.x+box.width/2,y=box.y+box.height/2;
+  await page.mouse.move(x,y);await page.mouse.down();
+  await page.mouse.move(x+20,y+20,{steps:6});await page.mouse.up();
+  await screenshot('clipart-after-resize');
   await readyPreview();
   const changed=await page.locator('#pages .draft-page-layer .draft-object').boundingBox();
   await closeDialog();
   if(!original||!changed||changed.width<=original.width)
     throw Error('Drag resize did not enlarge object');
-   return{before_px:original.width,after_px:changed.width};
+  return{before_px:original.width,after_px:changed.width,handle:'bottom-right'};
  });
  await check('save-leave-reopen',async()=>{
   await closeDialog();
