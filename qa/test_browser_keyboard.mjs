@@ -95,6 +95,10 @@ try{
     'An uncatalogued but font-verified glyph is directly insertable');
   await page.locator('#clear').click();
   await page.locator('.tab[data-tab="unilaterals"]').click();
+  const reedAgain=page.locator('#keys button').filter({hasText:'𓇋'}).first();
+  await reedAgain.click();await reedAgain.click();
+  await page.waitForFunction(()=>document.getElementById('save-personal-word')?.disabled===false,
+    null,{timeout:90000});
   await page.locator('#save-personal-word').click();
   await page.locator('#manage-personal-words').click();
   const ownSaved=page.locator('#personal-words-list .personal-item');
