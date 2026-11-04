@@ -23,11 +23,13 @@ Use `PYTHONPATH=core python tools/benchmark_layout.py --words 2000 --artworks 8`
 
 - Compose each complete word as one quadrat under the existing word model; do not introduce unagreed word segmentation.
 - The column's nominal width equals two nominal sign widths, and the quadrat uses actual glyph-ink geometry rather than font character cells.
-- Only three automatic patterns exist: a sign on its own row (default); two signs side by side when they fit; or a tall sign beside two smaller vertically stacked signs.
+- The current automatic subset has three patterns: a sign on its own row (default); two consecutive signs side by side when the four-class compatibility rule and actual ink geometry permit it; or a normal tall host beside two small or wide companions stacked vertically. This is an implementation subset, not a claim to cover every historically attested grouping.
+- The two measured metrics (ink aspect ratio and longest ink extent) derive four classes: square/full, tall/narrow, wide/low and small/compact. Compact signs map to the small class regardless of aspect ratio. A per-sign class is descriptive; it does not by itself mean that a sign must be grouped or must stand alone.
 - Preserve spelling order, glyph identities and natural aspect ratios. The stacked case tests the three actual 2D ink silhouettes at the proper vertical positions before accepting its shared row.
-- Natural vertical spacing is 20% of the preceding visible row height. Within the small-sign stack it is 20% of the first small sign's height. The final row supplies one trailing gap, shared across word boundaries without duplication.
+- Internal clearance between neighboring signs in a shared quadrat is 5% of the column width. The natural gap after a finished row is separately 20% of that row's visible height. In the M17 + Q3 + Q3 example in a 20 mm column, the internal Q3-to-Q3 gap is 1 mm; it is not 20% of a Q3 height. The final row supplies one trailing gap, shared across word boundaries without duplication.
 - The column may distribute leftover space across the quadrat's existing flexible row gaps, but may not alter the symbols or independently invent a different quadrat pattern.
 - Layout geometry is ephemeral. Changing words, font size, surface or constraints reflows from the same ordered content; the browser only paints the calculated result.
+- Historical references also document insertion, broader stacking, connecting, combining and kerning. These are not yet implemented as automatic composition rules. Add them only after a separate review of attested examples and explicit per-sign geometry/placement constraints.
 
 ## Completed-page prefix reuse
 
