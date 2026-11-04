@@ -80,6 +80,11 @@ jobs:
           node qa/test_font_bounds_browser.mjs
           node qa/test_touch_editing.mjs
           node qa/test_release_update.mjs
+      - name: Read-only live iPhone and iPad user-journey audit
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          AUDIT_BASE_URL: https://mdwnfr.sydgouda.workers.dev/
+        run: node qa/audit_live_ui.mjs
       - uses: actions/upload-artifact@v4
         if: always() && github.event_name == 'pull_request'
         with:
