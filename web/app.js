@@ -574,6 +574,8 @@ for(const kind of Object.keys(TRIGGERS)){
  });
 }
 
+$('keyboard-close').addEventListener('click',()=>switchPanel(null));
+
 function textForSharing(items){
  return (items||[]).map(item=>{
   if(item.type==='word')return (item.signs||[]).map(s=>typeof s==='string'?s:(s.glyph||s.sign||'')).join('');
