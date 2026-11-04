@@ -9,7 +9,7 @@ sys.path.insert(0,str(ROOT/'core'))
 from mdwnfr.api import handle_json
 from mdwnfr.document import new_document, transaction, assert_document, DocumentError
 from copy import deepcopy
-from mdwnfr.quadrat import compose
+from mdwnfr.quadrat import compose, glyph_profiles
 from mdwnfr.layout import layout_document
 from mdwnfr.layout_sync import summarize_layout
 
@@ -27,6 +27,34 @@ class QuadratWorkflowTests(unittest.TestCase):
                 self.assertGreaterEqual(glyph['y'],0)
                 self.assertLessEqual(glyph['x']+glyph['width'],20.00001)
                 self.assertLessEqual(glyph['y']+glyph['height'],shape['height']+0.00001)
+
+    def test_two_wide_signs_can_stack_vertically(self):
+        profiles=glyph_profiles()
+        wide=[s for s,p in profiles.items() if p['quadrat_class']=='wide']
+        self.assertGreaterEqual(len(wide),2)
+        shape=compose(wide[:2],20).payload()
+        self.assertEqual(shape['rows'],[[0,1]])
+        first,second=shape['signs']
+        self.assertLess(first['y']+first['height'],second['y']+1e-7)
+        self.assertAlmostEqual(first['x']+first['width']/2,10,places=5)
+        self.assertAlmostEqual(second['x']+second['width']/2,10,places=5)
+
+    def test_three_and_four_small_signs_use_compact_two_by_two_patterns(self):
+        small=[s for s,p in glyph_profiles().items()
+               if p['quadrat_class']=='small']
+        self.assertGreaterEqual(len(small),4)
+        for count in (3,4):
+            with self.subTest(count=count):
+                shape=compose(small[:count],20).payload()
+                self.assertEqual(shape['rows'],[list(range(count))])
+                boxes=shape['signs']
+                self.assertGreater(max(b['y'] for b in boxes),
+                                   min(b['y'] for b in boxes))
+                self.assertTrue(all(b['x']>=0 and b['x']+b['width']<=20.00001
+                                    for b in boxes))
+                self.assertTrue(all(b['y']>=0 and
+                                    b['y']+b['height']<=shape['height']+1e-5
+                                    for b in boxes))
 
     def test_navigation_preview_is_bounded_and_grounded_in_layout(self):
         doc=new_document('Geometry-driven pages')
