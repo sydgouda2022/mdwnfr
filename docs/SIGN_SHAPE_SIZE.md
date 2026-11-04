@@ -43,7 +43,7 @@ James P. Allen's introduction likewise describes tall, flat and small signs, not
 
 These sources support the four broad visual classes, **not a universal permission table**. A shape label alone cannot prove that a sign must be alone, must be paired, or may only occupy one side of a group. Actual inscriptions show multiple arrangements, insertion and kerning; scribes adapt sign size and position to the surrounding signs and the writing surface.
 
-The 203 entries marked `needs_review` lie within 0.07 em of either 0.70 em dimension boundary and should receive priority in visual review. The remaining entries are also machine-classified; absence of the flag is not Egyptological approval. The font's standardized outlines are a measurement source, not a substitute for period-specific epigraphic examples.
+The 203 entries marked `needs_review` lie within 0.07 em of either 0.70 em dimension boundary. They have now received a visual geometry pass; the flag remains a proximity-to-threshold indicator, not an indication that the outline is uninspected. The remaining entries are also machine-classified; absence of the flag is not Egyptological approval. See `SIGN_SHAPE_VISUAL_AUDIT.md` for the method and findings. The font's standardized outlines are a measurement source, not a substitute for period-specific epigraphic examples.
 
 ## What the classes mean for the editor
 
