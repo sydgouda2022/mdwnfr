@@ -165,32 +165,33 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
   const tableStyle=await page.locator('.table-object').first().evaluate(el=>getComputedStyle(el).borderTopStyle);
   return{preview_papers:n,cells,table_border_style:tableStyle,sheet:dimensions};
  });
- await check('table-cell-edit-open',async()=>{
+ await check('table-cell-direct-writing',async()=>{
   const table=page.locator('.table-object').first();
-  await table.locator('.table-cell-view').first().click();
+  const cell=table.locator('.table-cell-view').first();
+  if(config.mobile){
+   const rect=await cell.boundingBox();if(!rect)throw Error('Table cell is not visible');
+   await page.touchscreen.tap(rect.x+rect.width/2,rect.y+rect.height/2);
+  }else await cell.click();
   if(await visible('#format-panel'))throw Error('Table cell tap opened a panel over the page');
-  await page.locator('#object-action-edit').click();
-   await page.locator('#insert-dialog-backdrop').waitFor({state:'visible',timeout:90000});
-   await page.locator('#insert-table-cell-input').fill('𓅓𓏏');
-   await readyPreview();
-   await page.locator('#insert-sheet-confirm').click();
-   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden',timeout:90000});
-  await wait(page,()=>document.querySelectorAll('.table-cell-word .glyph-ink-svg text').length>=2,90000);
-  return{cell_glyphs:await page.locator('.table-cell-word .glyph-ink-svg text').count()};
+  await page.locator('#keyboard-panel').waitFor({state:'visible',timeout:15000});
+  await page.locator('#keys .key').first().click();
+  await page.locator('#suggestions .user-choice').first().click();
+  await wait(page,()=>document.querySelectorAll('.table-cell-word .glyph-ink-svg text').length>=1,90000);
+  const glyphs=await page.locator('.table-cell-word .glyph-ink-svg text').count();
+  await page.locator('#keyboard-close').click();
+  await page.locator('#keyboard-panel').waitFor({state:'hidden'});
+  return{cell_glyphs:glyphs,direct_keyboard_entry:true};
  });
  await check('table-reopen-editor',async()=>{
-  // Normal user journey: dismiss the Format inspector before reaching
-  // an object beneath it. The former audit clicked through the inspector
-  // and sometimes through the text-range handle at the table corner.
   if(await visible('#format-panel'))await page.locator('#format-toggle').click();
-  const table=page.locator('.table-object').first();
-  await table.locator('.table-cell-view').last().dblclick();
+  await page.locator('#object-quick-actions').waitFor({state:'visible',timeout:15000});
+  await page.locator('#object-action-edit').click();
   await page.locator('#insert-screen-table').waitFor({state:'visible',timeout:30000});
   const rows=await page.locator('#insert-table-rows').inputValue();
   const cols=await page.locator('#insert-table-columns').inputValue();
   const border=await page.locator('#insert-table-border').inputValue();
   await closeDialog();
-  return{rows,columns:cols,border};
+  return{rows,columns:cols,border,opened_via_contextual_edit:true};
  });
  await check('cartouche-horizontal-preview-confirm-reopen',async()=>{
   await enterSheet('cartouche');
@@ -200,25 +201,27 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden',timeout:90000});
   const cart=page.locator('.cartouche-object').first();
   await cart.waitFor({state:'visible',timeout:90000});
-  if(config.mobile){
-   // iPhone/iPad must use two real touch taps, not a desktop mouse dblclick.
-   const rect=await cart.boundingBox();
-   if(!rect)throw Error('Cartouche is not visible for touch editing');
-   const x=rect.x+rect.width/2,y=rect.y+rect.height/2;
-   await page.touchscreen.tap(x,y);
-   await page.locator('#object-quick-actions').waitFor({state:'visible',timeout:15000});
-   if(await page.locator('.range-handle').count())
-    throw Error('Text-range handles are obscuring the cartouche');
-   if(await page.locator('#format-panel').isVisible())
-    throw Error('Selecting a cartouche unexpectedly opened Format');
-   await page.touchscreen.tap(x,y);
-  }else await cart.dblclick();
+  const rect=await cart.boundingBox();
+  if(!rect)throw Error('Cartouche is not visible for text entry');
+  const x=rect.x+rect.width/2,y=rect.y+rect.height/2;
+  if(config.mobile)await page.touchscreen.tap(x,y);
+  else await cart.click();
+  await page.locator('#keyboard-panel').waitFor({state:'visible',timeout:15000});
+  if(await page.locator('.range-handle').count())
+   throw Error('Text-range handles are obscuring the cartouche');
+  await page.locator('#keys .key').first().click();
+  await page.locator('#suggestions .user-choice').first().click();
+  await wait(page,()=>document.querySelector('.cartouche-word')!==null,90000);
+  await page.locator('#keyboard-close').click();
+  await page.locator('#keyboard-panel').waitFor({state:'hidden'});
+  await page.locator('#object-quick-actions').waitFor({state:'visible',timeout:15000});
+  await page.locator('#object-action-edit').click();
   await page.locator('#insert-screen-cartouche').waitFor({state:'visible',timeout:30000});
   const direction=await page.locator('input[name="insert-cartouche-direction"]:checked').inputValue();
   await screenshot('cartouche');
   await closeDialog();
   if(direction!=='horizontal')throw Error('Cartouche orientation did not survive commit');
-  return{direction};
+  return{direction,direct_keyboard_entry:true,cartouche_words:await page.locator('.cartouche-word').count()};
  });
  await check('artwork-preview-drag',async()=>{
   await enterSheet('clipart');
