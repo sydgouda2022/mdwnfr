@@ -1,10 +1,9 @@
-"""Deterministic quadrat packing from glyph shape, natural size and ink geometry.
+"""Deterministic quadrat packing from glyph dimensions and ink geometry.
 
-Adjacent signs can occupy separate rows, share a horizontal row, or form
-a tall host beside two vertically stacked companions. Composition preserves
-logical sign order, visible aspect ratios and actual silhouette clearance.
-Internal clearance is 5% of column width; the existing 20% gap between
-finished rows/words remains independent and flexible for paper justification.
+Each sign is classified by its measured width and height relative to a virtual
+quadrat. Composition preserves logical sign order, visible aspect ratios and
+actual silhouette clearance. Internal clearance is 5% of column width; the
+existing 20% gap between finished rows/words remains independent.
 """
 from __future__ import annotations
 from dataclasses import dataclass, asdict
@@ -20,6 +19,8 @@ COMPACT_BELOW_EXTENT_EM=.70
 TALL_REVIEW_MARGIN=.07
 WIDE_REVIEW_MARGIN=.14
 SIZE_REVIEW_MARGIN_EM=.07
+QUADRAT_MIN_DIMENSION_EM=.70
+QUADRAT_REVIEW_MARGIN_EM=.07
 INNER_CLEARANCE_RATIO=.05
 GROUP_HEIGHT_RATIO=.75
 VERTICAL_GAP_RATIO=.20
@@ -114,16 +115,19 @@ def classify_sign_bounds(bounds:tuple[float,...]|list[float])->dict:
     shape=('tall' if aspect<TALL_BELOW_ASPECT else
            'wide' if aspect>WIDE_ABOVE_ASPECT else 'squareish')
     size='compact' if extent<COMPACT_BELOW_EXTENT_EM else 'normal'
-    review=(abs(aspect-TALL_BELOW_ASPECT)<=TALL_REVIEW_MARGIN or
-            abs(aspect-WIDE_ABOVE_ASPECT)<=WIDE_REVIEW_MARGIN or
-            abs(extent-COMPACT_BELOW_EXTENT_EM)<=SIZE_REVIEW_MARGIN_EM)
-    # A four-way quadrat class makes the two measured dimensions usable
-    # without conflating shape with size. Compact signs form the small class
-    # regardless of aspect ratio; otherwise the shape determines the class.
-    quadrat_class=('small' if size=='compact' else
-                   {'squareish':'square','tall':'tall','wide':'wide'}[shape])
-    return {'shape':shape,'size':size,'quadrat_class':quadrat_class,
-            'needs_review':review}
+    # The historical four-way typology is based on both dimensions of a
+    # virtual quadrat, not aspect ratio plus the longest side alone.
+    broad=width>=QUADRAT_MIN_DIMENSION_EM
+    tall=height>=QUADRAT_MIN_DIMENSION_EM
+    quadrat_class=('square' if broad and tall else
+                   'tall' if tall else
+                   'wide' if broad else 'small')
+    # Flag signs close to either independent dimension boundary for visual
+    # review. Aspect/longest-extent labels remain useful diagnostics only.
+    review=(abs(width-QUADRAT_MIN_DIMENSION_EM)<=QUADRAT_REVIEW_MARGIN_EM or
+            abs(height-QUADRAT_MIN_DIMENSION_EM)<=QUADRAT_REVIEW_MARGIN_EM)
+    return {'width_em':width,'height_em':height,'shape':shape,'size':size,
+            'quadrat_class':quadrat_class,'needs_review':review}
 
 
 @lru_cache(maxsize=1)
