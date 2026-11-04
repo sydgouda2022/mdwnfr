@@ -285,10 +285,11 @@ def compose(signs:list[str],column_width:float,
         target=width*GROUP_HEIGHT_RATIO
         result=fit(target)
         if result is None:
-            # Reduce the pair uniformly only as far as the legibility floor.
-            ratio=min(width/(ratios[i]*target*.5),
-                      width/(ratios[i+1]*target*.5))
-            target*=min(1.0,ratio)
+            available=target-gap
+            total=natural_heights[i]+natural_heights[i+1]
+            widest=max(ratios[i]*available*natural_heights[i]/total,
+                       ratios[i+1]*available*natural_heights[i+1]/total)
+            target=gap+available*width/widest
             if target<width*.5:
                 return None
             result=fit(target)
