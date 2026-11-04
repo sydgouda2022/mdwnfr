@@ -22,27 +22,33 @@ async function inspect({entries=full,cached=full,controller=true,complete=true,
   keys:async()=>cached.map(path=>({url:'https://mdwnfr.example'+path}))
  };
  const environment={
-  $:id=>{assert.equal(id,'offline-notice');return notice;},
+  $:id=>{assert.ok(['offline-notice','offline-retry'].includes(id));return id==='offline-notice'?notice:retry;},
   fetch:async path=>{assert.equal(path,'/runtime-status.json');
    return{ok:true,json:async()=>({offline_ready:offlineReady})};},
-  navigator:{serviceWorker:controller?{controller:{}}:{controller:null}},
+  navigator:{serviceWorker:{controller:controller?{}:null,
+   getRegistration:async()=>({active:{},installing:null})}},
   window:{caches:{}},
   caches:{keys:async()=>['mdwnfr-offline-1234567890abcdef'],
    open:async name=>{assert.match(name,/^mdwnfr-offline-/);return cache;}},
-  URL
+  URL,clearTimeout:()=>{},setTimeout:()=>42
  };
  await vm.runInNewContext(check+'\nshowOfflineReadiness()',environment);
- return notice;
+ return {hidden:notice.hidden,textContent:notice.textContent,retryHidden:retry.hidden};
 }
 assert.equal((await inspect()).hidden,true,'All advertised assets cached: ready');
-assert.equal((await inspect({cached:critical})).hidden,false,
+const incomplete=await inspect({cached:critical});
+assert.equal(incomplete.hidden,false,
  'A missing secondary Python module must fail readiness, even if critical files exist');
+assert.match(incomplete.textContent,/incomplete \(6\/8 files\)/);
+assert.equal(incomplete.retryHidden,false);
 assert.equal((await inspect({cached:full.slice(1)})).hidden,false,
  'Missing initial HTML must fail readiness');
 assert.equal((await inspect({entries:[...full,full[0]]})).hidden,false,
  'Duplicate manifest paths invalidate readiness');
-assert.equal((await inspect({controller:false})).hidden,false,
+const uncontrolled=await inspect({controller:false});
+assert.equal(uncontrolled.hidden,false,
  'No installed controlling service worker means not yet offline ready');
+assert.match(uncontrolled.textContent,/not controlling this tab/);
 assert.equal((await inspect({complete:false})).hidden,false);
 assert.equal((await inspect({format:'wrong-format'})).hidden,false);
 assert.equal((await inspect({offlineReady:false})).hidden,false);
