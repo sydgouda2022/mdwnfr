@@ -257,6 +257,72 @@ def compose(signs:list[str],column_width:float,
         return height,tuple((j,x+shift,y,w,h) for j,x,y,w,h in placements)
 
     @lru_cache(maxsize=None)
+    def vertical_pair(i:int):
+        """Stack two low/compact signs in one quadrat, preserving their ratios."""
+        if i+1>=len(signs):
+            return None
+        classes={profiles[signs[j]]['quadrat_class'] for j in (i,i+1)}
+        if not classes.issubset({'wide','small'}):
+            return None
+
+        def fit(target_height:float):
+            available=target_height-gap
+            if available<=0:
+                return None
+            total=natural_heights[i]+natural_heights[i+1]
+            heights=(available*natural_heights[i]/total,
+                     available*natural_heights[i+1]/total)
+            widths=(ratios[i]*heights[0],ratios[i+1]*heights[1])
+            widest=max(widths)
+            if widest>width:
+                return None
+            boxes=[]
+            for j,h,w,y0 in ((i,heights[0],widths[0],0.0),
+                             (i+1,heights[1],widths[1],heights[0]+gap)):
+                boxes.append((j,(width-w)/2,y0,w,h))
+            return target_height,tuple(boxes)
+
+        target=width*GROUP_HEIGHT_RATIO
+        result=fit(target)
+        if result is None:
+            available=target-gap
+            total=natural_heights[i]+natural_heights[i+1]
+            widest=max(ratios[i]*available*natural_heights[i]/total,
+                       ratios[i+1]*available*natural_heights[i+1]/total)
+            target=gap+available*width/widest
+            if target<width*.5:
+                return None
+            result=fit(target)
+        return result
+
+    @lru_cache(maxsize=None)
+    def small_grid(i:int,count:int):
+        """Place three or four compact signs in deterministic 2x2 tabulation."""
+        if count not in (3,4) or i+count>len(signs):
+            return None
+        if any(profiles[signs[j]]['quadrat_class']!='small'
+               for j in range(i,i+count)):
+            return None
+        target=width*GROUP_HEIGHT_RATIO
+        # Reserve the same 5%-of-column-width clearance between every
+        # neighboring cell; outer margins are not counted as internal gaps.
+        cell_w=(width-gap)/2
+        cell_h=(target-gap)/2
+        cells=([(0,0),(1,0),(0.5,1)] if count==3 else
+               [(0,0),(1,0),(0,1),(1,1)])
+        boxes=[]
+        for offset,(column,row) in enumerate(cells):
+            j=i+offset
+            h=min(cell_h,cell_w/ratios[j])
+            w=ratios[j]*h
+            cell_x=column*(cell_w+gap) if column in (0,1) else (width-cell_w)/2
+            cell_y=row*(cell_h+gap)
+            x=cell_x+(cell_w-w)/2
+            y=cell_y+(cell_h-h)/2
+            boxes.append((j,x,y,w,h))
+        return target,tuple(boxes)
+
+    @lru_cache(maxsize=None)
     def tall_stack(i:int):
         if i+2>=len(signs):
             return None
@@ -347,32 +413,46 @@ def compose(signs:list[str],column_width:float,
                              key=lambda box:box[0]))
         return desired,ordered
 
+    def visible_ink_area(placed):
+        area=0.0
+        for j,_,_,w,h in placed:
+            coverage=sum(row[1]-row[0] for row in ink_scans[signs[j]]
+                         if row is not None)/(64*64)
+            area+=w*h*coverage
+        return area
+
     @lru_cache(maxsize=None)
     def choose(index:int):
         if index==len(signs):
-            return (0.0,0,(),())
+            return (0,0.0,0.0,(),())
         possibilities=[]
         for length,layout in (
             (1,(single_dimensions(index)[1],
                 ((index,(width-single_dimensions(index)[0])/2,0.0,
                   *single_dimensions(index)),))),
             (2,horizontal(index)),
+            (2,vertical_pair(index)),
+            (3,small_grid(index,3)),
+            (4,small_grid(index,4)),
             (3,tall_stack(index))):
             if layout is None:
                 continue
             row_height,placed=layout
-            remaining,nrows,rows,placements=choose(index+length)
-            cost=row_height*(1+VERTICAL_GAP_RATIO)+remaining
-            possibilities.append((cost,nrows+1,
+            nrows,remaining,area,rows,placements=choose(index+length)
+            total_area=visible_ink_area(placed)+area
+            total_height=row_height*(1+VERTICAL_GAP_RATIO)+remaining
+            possibilities.append((nrows+1,total_height,total_area,
                                   ((tuple(range(index,index+length))),)+rows,
                                   ((row_height,placed),)+placements))
-        # Minimum finished height is an explicit, objective packing decision.
-        # A deterministic grouped-row tie break avoids stranded small signs.
+        # Prefer a valid shared quadrat over splitting the same ordered signs
+        # into separate rows; then minimize column height, then maximize the
+        # measured visible ink area. No subjective balance weights are used.
         return min(possibilities,
-                   key=lambda result:(round(result[0],9),result[1],
-                                      -len(result[2][0])))
+                   key=lambda result:(result[0],round(result[1],9),
+                                      -round(result[2],9),
+                                      -len(result[3][0])))
 
-    _,_,rows,layouts=choose(0)
+    _,_,_,rows,layouts=choose(0)
     heights=[h for h,_ in layouts]
     gaps=[h*VERTICAL_GAP_RATIO for h in heights]
     placed=[None]*len(signs)
