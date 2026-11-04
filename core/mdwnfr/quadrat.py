@@ -123,8 +123,9 @@ def classify_sign_bounds(bounds:tuple[float,...]|list[float])->dict:
     # review. Aspect/longest-extent labels remain useful diagnostics only.
     review=(abs(width-QUADRAT_MIN_DIMENSION_EM)<=QUADRAT_REVIEW_MARGIN_EM or
             abs(height-QUADRAT_MIN_DIMENSION_EM)<=QUADRAT_REVIEW_MARGIN_EM)
-    return {'width_em':width,'height_em':height,'shape':shape,'size':size,
-            'quadrat_class':quadrat_class,'needs_review':review}
+    return {'width_em':round(width,6),'height_em':round(height,6),
+            'shape':shape,'size':size,'quadrat_class':quadrat_class,
+            'needs_review':review}
 
 
 @lru_cache(maxsize=1)
