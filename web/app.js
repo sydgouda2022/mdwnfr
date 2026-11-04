@@ -3217,48 +3217,108 @@ async function renderDocList(){
 
 // A cached shell is not proof that the Python editor runs without Internet.
 async function showOfflineReadiness(){
- const notice=$('offline-notice');
- try{
-  const response=await fetch('/runtime-status.json',{cache:'no-store'});
-  if(!response.ok)throw new Error('Missing runtime manifest');
-  const state=await response.json();
-  let installed=false;
-  if(state.offline_ready===true&&navigator.serviceWorker?.controller&&'caches' in window){
-   const names=(await caches.keys()).filter(name=>/^mdwnfr-offline-[a-f0-9]{16}$/.test(name));
-   for(const name of names){
-    const cache=await caches.open(name);
-    const manifest=await cache.match('/offline-assets.json');
-    if(!manifest)continue;
-    const publication=await manifest.json();
-    if(publication.complete!==true||publication.format!=='mdwnfr-offline-publication-v1'||
-       !Array.isArray(publication.assets)||!publication.assets.length)continue;
-    const critical=['/index.html','/app.js','/keyboard-prediction-worker.mjs',
-     '/keyboard-release-pin.json','/vendor/pyodide/pyodide.asm.wasm',
-     '/assets/fonts/hieroglyphs.woff2'];
-    const paths=publication.assets.map(entry=>entry?.path);
-    if(paths.some(path=>typeof path!=='string'||!path.startsWith('/'))||
-       new Set(paths).size!==paths.length)continue;
-    const assets=new Set(paths);
-    if(!critical.every(path=>assets.has(path)))continue;
-    // The installer checks every SHA-256 before publishing the cache. The
-    // readiness badge must also require EVERY manifest asset to remain cached,
-    // not just six critical files. One lost Python module breaks offline edits.
-    const cached=new Set((await cache.keys()).map(request=>new URL(request.url).pathname));
-    if(paths.every(path=>cached.has(path))){
-      installed=true;break;
+  // Cache completion is the only proof of offline installation. Distinguish a
+  // pending installation from a missing/incomplete one, and keep checking when
+  // the browser returns from the background.
+  if(showOfflineReadiness.running)return;
+  showOfflineReadiness.running=true;
+  const notice=$('offline-notice'),retry=$('offline-retry');
+  let installed=false,reason='';
+  try{
+    const response=await fetch('/runtime-status.json',{cache:'no-store'});
+    if(!response.ok)throw new Error('Missing runtime manifest');
+    const state=await response.json();
+    if(state.offline_ready!==true){
+      reason='This release is missing its local Python runtime or hieroglyphic font.';
+    }else if(!('serviceWorker' in navigator)){
+      reason='This browser does not support the service worker required for offline editing.';
+    }else if(!('caches' in window)){
+      reason='This browser does not expose offline storage. Check private browsing or site storage permissions.';
+    }else{
+      let expected=0,found=0;
+      const names=(await caches.keys()).filter(name=>/^mdwnfr-offline-[a-f0-9]{16}$/.test(name));
+      for(const name of names){
+        const cache=await caches.open(name);
+        const manifest=await cache.match('/offline-assets.json');
+        if(!manifest)continue;
+        const publication=await manifest.json().catch(()=>null);
+        if(publication?.complete!==true||publication.format!=='mdwnfr-offline-publication-v1'||
+           !Array.isArray(publication.assets)||!publication.assets.length)continue;
+        const critical=['/index.html','/app.js','/keyboard-prediction-worker.mjs',
+         '/keyboard-release-pin.json','/vendor/pyodide/pyodide.asm.wasm',
+         '/assets/fonts/hieroglyphs.woff2'];
+        const paths=publication.assets.map(entry=>entry?.path);
+        if(paths.some(path=>typeof path!=='string'||!path.startsWith('/'))||
+           new Set(paths).size!==paths.length)continue;
+        const assets=new Set(paths);
+        if(!critical.every(path=>assets.has(path)))continue;
+        const cached=new Set((await cache.keys()).map(request=>new URL(request.url).pathname));
+        const count=paths.filter(path=>cached.has(path)).length;
+        if(count>found){found=count;expected=paths.length;}
+        if(count===paths.length&&navigator.serviceWorker.controller){
+          installed=true;break;
+        }
+      }
+      if(!installed){
+        const registration=await navigator.serviceWorker.getRegistration?.();
+        if(registration?.installing){
+          reason='Offline installation is downloading the editor files. '+(expected?
+            found+' of '+expected+' files are cached.':'It has not completed yet.');
+        }else if(!navigator.serviceWorker.controller){
+          reason='The offline service worker is not controlling this tab. Reopen Mdwnfr, or retry setup.';
+        }else if(expected){
+          reason='Offline installation is incomplete ('+found+'/'+expected+' files). Retry offline setup.';
+        }else if(!names.length){
+          reason='The offline files are not installed on this device. Retry offline setup.';
+        }else{
+          reason='No complete offline file inventory was found. Retry offline setup.';
+        }
+      }
     }
-   }
+  }catch(error){
+    reason='Cannot verify offline installation: '+String(error?.message||error)+'. Retry when connected.';
+  }finally{
+    showOfflineReadiness.running=false;
+    notice.hidden=installed;
+    retry.hidden=installed||!('serviceWorker' in navigator);
+    if(!installed)notice.textContent=reason;
+    if(showOfflineReadiness.timer)clearTimeout(showOfflineReadiness.timer);
+    showOfflineReadiness.timer=installed?null:setTimeout(()=>{void showOfflineReadiness();},15000);
   }
-  notice.hidden=installed;
-  if(!installed)notice.textContent=state.offline_ready===true
-   ?'Offline editing is not yet confirmed on this device. Let the installation finish before relying on offline use.'
-   :'Offline editing is not installed: the local Python runtime or hieroglyph font is incomplete.';
- }catch(error){
-  notice.hidden=false;
-  notice.textContent='Could not verify the offline editor installation. Do not clear this app’s site data.';
- }
 }
-if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('controllerchange',()=>{void showOfflineReadiness();});
+if('serviceWorker' in navigator){
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{void showOfflineReadiness();});
+ // Installation can finish after app startup without any new navigation.
+ void navigator.serviceWorker.getRegistration().then(registration=>{
+   if(!registration)return;
+   const watch=sw=>sw?.addEventListener('statechange',()=>{void showOfflineReadiness();});
+   watch(registration.installing);
+   registration.addEventListener('updatefound',()=>{
+     watch(registration.installing);void showOfflineReadiness();
+   });
+ }).catch(()=>{});
+}
+window.addEventListener('online',()=>{void showOfflineReadiness();});
+window.addEventListener('focus',()=>{void showOfflineReadiness();});
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden)void showOfflineReadiness();
+});
+$('offline-retry').onclick=async()=>{
+ const retry=$('offline-retry');
+ if(retry.disabled||!('serviceWorker' in navigator))return;
+ retry.disabled=true;
+ $('offline-notice').textContent='Restarting the offline installation…';
+ try{
+   // Changing the service-worker script URL triggers installation even if the
+   // old script bytes were unchanged. Never clear document or storage data.
+   await navigator.serviceWorker.register('/sw.js?offline-retry='+Date.now(),{
+     scope:'/',updateViaCache:'none'});
+   await showOfflineReadiness();
+ }catch(error){
+   $('offline-notice').hidden=false;
+   $('offline-notice').textContent='Offline setup failed: '+String(error?.message||error);
+ }finally{retry.disabled=false;}
+};
 
 // Emergency backups use the current schema and the same validated import path.
 function downloadUnsavedDocumentCopy(){

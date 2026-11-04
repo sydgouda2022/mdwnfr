@@ -25,7 +25,8 @@ const caches={
   if(!entries.has(k))entries.set(k,new Map());
   const cache=entries.get(k);
   return {
-   async match(path){return cache.get(path)},
+   async match(path){const value=cache.get(path);return value instanceof Response?value.clone():value},
+   async keys(){return [...cache.keys()].map(path=>({url:'https://mdwnfr.example'+path}))},
    async put(path,response){cache.set(path,response)}
   };
  }
@@ -64,5 +65,11 @@ await event('activate');
 assert.ok(entries.has(previous),'Retain previous complete release for open tabs');
 assert.ok(entries.has(current),'New cache must survive activation');
 const active=await caches.open(current);
+assert.equal(await (await active.match('/app.js')).text(),'APP');
+// A repeat installation of an already complete release must not overwrite
+// or delete the only verified cache, even when the network has since failed.
+failSecond=true;
+await event('install');
+assert.ok(entries.has(current),'Reinstall of same build must retain verified cache');
 assert.equal(await (await active.match('/app.js')).text(),'APP');
 console.log('PASS: failed offline update preserves previous release; verified candidate activates atomically');

@@ -28,9 +28,30 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
   // A partial replacement must never write into the active release cache.
   const cache=await caches.open(CACHE);
   try {
-    // Serial verification bounds transient memory, including on smaller iPhones.
-    for(const record of publication.assets)
-      await cache.put(record.path,await verifiedResponse(record));
+    // A user may explicitly reinstall the SAME release. If the previous
+    // installation was already complete, never overwrite/delete its cache.
+    const prior=await cache.match(MANIFEST);
+    if(prior){
+      const verified=await prior.json().catch(()=>null);
+      if(verified?.complete===true &&
+         JSON.stringify(verified.assets)===JSON.stringify(publication.assets)){
+        const keys=new Set((await cache.keys()).map(key=>new URL(key.url).pathname));
+        if(publication.assets.every(record=>keys.has(record.path))){
+          await self.skipWaiting();return;
+        }
+      }
+    }
+    // A serial 126-file transfer can exceed the browser's service-worker
+    // install lifetime on mobile. Bound parallel transfers to three at a time
+    // so each batch finishes quickly without exhausting mobile memory.
+    // allSettled ensures no writes remain in flight before rollback.
+    for(let i=0;i<publication.assets.length;i+=3){
+      const batch=publication.assets.slice(i,i+3);
+      const results=await Promise.allSettled(batch.map(async record=>
+        cache.put(record.path,await verifiedResponse(record))));
+      const failure=results.find(item=>item.status==='rejected');
+      if(failure)throw failure.reason;
+    }
     await cache.put(MANIFEST,new Response(JSON.stringify(publication),{
       headers:{'Content-Type':'application/json'}}));
     await self.skipWaiting();
