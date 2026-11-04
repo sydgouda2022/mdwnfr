@@ -409,10 +409,18 @@ def compose(signs:list[str],column_width:float,
                              key=lambda box:box[0]))
         return desired,ordered
 
+    def visible_ink_area(placed):
+        area=0.0
+        for j,_,_,w,h in placed:
+            coverage=sum(row[1]-row[0] for row in ink_scans[signs[j]]
+                         if row is not None)/(64*64)
+            area+=w*h*coverage
+        return area
+
     @lru_cache(maxsize=None)
     def choose(index:int):
         if index==len(signs):
-            return (0.0,0,(),())
+            return (0.0,0.0,0,(),())
         possibilities=[]
         for length,layout in (
             (1,(single_dimensions(index)[1],
@@ -426,18 +434,20 @@ def compose(signs:list[str],column_width:float,
             if layout is None:
                 continue
             row_height,placed=layout
-            remaining,nrows,rows,placements=choose(index+length)
-            cost=row_height*(1+VERTICAL_GAP_RATIO)+remaining
-            possibilities.append((cost,nrows+1,
+            area,remaining,nrows,rows,placements=choose(index+length)
+            total_area=visible_ink_area(placed)+area
+            total_height=row_height*(1+VERTICAL_GAP_RATIO)+remaining
+            possibilities.append((total_area,total_height,nrows+1,
                                   ((tuple(range(index,index+length))),)+rows,
                                   ((row_height,placed),)+placements))
-        # Minimum finished height is an explicit, objective packing decision.
-        # A deterministic grouped-row tie break avoids stranded small signs.
-        return min(possibilities,
-                   key=lambda result:(round(result[0],9),result[1],
-                                      -len(result[2][0])))
+        # First maximize measured visible ink area; then minimize total
+        # column height. This is a geometric objective, not a subjective
+        # visual-balance score or a hand-tuned weighted sum.
+        return max(possibilities,
+                   key=lambda result:(round(result[0],9),-round(result[1],9),
+                                      -result[2],len(result[3][0])))
 
-    _,_,rows,layouts=choose(0)
+    _,_,_,rows,layouts=choose(0)
     heights=[h for h,_ in layouts]
     gaps=[h*VERTICAL_GAP_RATIO for h in heights]
     placed=[None]*len(signs)
