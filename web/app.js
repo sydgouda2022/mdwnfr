@@ -1388,9 +1388,23 @@ $('insert-sheet-confirm').onclick=async()=>{
   {op:'insert_existing',index:d.index,object:d.object};
  const success=await apply(action);
  if(insertDraft!==d)return;
- if(success){closeInsertSheet();clearSelection();
+ if(success){
+  const committedId=d.object.id;
+  closeInsertSheet();clearSelection();
   caretIndex=Math.min(doc.items.length,d.index+1);
-  updateSelection();}
+  updateSelection();
+  // Reveal the real object after dismissing the temporary sheet. At a
+  // readable phone zoom, a correct page object may be outside the viewport.
+  requestAnimationFrame(()=>{
+   const node=$('pages').querySelector('[data-id="'+CSS.escape(committedId)+'"]');
+   if(!node||editorScreen.hidden)return;
+   const bounds=node.getBoundingClientRect();
+   const area=$('canvas-area').getBoundingClientRect();
+   if(bounds.top<area.top+32||bounds.bottom>area.bottom-46||
+      bounds.left<area.left+12||bounds.right>area.right-12)
+    node.scrollIntoView({behavior:'instant',block:'center',inline:'nearest'});
+  });
+ }
  else{
   d.busy=false;d.valid=true;$('insert-sheet-confirm').disabled=false;
   $('insert-preview-status').textContent='Could not commit the object. Check the editor status and try again.';

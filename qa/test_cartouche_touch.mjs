@@ -32,9 +32,17 @@ for(const [label,browserType,width,height] of [
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
   const cart=page.locator('.cartouche-object').first();
   await cart.waitFor({state:'visible',timeout:90000});
+  await page.waitForTimeout(120);
   const at=await cart.boundingBox();
   assert.ok(at,'A new cartouche must have a visible hit target');
   const cx=at.x+at.width/2,cy=at.y+at.height/2;
+  const initialHit=await page.evaluate(({x,y})=>{
+   const el=document.elementFromPoint(x,y);
+   return {tag:el?.tagName,classes:el?.getAttribute('class'),
+    cartouche:el?.closest('.cartouche-object')?.dataset.id};
+  },{x:cx,y:cy});
+  console.log('CARTOUCHE_FIRST_TOUCH_TARGET',label,JSON.stringify({at,initialHit}));
+  assert.ok(initialHit.cartouche,'New cartouche must be touchable at its center');
   // Initial selection must not open an inspector or install text-only handles.
   await page.touchscreen.tap(cx,cy);
   assert.equal(await page.locator('#insert-dialog-backdrop').isVisible(),false);
