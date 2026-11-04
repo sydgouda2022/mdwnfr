@@ -49,7 +49,8 @@ for(const [label,browserType,width,height] of [
    'A hieroglyph typed through the keyboard must appear inside the cartouche');
   // Closing the keyboard reveals contextual actions. The object specification
   // remains available through Edit rather than interrupting text entry.
-  await page.locator('#keyboard-toggle').click();
+  await page.locator('#keyboard-close').click();
+  await page.locator('#keyboard-panel').waitFor({state:'hidden'});
   await page.locator('#object-quick-actions').waitFor({state:'visible'});
   await page.locator('#object-action-edit').click();
   await page.locator('#insert-screen-cartouche').waitFor({state:'visible',timeout:30000});
