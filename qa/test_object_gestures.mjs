@@ -51,6 +51,10 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
      await page.locator('#format-toggle').click();
     const handle=node.locator('.art-resize.bottom-right');
     await handle.waitFor({state:'visible'});
+    // At phone editing zoom, successive illustrations may extend below the
+    // viewport. Scroll the physical page to the handle as a user would; a
+    // Playwright-visible element need not be inside the touchable viewport.
+    await handle.scrollIntoViewIfNeeded({timeout:30000});
     await page.waitForTimeout(180);
     const previous=kind==='cartouche'?(obj.enclosure_padding_mm||0):(obj.width_mm||0);
     let rect,x,y,hit;
@@ -64,6 +68,7 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
       return {classNames:el?.getAttribute('class'),id:el?.closest('[data-id]')?.dataset.id};
      },{x,y});
      if((hit.classNames||'').includes('art-resize bottom-right')&&hit.id===obj.id)break;
+     await handle.scrollIntoViewIfNeeded({timeout:30000});
      await page.waitForTimeout(120);
     }
     assert.ok((hit.classNames||'').includes('art-resize bottom-right')&&hit.id===obj.id,
