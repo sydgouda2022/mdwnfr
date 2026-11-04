@@ -1,54 +1,58 @@
-# Hieroglyph shape, relative size and quadrat classes
+# Hieroglyph shape, size and quadrat classes
 
-This is a **mechanically measured inventory of all 1,072 signs** in the one installed Noto Sans Egyptian Hieroglyphs font. It gives the compositor a consistent starting description of each sign. It is not a claim that every sign has one fixed size or one mandatory historical placement.
+This is a **mechanically measured inventory of all 1,072 signs** in the installed Noto Sans Egyptian Hieroglyphs font. It gives the compositor a consistent geometric starting point. It is not a claim that every sign has one fixed size or one mandatory historical placement.
 
-## Two independent measurements
+## The two primary measurements
 
-- **Shape** is the visible-ink width divided by visible-ink height. Tall signs are below 0.70; square-ish signs are from 0.70 through 1.40; wide signs are above 1.40.
-- **Relative size** is the longer visible-ink dimension measured in font em units. A sign is compact below 0.70 em and normal-sized otherwise. Size is not measured by bounding-box area: a naturally wide, short sign must not be mistaken for a tiny sign.
+Each sign is measured from its actual visible ink bounds in font-em units:
 
-The two measurements remain available separately. The four convenient quadrat classes are derived from them:
+- **Width**: visible-ink width relative to one em.
+- **Height**: visible-ink height relative to one em.
 
-| Quadrat class | Measurement rule | Signs |
-| --- | --- | ---: |
-| **Square / full** | Square-ish + normal | 429 |
-| **Tall / narrow** | Tall + normal | 284 |
-| **Wide / low** | Wide + normal | 276 |
-| **Small / compact** | Compact, regardless of aspect ratio | 83 |
-| **Total** | | **1,072** |
+These two dimensions are compared independently with a 0.70 em threshold. That maps directly to the four broad shapes described relative to an ideal quadrat:
 
-This preserves the distinction between shape and size while giving the composition engine the four classes used in Egyptological descriptions of quadrat proportions.
+| Quadrat class | Width | Height | Signs |
+| --- | --- | --- | ---: |
+| **Square / full** | At least 0.70 em | At least 0.70 em | 494 |
+| **Tall / narrow** | Below 0.70 em | At least 0.70 em | 275 |
+| **Wide / low** | At least 0.70 em | Below 0.70 em | 220 |
+| **Small / compact** | Below 0.70 em | Below 0.70 em | 83 |
+| **Total** | | | **1,072** |
+
+The profile also retains two secondary diagnostics: aspect-ratio shape (`tall`, `squareish`, `wide`) and longest-ink extent (`compact`, `normal`). Those summaries are useful for inspection, but **they do not determine the four quadrat classes**. A sign is small only when both its measured width and height are below the threshold. A narrow sign that is still tall is a tall sign, not a small one.
 
 ## Canonical examples
 
-| Gardiner sign | Unicode | Shape | Size | Quadrat class |
-| --- | --- | --- | --- | --- |
-| G17 | 𓅓 | Square-ish | Normal | Square |
-| M17 | 𓇋 | Tall | Normal | Tall |
-| N35 | 𓈖 | Wide | Normal | Wide |
-| I9 | 𓆑 | Wide | Normal | Wide |
-| Q3 | 𓊪 | Square-ish | Compact | Small |
+| Gardiner sign | Unicode | Width × height (em) | Quadrat class |
+| --- | --- | ---: | --- |
+| G17 | 𓅓 | 1.018 × 1.019 | Square |
+| M17 | 𓇋 | 0.244 × 1.001 | Tall |
+| N35 | 𓈖 | 1.099 × 0.196 | Wide |
+| I9 | 𓆑 | 1.405 × 0.394 | Wide |
+| Q3 | 𓊪 | 0.305 × 0.369 | Small |
 
-Additional examples from the published four-shape typology are covered by tests: G14 and W17 (full/square), P6, R8 and S34 (tall/narrow), D21, T11 and V31 (low/broad), and Q3 and W11 (low/narrow).
+The regression suite also checks published exemplars: G14 and W17 (full/square), P6, R8 and S34 (tall/narrow), D21, T11 and V31 (low/broad), and Q3 and W11 (low/narrow).
 
 ## Historical basis and limits
 
-Stéphane Polis describes four basic sign shapes relative to an ideal quadrat: tall-and-broad, tall-and-narrow, low-and-broad, and low-and-narrow. He also notes that actual sign sizes vary with the available writing space, that some tall-narrow signs can stand alone, and that the goal is balanced, legible composition. See [Polis, “The Functions and Toposyntax of Ancient Egyptian Hieroglyphs” (2018), pp. 294–295](https://doi.org/10.4000/signata.1920).
+Stéphane Polis describes four basic sign shapes relative to an ideal quadrat: tall-and-broad (roughly full quadrat), tall-and-narrow (roughly a vertical half), low-and-broad (roughly a horizontal half), and low-and-narrow (roughly a quarter). He also notes that actual sign sizes vary with the available writing space, that some tall-narrow signs can stand alone, and that the goal is balanced, legible composition. See [Polis, “The Functions and Toposyntax of Ancient Egyptian Hieroglyphs” (2018), pp. 294–295](https://doi.org/10.4000/signata.1920).
+
+The source explicitly cautions that the typology is influenced by standardized fonts and modern typographic habits. The 0.70 em threshold is therefore an engineering boundary for this font, not an ancient fixed measurement. It must be checked against the sign's visible outline and historical examples.
 
 James P. Allen's introduction likewise describes tall, flat and small signs, noting that tall signs often stand alone while other signs are commonly grouped; flat or small signs can also stand alone when centered. See [Allen, *Middle Egyptian*, §1.7 (Cambridge University Press)](https://assets.cambridge.org/97805215/17966/excerpt/9780521517966_excerpt.pdf).
 
 These sources support the four broad visual classes, **not a universal permission table**. A shape label alone cannot prove that a sign must be alone, must be paired, or may only occupy one side of a group. Actual inscriptions show multiple arrangements, insertion and kerning; scribes adapt sign size and position to the surrounding signs and the writing surface.
 
-The 229 entries marked `needs_review` lie near one of the mechanical cutoffs and should receive priority in visual review. The remaining entries are also machine-classified; absence of the flag is not Egyptological approval. The font's standardized outlines are a measurement source, not a substitute for period-specific epigraphic examples.
+The 203 entries marked `needs_review` lie within 0.07 em of either 0.70 em dimension boundary and should receive priority in visual review. The remaining entries are also machine-classified; absence of the flag is not Egyptological approval. The font's standardized outlines are a measurement source, not a substitute for period-specific epigraphic examples.
 
 ## What the classes mean for the editor
 
 - Every sign remains eligible to appear alone. A standalone sign is centered in its available quadrat.
-- The four classes describe geometry. They do not by themselves force grouping or change the spelling order.
-- A small sign is a potential companion or insert, not a sign that must always be attached to a neighbor.
-- A tall sign may be a standalone sign or a host for a smaller sign, depending on its actual outline and the evidence for the arrangement.
-- A wide sign may participate in a vertical stack, but its class alone does not guarantee that the combination fits.
-- Any future sign-specific restriction such as “always alone” must be supported by inspected historical examples, not inferred solely from its aspect ratio.
+- The four classes describe the space a sign can approximately occupy. They do not by themselves force grouping or change spelling order.
+- A small sign can potentially occupy a quarter-quadrat or accompany another sign, but it is not required to attach to a neighbor.
+- A tall sign can stand alone or share a quadrat with smaller signs if the actual silhouettes and historical arrangement permit it.
+- A wide sign can potentially be stacked with another wide sign or combined with smaller signs; its class alone does not guarantee that a particular combination fits.
+- Any future sign-specific restriction such as “always alone” must be supported by inspected historical examples, not inferred solely from its dimensions.
 
 ## Single inventory source
 
@@ -59,12 +63,12 @@ The 229 entries marked `needs_review` lie near one of the mechanical cutoffs and
 - Consistency check: `python tools/build_sign_profiles.py --check`.
 - Regression tests and canonical examples: `qa/test_sign_profiles.py`.
 
-The four-class label is derived from the two metrics:
+The four-class label is derived from the two primary measurements:
 
-- `square` = square-ish + normal.
-- `tall` = tall + normal.
-- `wide` = wide + normal.
-- `small` = compact, regardless of aspect ratio.
+- `square` = width ≥ 0.70 em and height ≥ 0.70 em.
+- `tall` = width < 0.70 em and height ≥ 0.70 em.
+- `wide` = width ≥ 0.70 em and height < 0.70 em.
+- `small` = width < 0.70 em and height < 0.70 em.
 
 ## Current automatic composition subset
 
