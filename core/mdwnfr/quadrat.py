@@ -304,8 +304,10 @@ def compose(signs:list[str],column_width:float,
                for j in range(i,i+count)):
             return None
         target=width*GROUP_HEIGHT_RATIO
-        cell_w=width/2
-        cell_h=target/2
+        # Reserve the same 5%-of-column-width clearance between every
+        # neighboring cell; outer margins are not counted as internal gaps.
+        cell_w=(width-gap)/2
+        cell_h=(target-gap)/2
         cells=([(0,0),(1,0),(0.5,1)] if count==3 else
                [(0,0),(1,0),(0,1),(1,1)])
         boxes=[]
@@ -313,8 +315,10 @@ def compose(signs:list[str],column_width:float,
             j=i+offset
             h=min(cell_h,cell_w/ratios[j])
             w=ratios[j]*h
-            x=column*cell_w+(cell_w-w)/2
-            y=row*cell_h+(cell_h-h)/2
+            cell_x=column*(cell_w+gap) if column in (0,1) else (width-cell_w)/2
+            cell_y=row*(cell_h+gap)
+            x=cell_x+(cell_w-w)/2
+            y=cell_y+(cell_h-h)/2
             boxes.append((j,x,y,w,h))
         return target,tuple(boxes)
 
