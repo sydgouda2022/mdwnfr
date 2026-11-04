@@ -48,6 +48,14 @@ class SignShapeSizeProfiles(unittest.TestCase):
         )
         self.assertEqual(check.returncode, 0, check.stderr + check.stdout)
 
+    def test_browser_worker_and_offline_release_ship_profiles(self):
+        worker=(ROOT / "web/worker.js").read_text(encoding="utf-8")
+        publication=(ROOT / "tools/offline_publication.py").read_text(encoding="utf-8")
+        path="core/mdwnfr/data/sign_profiles.json"
+        self.assertIn("/" + path, worker)
+        self.assertIn("/home/pyodide/mdwnfr/data/sign_profiles.json", worker)
+        self.assertIn(path, publication)
+
     def test_size_is_longest_extent_not_bbox_area(self):
         profiles = self.data["profiles"]
         # A very thin, wide glyph must not be called compact just because its
