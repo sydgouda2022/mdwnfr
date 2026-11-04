@@ -41,15 +41,16 @@ Q3 illustrates why size cannot be inferred from shape. It has semi-square propor
 
 ## Single inventory source
 
-- Input: `core/mdwnfr/data/glyph_geometry.json` (the measured glyph outlines).
-- Generated classification: `core/mdwnfr/data/sign_profiles.json`.
+- Runtime input: `core/mdwnfr/data/glyph_geometry.json` (the validated measured glyph outlines).
+- Authoritative thresholds and classification: `core/mdwnfr/quadrat.py` (`classify_sign_bounds`).
+- Review-only generated classification: `core/mdwnfr/data/sign_profiles.json` (not loaded by Pyodide).
 - Generator: `python tools/build_sign_profiles.py`.
 - Check for any stale inventory: `python tools/build_sign_profiles.py --check`.
 - Integrity and canonical examples: `qa/test_sign_profiles.py`.
 
 ## Implemented composition rules
 
-The compositor in `core/mdwnfr/quadrat.py` now consults this catalogue directly:
+The compositor in `core/mdwnfr/quadrat.py` computes the same classification directly from its already-verified `glyph_geometry.json` data. The generated `sign_profiles.json` is a reviewable export, **not a second runtime dependency**. This prevents older browser workers from failing when they load updated compositor code before acquiring a new optional classification file. Placement uses these rules:
 
 1. Every sign may stand alone, centered at natural visible proportions.
 2. Two consecutive signs may share a horizontal row when one is compact or both are tall, provided the actual silhouettes fit.
