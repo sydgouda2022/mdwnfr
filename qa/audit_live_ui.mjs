@@ -214,7 +214,12 @@ for(const config of configurations.filter(c=>!process.env.AUDIT_VARIANT||c.name=
   console.log('CARTOUCHE_AUDIT_HIT '+JSON.stringify({configuration:config.name,rect,hit}));
   if(config.mobile)await page.touchscreen.tap(x,y);
   else await cart.click();
-  await page.locator('#keyboard-panel').waitFor({state:'visible',timeout:15000});
+  try{
+   await page.locator('#keyboard-panel').waitFor({state:'visible',timeout:15000});
+  }catch(error){
+   await screenshot('cartouche-keyboard-failure');
+   throw Error('Cartouche tap did not open keyboard; hit='+JSON.stringify(hit)+'; '+error.message);
+  }
   if(await page.locator('.range-handle').count())
    throw Error('Text-range handles are obscuring the cartouche');
   await page.locator('#keys .key').first().click();
