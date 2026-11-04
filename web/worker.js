@@ -34,9 +34,6 @@ async function boot() {
     const ink=await fetch('/core/mdwnfr/data/glyph_geometry.json',{cache:'force-cache'});
     if(!ink.ok)throw new Error('Verified glyph silhouettes are unavailable');
     pyodide.FS.writeFile('/home/pyodide/mdwnfr/data/glyph_geometry.json',await ink.text());
-    const signProfiles=await fetch('/core/mdwnfr/data/sign_profiles.json',{cache:'force-cache'});
-    if(!signProfiles.ok)throw new Error('Measured hieroglyph shape/size profiles are unavailable');
-    pyodide.FS.writeFile('/home/pyodide/mdwnfr/data/sign_profiles.json',await signProfiles.text());
     const contour=await fetch('/core/mdwnfr/data/artwork_silhouettes.json',{cache:'force-cache'});
     if(!contour.ok)throw new Error('Installed artwork silhouettes not available');
     pyodide.FS.writeFile('/home/pyodide/mdwnfr/data/artwork_silhouettes.json',await contour.text());

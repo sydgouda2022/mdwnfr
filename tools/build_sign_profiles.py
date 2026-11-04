@@ -12,29 +12,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "core/mdwnfr/data/glyph_geometry.json"
 TARGET = ROOT / "core/mdwnfr/data/sign_profiles.json"
-TALL_BELOW = 0.70
-WIDE_ABOVE = 1.40
-COMPACT_BELOW_EM = 0.70
-TALL_REVIEW_MARGIN = 0.07
-WIDE_REVIEW_MARGIN = 0.14
-SIZE_REVIEW_MARGIN_EM = 0.07
+# The compositor owns these rules; the JSON catalogue is a reviewable export.
+import sys
+sys.path.insert(0,str(ROOT / "core"))
+from mdwnfr.quadrat import (classify_sign_bounds,
+    TALL_BELOW_ASPECT, WIDE_ABOVE_ASPECT, COMPACT_BELOW_EXTENT_EM,
+    TALL_REVIEW_MARGIN, WIDE_REVIEW_MARGIN, SIZE_REVIEW_MARGIN_EM)
 
 
 def classify(bounds: list[float]) -> dict:
-    left, bottom, right, top = bounds
-    width = right - left
-    height = top - bottom
-    if width <= 0 or height <= 0:
-        raise ValueError("Invalid hieroglyph ink outline")
-    aspect = width / height
-    extent = max(width, height)
-    shape = "tall" if aspect < TALL_BELOW else "wide" if aspect > WIDE_ABOVE else "squareish"
-    size = "compact" if extent < COMPACT_BELOW_EM else "normal"
-    # Borderline cutoffs are automatically marked for visual review.
-    review = (abs(aspect - TALL_BELOW) <= TALL_REVIEW_MARGIN or
-              abs(aspect - WIDE_ABOVE) <= WIDE_REVIEW_MARGIN or
-              abs(extent - COMPACT_BELOW_EM) <= SIZE_REVIEW_MARGIN_EM)
-    return {"shape": shape, "size": size, "needs_review": review}
+    return classify_sign_bounds(bounds)
 
 
 def inventory() -> dict:
@@ -46,8 +33,8 @@ def inventory() -> dict:
         "format": "mdwnfr-sign-shape-size-v1",
         "font_sha256": source["font_sha256"],
         "rules": {
-            "shape": {"tall_below_aspect": TALL_BELOW, "wide_above_aspect": WIDE_ABOVE},
-            "size": {"compact_below_longest_ink_dimension_em": COMPACT_BELOW_EM},
+            "shape": {"tall_below_aspect": TALL_BELOW_ASPECT, "wide_above_aspect": WIDE_ABOVE_ASPECT},
+            "size": {"compact_below_longest_ink_dimension_em": COMPACT_BELOW_EXTENT_EM},
             "review": {
                 "tall_aspect_margin": TALL_REVIEW_MARGIN,
                 "wide_aspect_margin": WIDE_REVIEW_MARGIN,

@@ -14,7 +14,12 @@ from typing import Mapping
 import json, math
 
 DATA_PATH=Path(__file__).resolve().parent/'data'/'glyph_geometry.json'
-PROFILE_PATH=Path(__file__).resolve().parent/'data'/'sign_profiles.json'
+TALL_BELOW_ASPECT=.70
+WIDE_ABOVE_ASPECT=1.40
+COMPACT_BELOW_EXTENT_EM=.70
+TALL_REVIEW_MARGIN=.07
+WIDE_REVIEW_MARGIN=.14
+SIZE_REVIEW_MARGIN_EM=.07
 INNER_CLEARANCE_RATIO=.05
 GROUP_HEIGHT_RATIO=.75
 VERTICAL_GAP_RATIO=.20
@@ -94,17 +99,32 @@ def glyph_optical_factors()->dict:
     return _catalogue()[2]
 
 
+def classify_sign_bounds(bounds:tuple[float,...]|list[float])->dict:
+    """Classify actual ink bounds at the installed font's common em scale.
+
+    All runtime metadata comes from the already-loaded glyph geometry. The
+    generated JSON inventory is for audit, not a second browser dependency.
+    """
+    left,bottom,right,top=bounds
+    width,height=right-left,top-bottom
+    if width<=0 or height<=0 or not all(math.isfinite(v) for v in bounds):
+        raise ValueError('Invalid hieroglyph ink outline')
+    aspect=width/height
+    extent=max(width,height)
+    shape=('tall' if aspect<TALL_BELOW_ASPECT else
+           'wide' if aspect>WIDE_ABOVE_ASPECT else 'squareish')
+    size='compact' if extent<COMPACT_BELOW_EXTENT_EM else 'normal'
+    review=(abs(aspect-TALL_BELOW_ASPECT)<=TALL_REVIEW_MARGIN or
+            abs(aspect-WIDE_ABOVE_ASPECT)<=WIDE_REVIEW_MARGIN or
+            abs(extent-COMPACT_BELOW_EXTENT_EM)<=SIZE_REVIEW_MARGIN_EM)
+    return {'shape':shape,'size':size,'needs_review':review}
+
+
 @lru_cache(maxsize=1)
 def glyph_profiles()->dict:
-    """Single measured shape/size classification for all shipped signs."""
-    data=json.loads(PROFILE_PATH.read_text(encoding='utf-8'))
-    profiles=data.get('profiles')
-    source=json.loads(DATA_PATH.read_text(encoding='utf-8'))
-    if (data.get('format')!='mdwnfr-sign-shape-size-v1' or
-        data.get('font_sha256')!=source.get('font_sha256') or
-        not isinstance(profiles,dict) or set(profiles)!=set(glyph_geometry())):
-        raise ValueError('Shape/size classification does not match the installed font')
-    return profiles
+    """Classify all 1,072 signs from the same validated geometry as rendering."""
+    return {sign:classify_sign_bounds(bounds)
+            for sign,bounds in glyph_geometry().items()}
 
 
 def _silhouette_advance(left:list,right:list,w_left:float,h_left:float,
