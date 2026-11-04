@@ -50,7 +50,11 @@ def ink_near_bird(layout):
                 continue
             for placed in col['placements']:
                 for g in placed['quadrat']['signs']:
-                    x=placed['x']+g['x']
+                    # SVG mirrors the entire quadrat in RTL. Collision
+                    # assertions must inspect the same physical ink position.
+                    local_x=(g['x'] if layout['direction']=='ltr' else
+                             layout['column_width_mm']-g['x']-g['width'])
+                    x=placed['x']+local_x
                     y=placed['y']+g['y']
                     w,h=g['width'],g['height']
                     if not (x < bird['x']+bird['width_mm']+clearance and
