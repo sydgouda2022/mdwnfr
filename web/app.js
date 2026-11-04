@@ -422,17 +422,9 @@ function paintPageContent(slot,p,shell){
      // Selecting a cell must not slide the Format inspector over the next
      // tap. On phones this previously swallowed a double-tap intended to
      // reopen the table editor. Format remains available via its toolbar icon.
-     box.addEventListener('click',e=>{e.stopPropagation();choose();});
-     box.addEventListener('dblclick',e=>{e.stopPropagation();choose();void beginInsertSheet('table',item.id);});
-     box.addEventListener('pointerup',e=>{
-      if(!['touch','pen'].includes(e.pointerType))return;
-      const now=performance.now(),last=box._tap;
-      box._tap={time:now,x:e.clientX,y:e.clientY};
-      if(last&&now-last.time<=520&&Math.hypot(e.clientX-last.x,e.clientY-last.y)<=30){
-       box._tap=null;choose();void beginInsertSheet('table',item.id);
-      }
-     });
-     box.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();if(activePanel!=='format')switchPanel('format');}});
+     box.addEventListener('click',e=>{e.stopPropagation();choose();openNestedKeyboard();});
+     box.addEventListener('dblclick',e=>{e.stopPropagation();choose();openNestedKeyboard();});
+     box.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();openNestedKeyboard();}});
      if(selectedTableCell?.tableId===item.id&&selectedTableCell.row===cell.row&&selectedTableCell.column===cell.column)box.classList.add('active');
      for(const w of cell.words){
       const wordNode=document.createElement('div');wordNode.className='table-cell-word';
@@ -454,12 +446,12 @@ function paintPageContent(slot,p,shell){
     node.style.width=mm(item.width_mm);node.style.height=mm(item.height);
     if(range&&itemIndex>=range.start&&itemIndex<range.end)node.classList.add('selected','in-range');
     node.setAttribute('role','button');node.tabIndex=0;node.setAttribute('aria-label','Hieroglyphic cartouche');
-    node.addEventListener('click',e=>{e.stopPropagation();selectWord(item.id,e.shiftKey);});
-    node.addEventListener('dblclick',e=>{e.stopPropagation();
-      if(performance.now()-lastCartoucheTouchOpen>700)
-       void beginInsertSheet('cartouche',item.id);
+    node.addEventListener('click',e=>{
+     e.stopPropagation();selectWord(item.id,e.shiftKey);
+     if(!e.shiftKey)openNestedKeyboard();
     });
-    node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectWord(item.id);if(activePanel!=='format')switchPanel('format');}});
+    node.addEventListener('dblclick',e=>{e.stopPropagation();selectWord(item.id);openNestedKeyboard();});
+    node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectWord(item.id);openNestedKeyboard();}});
     node.addEventListener('pointerdown',e=>beginObjectDrag(e,item,c,p,node));
     const geometry=item.cartouche;
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -1455,6 +1447,12 @@ $('insert-table').onclick=()=>beginInsertSheet('table');
 function selectedTable(){
  const table=selectedItems();return table.length===1&&table[0]?.type==='table'?table[0]:null;
 }
+function openNestedKeyboard(){
+ // Nested words use the same canonical transaction, history and autosave path
+ // as ordinary words. Opening this panel is idempotent across touch/click.
+ editingId=null;buffer=[];renderComposer();
+ if(activePanel!=='keyboard')switchPanel('keyboard');
+}
 function selectTableCell(tableId,row,column){
  selectedTableCell={tableId,row,column};
  selectWord(tableId);
@@ -1658,18 +1656,6 @@ function addObjectResizeHandles(node,placement,column,page){
 // Touch double-tap is handled at the end of a stationary pointer gesture,
 // while mouse double-click and keyboard activation remain separate. Dragging
 // or resizing never counts as a tap and cannot open the editing inspector.
-let recentCartoucheTouch=null,lastCartoucheTouchOpen=-Infinity;
-function noteCartoucheTouch(id,x,y){
- const now=performance.now();
- const previous=recentCartoucheTouch;
- const twice=previous?.id===id && now-previous.time<=520 &&
-  Math.hypot(x-previous.x,y-previous.y)<=30;
- recentCartoucheTouch=twice?null:{id,x,y,time:now};
- if(twice){
-  lastCartoucheTouchOpen=now;
-  void beginInsertSheet('cartouche',id);
- }
-}
 function nestedDragHorizontalPosition(original,placement,column,deltaX,direction){
  const room=Math.max(0,column.width-placement.width_mm);
  const desiredX=placement.x+deltaX;
@@ -1715,7 +1701,7 @@ function beginObjectDrag(e,placement,column,page,node){
     draft.lastReflow=performance.now();requestInsertPreview();
    }
   },
-  onCancel:()=>{recentCartoucheTouch=null;reset();finishExistingObjectPreview(draft,null);},
+  onCancel:()=>{reset();finishExistingObjectPreview(draft,null);},
   onFinish:async ({moved,dx,dy,clientX,clientY})=>{
    node.classList.remove('drag-preview');
    if(!moved){
@@ -1723,11 +1709,9 @@ function beginObjectDrag(e,placement,column,page,node){
     selectWord(placement.id);
     if(original.type==='cartouche' &&
        (e.pointerType==='touch'||e.pointerType==='pen'))
-     noteCartoucheTouch(placement.id,clientX,clientY);
-    else recentCartoucheTouch=null;
+     openNestedKeyboard();
     return;
    }
-   recentCartoucheTouch=null;
    const deltaX=dx/unit,deltaY=dy/unit;
    // A cross-page drop may need to load an offscreen, virtualized page.
    // Snapshot the active revision before the await so a late response can
@@ -1799,12 +1783,6 @@ function beginObjectResize(e,placement,node,edge){
  // accessible resize target. Its second tap therefore lands on the handle.
  // Treat that stationary tap as the same edit gesture; a moved pointer still
  // resizes normally. Do not shrink or hide the hit target to fix navigation.
- const secondCartoucheTap=original.type==='cartouche' &&
-  (e.pointerType==='touch'||e.pointerType==='pen') &&
-  recentCartoucheTouch?.id===placement.id &&
-  performance.now()-recentCartoucheTouch.time<=520 &&
-  Math.hypot(e.clientX-recentCartoucheTouch.x,
-             e.clientY-recentCartoucheTouch.y)<=30;
  selectWord(placement.id);
  const draft=startExistingObjectPreview(original,node);
  if(!draft)return;
@@ -1840,15 +1818,12 @@ function beginObjectResize(e,placement,node,edge){
     requestInsertPreview();
    }
   },
-  onCancel:()=>{recentCartoucheTouch=null;finishExistingObjectPreview(draft,null);},
+  onCancel:()=>{finishExistingObjectPreview(draft,null);},
   onFinish:({moved,clientX,clientY})=>{
    if(!moved){
     finishExistingObjectPreview(draft,null);
-    if(secondCartoucheTap)
-     noteCartoucheTouch(placement.id,clientX,clientY);
     return;
    }
-   recentCartoucheTouch=null;
    if(value===baseline){finishExistingObjectPreview(draft,null);return;}
    let action;
    if(isCartouche)action={op:'replace_cartouche',id:original.id,
@@ -2832,6 +2807,7 @@ function renderComposer(){
  const table=selectedTable();
  $('composer-title').textContent=table&&selectedTableCell?.tableId===table.id
   ? `Compose table cell ${String.fromCharCode(65+selectedTableCell.column)}${selectedTableCell.row+1}`
+  : selectedCartoucheObject()?'Compose cartouche word'
   : editingId?'Edit selected word':'Compose a word';
  const area=$('composer');area.replaceChildren();
  if(buffer.length)area.append(facingSequenceNode(buffer));
