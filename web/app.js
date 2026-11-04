@@ -1652,10 +1652,8 @@ function addObjectResizeHandles(node,placement,column,page){
   node.append(handle);
  }
 }
-// Native dblclick is not reliable for cartouches in small-screen iOS WebKit.
-// Touch double-tap is handled at the end of a stationary pointer gesture,
-// while mouse double-click and keyboard activation remain separate. Dragging
-// or resizing never counts as a tap and cannot open the editing inspector.
+// A single tap on nested writing opens the keyboard. Object movement and
+// resize remain separate pointer gestures and never start text entry.
 function nestedDragHorizontalPosition(original,placement,column,deltaX,direction){
  const room=Math.max(0,column.width-placement.width_mm);
  const desiredX=placement.x+deltaX;
@@ -1779,10 +1777,9 @@ function beginObjectResize(e,placement,node,edge){
  e.preventDefault();e.stopPropagation();
  const original=objectById(placement.id);
  if(!original)return;
- // In fit-page view an empty cartouche may be smaller than the 44px
- // accessible resize target. Its second tap therefore lands on the handle.
- // Treat that stationary tap as the same edit gesture; a moved pointer still
- // resizes normally. Do not shrink or hide the hit target to fix navigation.
+ // Resize handles remain dedicated manipulation targets. A stationary
+ // tap here selects the object but does not enter text; tap its interior to
+ // open nested writing without risking an accidental resize.
  selectWord(placement.id);
  const draft=startExistingObjectPreview(original,node);
  if(!draft)return;
