@@ -1,5 +1,6 @@
 import {save,load,list,listTrash,moveToTrash,restoreFromTrash,remove,loadProfile,updateProfile,countWords} from './storage.js';
 import {createKeyboardFromData} from './vendor/hieroglyphic/keyboard_api.mjs';
+import {OTHER_SIGNS} from './keyboard_extra.mjs';
 import {NO_MIRROR_HIEROGLYPHS,mirrorSign,reverseVisualQuadrat} from './hieroglyph_facing.mjs';
 import {buildEgyptianPalette,normalizeColour} from './editor_controls.mjs';
 
@@ -8,7 +9,7 @@ import {buildEgyptianPalette,normalizeColour} from './editor_controls.mjs';
 const $=id=>document.getElementById(id);
 const pxmm=96/25.4;
 const signKeyboard=createKeyboardFromData();
-const glyphGroups={unilaterals:signKeyboard.getSigns('uni'),bilaterals:signKeyboard.getSigns('bi'),trilaterals:signKeyboard.getSigns('tri')};
+const glyphGroups={unilaterals:signKeyboard.getSigns('uni'),bilaterals:signKeyboard.getSigns('bi'),trilaterals:signKeyboard.getSigns('tri'),others:OTHER_SIGNS};
 const numerals=[...('𓏺𓏻𓏼𓏽𓏾𓏿𓐀𓐁𓐂')].map((sign,i)=>({sign,value:String(i+1)})).concat([
  {sign:'𓎆',value:'10'},{sign:'𓍢',value:'100'},{sign:'𓆼',value:'1,000'},
  {sign:'𓂭',value:'10,000'},{sign:'𓆐',value:'100,000'},{sign:'𓁨',value:'1,000,000'}]);
@@ -1247,7 +1248,7 @@ function glyphKeyRows(container,group,columns,accept){
   for(const sign of signs.slice(i,i+columns)){
    const key=document.createElement('button');key.type='button';key.className='key';
    key.append(facingSignNode(sign.glyph,'key-glyph'));
-   key.title=sign.code+' · '+sign.name;key.setAttribute('aria-label',sign.code+' '+sign.name);
+   key.title=sign.name?sign.code+' · '+sign.name:sign.code;key.setAttribute('aria-label',sign.name?sign.code+' '+sign.name:sign.code);
    key.onclick=()=>accept(sign.glyph);row.append(key);
   }
   container.append(row);
@@ -1264,7 +1265,7 @@ function numeralKeyRow(container,accept){
 }
 function drawInsertGlyphs(){
  const tabs=$('insert-glyph-tabs');tabs.replaceChildren();
- for(const [group,label] of [['unilaterals','Uni'],['bilaterals','Bi'],['trilaterals','Tri']]){
+ for(const [group,label] of [['unilaterals','Uni'],['bilaterals','Bi'],['trilaterals','Tri'],['others','Other']]){
   const b=document.createElement('button');b.type='button';b.textContent=label;
   b.setAttribute('aria-pressed',String(group===draftGlyphTab));
   b.onclick=()=>{draftGlyphTab=group;drawInsertGlyphs();};tabs.append(b);

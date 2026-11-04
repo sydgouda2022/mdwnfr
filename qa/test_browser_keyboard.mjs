@@ -86,6 +86,19 @@ try{
    assert.ok(keyboardLayout.numeralsFirst,'Numerals appear above all sign keys');
    assert.ok(keyboardLayout.gap>=-3&&keyboardLayout.gap<=12,
      'Keyboard sits immediately above footer, without wasted gap');
+  await page.locator('#clear').click();
+  await page.locator('.tab[data-tab="others"]').click();
+  assert.equal(await page.locator('#keys button').count(),818,
+    'Other page exposes every remaining installed-font glyph');
+  await page.locator('#keys button').first().click();
+  assert.equal(await page.locator('#composer').textContent(),'𓀀',
+    'An uncatalogued but font-verified glyph is directly insertable');
+  await page.locator('#clear').click();
+  await page.locator('.tab[data-tab="unilaterals"]').click();
+  const reedAgain=page.locator('#keys button').filter({hasText:'𓇋'}).first();
+  await reedAgain.click();await reedAgain.click();
+  await page.waitForFunction(()=>document.getElementById('save-personal-word')?.disabled===false,
+    null,{timeout:90000});
   await page.locator('#save-personal-word').click();
   await page.locator('#manage-personal-words').click();
   const ownSaved=page.locator('#personal-words-list .personal-item');
@@ -164,8 +177,8 @@ try{
   await page.locator('#insert-table').click();
   await page.locator('#insert-dialog-backdrop').waitFor({state:'visible'});
   await page.locator('#insert-sheet-confirm').waitFor({state:'visible'});
-  assert.equal(await page.locator('#insert-glyph-tabs button').count(),3,
-    'Nested input uses the same three sign pages');
+  assert.equal(await page.locator('#insert-glyph-tabs button').count(),4,
+    'Nested input uses the same four sign pages');
   assert.equal(await page.locator('#insert-glyph-numbers .numkey').count(),15,
     'Nested input keeps all Egyptian numerals on the first row');
   await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm').disabled,

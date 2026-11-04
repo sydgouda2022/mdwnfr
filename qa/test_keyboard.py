@@ -62,6 +62,31 @@ class KeyboardConsumerTests(unittest.TestCase):
                 with self.assertRaises(DocumentError):
                     validate_signs([sign])
 
+    def test_extra_keyboard_module_is_in_offline_shell(self):
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from offline_publication import SHELL
+        self.assertIn('keyboard_extra.mjs', SHELL)
+
+    def test_other_keyboard_page_covers_every_remaining_font_glyph(self):
+        source = (ROOT / 'web/keyboard_extra.mjs').read_text(encoding='utf-8')
+        start = source.index('OTHER_SIGNS=Object.freeze(') + len('OTHER_SIGNS=Object.freeze(')
+        end = source.index('.map(Object.freeze))', start)
+        extra = json.loads(source[start:end])
+        outlines = glyph_geometry()
+        self.assertEqual(len(extra), 818)
+        glyphs = [entry['glyph'] for entry in extra]
+        self.assertEqual(len(glyphs), len(set(glyphs)))
+        self.assertTrue(set(glyphs).issubset(outlines))
+        self.assertTrue(all(entry['code'] == f"U+{ord(entry['glyph']):05X}"
+                            and entry['name'] == '' for entry in extra))
+        catalog_source = (ROOT / 'web/vendor/hieroglyphic/keyboard_catalog.js').read_text(encoding='utf-8')
+        catalog_start = catalog_source.index('SIGN_CATALOG=') + len('SIGN_CATALOG=')
+        catalog_end = catalog_source.rindex(';')
+        catalog = json.loads(catalog_source[catalog_start:catalog_end])
+        curated = {entry['glyph'] for group in catalog.values() for entry in group}
+        self.assertTrue(set(glyphs).isdisjoint(curated))
+        self.assertEqual(len(curated | set(glyphs)), len(outlines))
+
     def test_supported_font_outlines_can_be_composed(self):
         outlines = glyph_geometry()
         self.assertEqual(len(outlines), 1072)
