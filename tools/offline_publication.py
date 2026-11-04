@@ -19,6 +19,7 @@ SHELL = (
     'core/mdwnfr/history.py', 'core/mdwnfr/session.py',
     'core/mdwnfr/layout_sync.py', 'core/mdwnfr/api.py',
     'core/mdwnfr/data/glyph_geometry.json',
+    'core/mdwnfr/data/sign_profiles.json',
     'lexicon/lexicon.json', 'lexicon/manifest.json',
     'vendor/hieroglyphic/keyboard_api.mjs','vendor/hieroglyphic/keyboard_search.mjs',
     'vendor/hieroglyphic/keyboard_catalog.js','vendor/hieroglyphic/lexicon_install.mjs',

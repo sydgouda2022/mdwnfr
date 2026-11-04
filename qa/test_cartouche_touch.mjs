@@ -32,8 +32,15 @@ for(const [label,browserType,width,height] of [
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
   const cart=page.locator('.cartouche-object').first();
   await cart.waitFor({state:'visible',timeout:90000});
+  // A visible object can still lie outside the narrow phone viewport.
+  // Scroll the real editor into the paper location before a finger tap.
+  await cart.scrollIntoViewIfNeeded();
   await page.waitForTimeout(120);
   const at=await cart.boundingBox();
+  const viewport=page.viewportSize();
+  assert.ok(at && at.x+at.width/2>=0 && at.x+at.width/2<viewport.width &&
+               at.y+at.height/2>=0 && at.y+at.height/2<viewport.height,
+   'Inserted cartouche must be reachable by scrolling on the current device');
   assert.ok(at,'A new cartouche must have a visible hit target');
   const cx=at.x+at.width/2,cy=at.y+at.height/2;
   const initialHit=await page.evaluate(({x,y})=>{

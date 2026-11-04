@@ -47,4 +47,24 @@ Q3 illustrates why size cannot be inferred from shape. It has semi-square propor
 - Check for any stale inventory: `python tools/build_sign_profiles.py --check`.
 - Integrity and canonical examples: `qa/test_sign_profiles.py`.
 
-This stage **does not modify** `core/mdwnfr/quadrat.py` or production rendering. The next task is to review borderline and visually exceptional signs, then define composition eligibility using the approved shape and size catalogue.
+## Implemented composition rules
+
+The compositor in `core/mdwnfr/quadrat.py` now consults this catalogue directly:
+
+1. Every sign may stand alone, centered at natural visible proportions.
+2. Two consecutive signs may share a horizontal row when one is compact or both are tall, provided the actual silhouettes fit.
+3. A normal-sized tall host followed by two compact or wide companions can form a top/bottom-aligned stack beside the host; the reverse input order is supported as well. The companions fill the host height proportionally to their natural ink heights.
+4. Every internal pair of nearby visible outlines maintains **at least 5% of the column width** as clearance (with scan resolution allowance). The **20% visible-height gap between finished rows** is a separate existing rule.
+5. Every candidate preserves glyph aspect ratios and is centered inside the column. A small, bounded whole-group scale reduction is allowed when a proposed grouping slightly exceeds the column width.
+6. The compositor chooses the valid grouping minimizing total written height for the entire ordered word. If no pairing fits, it uses consecutive standalone rows. The editor does not enforce mandatory pairing or rewrite sign order.
+
+For a 20 mm column, M17 + Q3 + Q3 now uses a 15 mm host, a 1 mm vertical internal gap, and two 7 mm-high Q3 companions, retaining Q3's actual width/height ratio and aligned top/bottom edges.
+
+**Scope:** These are deterministic automatic layout heuristics based on measured font geometry, not a claim that every generated grouping is a historically attested spelling. The 229 boundary-adjacent classifications still merit expert visual review. The existing document model, local storage, table/cartouche layout, and page/column justification are unchanged.
+
+To run the composition regression suite:
+
+```sh
+PYTHONPATH=core python -m unittest qa.test_silhouette_spacing qa.test_sign_profiles -v
+```
+

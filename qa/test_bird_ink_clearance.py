@@ -50,7 +50,11 @@ def ink_near_bird(layout):
                 continue
             for placed in col['placements']:
                 for g in placed['quadrat']['signs']:
-                    x=placed['x']+g['x']
+                    # SVG mirrors the entire quadrat in RTL. Collision
+                    # assertions must inspect the same physical ink position.
+                    local_x=(g['x'] if layout['direction']=='ltr' else
+                             layout['column_width_mm']-g['x']-g['width'])
+                    x=placed['x']+local_x
                     y=placed['y']+g['y']
                     w,h=g['width'],g['height']
                     if not (x < bird['x']+bird['width_mm']+clearance and
@@ -96,6 +100,55 @@ class FinalBirdInkClearance(unittest.TestCase):
                           for col in pg['columns'] if col['kind']=='words'
                           for p in col['placements']],
                           [i['id'] for i in doc['items'] if i['type']=='word'])
+
+
+    def test_two_birds_do_not_strand_following_text_on_trailing_page_edge(self):
+        # Mirrors the mobile browser fixture at its larger 22 pt font size.
+        for direction in ('rtl','ltr'):
+            with self.subTest(direction=direction):
+                doc=new_document('Two floating birds',direction=direction,
+                                 surface='A4',font_size_pt=22)
+                items=[]
+                count=0
+                def add_words(n):
+                    nonlocal count
+                    for _ in range(n):
+                        items.append(word(SPELLINGS[count % len(SPELLINGS)]))
+                        count+=1
+                add_words(18)
+                horus=clipart('horus-falcon-raster',60,'auto')
+                horus['y_align']=.22
+                items.append(horus)
+                add_words(185)
+                bennu=clipart('bennu',60,'auto')
+                bennu['y_align']=.29
+                items.append(bennu)
+                add_words(280)
+                doc['items']=items
+                result=layout_document(doc)
+                for page,art in bird_placements(result):
+                    self.assertGreaterEqual(art['x'],-1e-6)
+                    self.assertLessEqual(art['x']+art['width_mm'],
+                                         page['width']+1e-6)
+                    ink=[]
+                    for col in page['columns']:
+                        if col['kind']!='words':
+                            continue
+                        for placed in col['placements']:
+                            for glyph in placed['quadrat']['signs']:
+                                gx=(glyph['x'] if direction=='ltr' else
+                                    result['column_width_mm']-glyph['x']-glyph['width'])
+                                ink.append((placed['x']+gx,placed['y']+glyph['y'],
+                                            glyph['width'],glyph['height']))
+                    shared=[(x,y,w,h) for x,y,w,h in ink
+                            if x<art['x']+art['width_mm'] and x+w>art['x']]
+                    self.assertTrue(shared,
+                        f"{direction}: {art['artwork_id']} isolated at page {page['index']}; "
+                        f"art x={art['x']:.2f}..{art['x']+art['width_mm']:.2f}, "
+                        f"word glyph x-range={min((x for x,_,_,_ in ink),default=-1):.2f}"
+                        f"..{max((x+w for x,_,w,_ in ink),default=-1):.2f}; "
+                        f"columns={len(page['columns'])}, words={len(ink)}, "
+                        f"intersect={len(shared)}")
 
     def test_resizing_both_birds_keeps_collision_and_compact_parity(self):
         for bird in BIRDS:

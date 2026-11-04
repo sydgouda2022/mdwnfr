@@ -180,7 +180,11 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
         occupied = 0
         for seed in columns:
             span = seed.get('span', 1)
-            if chunk and (seed.get('break_before') or occupied + span > page_capacity):
+            if chunk and (seed.get('break_before') or
+                          occupied >= page_capacity or occupied + span > page_capacity):
+                # Floating objects consume zero slots. Even so, an object
+                # that follows a completely filled page belongs to the next
+                # page, never beyond the physical right/left paper edge.
                 page_chunks.append(chunk)
                 chunk, occupied = [], 0
             chunk.append(seed)
