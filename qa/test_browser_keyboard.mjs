@@ -224,10 +224,15 @@ try{
   await page.locator('#insert-sheet-confirm').click();
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
   await page.locator('.cartouche-object').first().waitFor({state:'visible',timeout:90000});
-  await page.locator('.cartouche-object').first().dblclick();
+  await page.locator('.cartouche-object').first().click();
+  await page.locator('#keyboard-panel').waitFor({state:'visible'});
+  await page.locator('#keyboard-close').click();
+  await page.locator('#keyboard-panel').waitFor({state:'hidden'});
+  await page.locator('#object-quick-actions').waitFor({state:'visible'});
+  await page.locator('#object-action-edit').click();
   await page.locator('#insert-screen-cartouche').waitFor({state:'visible'});
   assert.equal(await page.locator('input[name="insert-cartouche-direction"]:checked').inputValue(),
-    'horizontal','Existing cartouche reopens its same orientation editor');
+    'horizontal','The contextual Edit action preserves cartouche orientation');
   await page.locator('#insert-sheet-cancel').click();
 
   await page.locator('#format-toggle').click();
