@@ -420,7 +420,7 @@ def compose(signs:list[str],column_width:float,
     @lru_cache(maxsize=None)
     def choose(index:int):
         if index==len(signs):
-            return (0.0,0.0,0,(),())
+            return (0,0.0,0.0,(),())
         possibilities=[]
         for length,layout in (
             (1,(single_dimensions(index)[1],
@@ -434,18 +434,19 @@ def compose(signs:list[str],column_width:float,
             if layout is None:
                 continue
             row_height,placed=layout
-            area,remaining,nrows,rows,placements=choose(index+length)
+            nrows,remaining,area,rows,placements=choose(index+length)
             total_area=visible_ink_area(placed)+area
             total_height=row_height*(1+VERTICAL_GAP_RATIO)+remaining
-            possibilities.append((total_area,total_height,nrows+1,
+            possibilities.append((nrows+1,total_height,total_area,
                                   ((tuple(range(index,index+length))),)+rows,
                                   ((row_height,placed),)+placements))
-        # First maximize measured visible ink area; then minimize total
-        # column height. This is a geometric objective, not a subjective
-        # visual-balance score or a hand-tuned weighted sum.
-        return max(possibilities,
-                   key=lambda result:(round(result[0],9),-round(result[1],9),
-                                      -result[2],len(result[3][0])))
+        # Prefer a valid shared quadrat over splitting the same ordered signs
+        # into separate rows; then minimize column height, then maximize the
+        # measured visible ink area. No subjective balance weights are used.
+        return min(possibilities,
+                   key=lambda result:(result[0],round(result[1],9),
+                                      -round(result[2],9),
+                                      -len(result[3][0])))
 
     _,_,_,rows,layouts=choose(0)
     heights=[h for h,_ in layouts]
