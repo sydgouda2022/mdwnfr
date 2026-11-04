@@ -64,6 +64,8 @@ try{
    await page.goto(base+'/');
    await page.waitForFunction(()=>document.getElementById('create-document')?.disabled===false,null,{timeout:180000});
    assert.notEqual(await page.locator('meta[name="mdwnfr-build"]').getAttribute('content'),'old-release');
+   await page.waitForFunction(()=>document.getElementById('offline-notice')?.hidden===true,
+    null,{timeout:90000});
    await page.locator('#create-document').click();
    await page.locator('#editor-screen').waitFor({state:'visible'});
    assert.equal(await page.locator('#font-size').inputValue(),'10','An update cannot mix fresh controls with an older Python default');
@@ -74,6 +76,8 @@ try{
    // successful navigation now proves the installed cache can run unaided.
    const stopped=once(server,'exit');server.kill('SIGTERM');await stopped;
    await page.reload({waitUntil:'domcontentloaded'});
+   await page.waitForFunction(()=>document.getElementById('offline-notice')?.hidden===true,
+    null,{timeout:60000});
    await page.waitForFunction(()=>document.getElementById('create-document')?.disabled===false,null,{timeout:180000});
    await page.locator('#create-document').click();
    await page.locator('#editor-screen').waitFor({state:'visible'});
