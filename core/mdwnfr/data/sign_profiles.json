@@ -1,0 +1,5380 @@
+{
+  "format": "mdwnfr-sign-shape-size-v1",
+  "font_sha256": "b792accc6207ca9caa59fc67f53926b6985a99d255dd432d7c68b68a6dfd62f8",
+  "rules": {
+    "shape": {
+      "tall_below_aspect": 0.7,
+      "wide_above_aspect": 1.4
+    },
+    "size": {
+      "compact_below_longest_ink_dimension_em": 0.7
+    },
+    "review": {
+      "tall_aspect_margin": 0.07,
+      "wide_aspect_margin": 0.14,
+      "extent_em_margin": 0.07
+    }
+  },
+  "profiles": {
+    "𓀀": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀁": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀂": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀃": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀄": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀅": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀆": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀇": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀈": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀉": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀊": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀋": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀌": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀍": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀎": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀏": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀐": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀑": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀒": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀓": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀔": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀕": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀖": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀗": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀘": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀙": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀚": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀛": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀜": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀝": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀞": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀟": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀠": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀡": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀢": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀣": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀤": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀥": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀦": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀧": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀨": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀩": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀪": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀫": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀬": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀭": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀮": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀯": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀰": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀱": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀲": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀳": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀴": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀵": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀶": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀷": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀸": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀹": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀺": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀻": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀼": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓀽": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀾": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓀿": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁀": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁁": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁂": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁃": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁄": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁅": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁆": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁇": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁈": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁉": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁊": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁋": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁌": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁍": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁎": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁏": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁐": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁑": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁒": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁓": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁔": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁕": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁖": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁗": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁘": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁙": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁚": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁛": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁜": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁝": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁞": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁟": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁠": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁡": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁢": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁣": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁤": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁥": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁦": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁧": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁨": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁩": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁪": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁫": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁬": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁭": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁮": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁯": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁰": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁱": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓁲": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁳": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁴": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁵": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁶": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓁷": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓁸": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁹": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁺": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁻": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁼": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁽": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁾": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓁿": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓂀": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂁": {
+      "shape": "wide",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓂂": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓂃": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂄": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓂅": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓂆": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂇": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓂈": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓂉": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓂊": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓂋": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂌": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂍": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂎": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂏": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂐": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂑": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓂒": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂓": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓂔": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓂕": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂖": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓂗": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂘": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂙": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂚": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂛": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓂜": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂝": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂞": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂟": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂠": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂡": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂢": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂣": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂤": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂥": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂦": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂧": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂨": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂩": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂪": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂫": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂬": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂭": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂮": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂯": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓂰": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂱": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂲": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂳": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓂴": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓂵": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂶": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂷": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂸": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂹": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂺": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂻": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓂼": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂽": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓂾": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓂿": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃀": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃁": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃂": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃃": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃄": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃅": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃆": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃇": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃈": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃉": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓃊": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃋": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃌": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃍": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃎": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃏": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃐": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃑": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃒": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓃓": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃔": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓃕": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃖": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓃗": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃘": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃙": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓃚": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃛": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓃜": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓃝": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓃞": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓃟": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃠": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃡": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃢": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃣": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃤": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃥": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃦": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃧": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃨": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃩": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃪": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃫": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃬": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃭": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃮": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃯": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃰": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃱": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃲": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃳": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃴": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃵": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃶": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃷": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓃸": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓃹": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃺": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃻": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓃼": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓃽": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓃾": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓃿": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄀": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄁": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄂": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄃": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄄": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄅": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄆": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄇": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄈": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄉": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄊": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄋": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄌": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄍": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄎": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄏": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄐": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄑": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄒": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄓": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄔": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄕": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄖": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄗": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄘": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄙": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄚": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄛": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄜": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄝": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄞": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄟": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄠": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄡": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄢": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄣": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓄤": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄥": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄦": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄧": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄨": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄩": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄪": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄫": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄬": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄭": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄮": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄯": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓄰": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄱": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄲": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄳": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄴": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄵": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄶": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄷": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄸": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄹": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓄺": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄻": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄼": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓄽": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓄾": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓄿": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅀": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅁": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅂": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅃": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅄": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅅": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅆": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅇": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅈": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅉": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓅊": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅋": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅌": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅍": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅎": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓅏": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅐": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅑": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅒": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓅓": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅔": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓅕": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅖": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅗": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅘": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅙": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓅚": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅛": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅜": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅝": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓅞": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅟": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅠": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅡": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅢": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅣": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅤": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅥": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅦": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓅧": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅨": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓅩": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓅪": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓅫": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓅬": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅭": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅮": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅯": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅰": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅱": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓅲": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅳": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅴": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅵": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅶": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅷": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅸": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓅹": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅺": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓅻": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅼": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅽": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓅾": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓅿": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆀": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓆁": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆂": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓆃": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆄": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆅": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆆": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆇": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓆈": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆉": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓆊": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆋": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓆌": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆍": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆎": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓆏": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆐": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆑": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆒": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆓": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆔": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆕": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆖": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆗": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓆘": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓆙": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆚": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆛": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆜": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆝": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆞": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆟": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆠": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆡": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆢": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆣": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓆤": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆥": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆦": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆧": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆨": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆩": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓆪": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓆫": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓆬": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆭": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆮": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆯": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆰": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆱": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆲": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆳": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆴": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆵": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓆶": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆷": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆸": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆹": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓆺": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆻": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆼": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆽": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓆾": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓆿": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓇀": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇁": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇂": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇃": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇄": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇅": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇆": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇇": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇈": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇉": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇊": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇋": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇌": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇍": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇎": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇏": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇐": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇑": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇒": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇓": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇔": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓇕": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇖": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇗": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇘": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇙": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇚": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇛": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇜": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇝": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇞": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇟": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇠": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇡": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇢": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇣": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇤": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓇥": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇦": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇧": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓇨": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓇩": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇪": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇫": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇬": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓇭": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓇮": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇯": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇰": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇱": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇲": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓇳": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓇴": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓇵": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇶": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓇷": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓇸": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓇹": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇺": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇻": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇼": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇽": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇾": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓇿": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈀": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈁": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈂": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈃": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈄": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈅": {
+      "shape": "wide",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓈆": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈇": {
+      "shape": "wide",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓈈": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈉": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈊": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈋": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈌": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈍": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈎": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓈏": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈐": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈑": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈒": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓈓": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈔": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈕": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈖": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈗": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈘": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈙": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈚": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈛": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈜": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈝": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓈞": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓈟": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓈠": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈡": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈢": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈣": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈤": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈥": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈦": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈧": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈨": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈩": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈪": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈫": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈬": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈭": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈮": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈯": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈰": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈱": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈲": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈳": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈴": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈵": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈶": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈷": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈸": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈹": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈺": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈻": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈼": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈽": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈾": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓈿": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉀": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉁": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉂": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉃": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉄": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉅": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉆": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉇": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉈": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉉": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉊": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉋": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉌": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉍": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉎": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉏": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉐": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉑": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉒": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉓": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉔": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉕": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓉖": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓉗": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉘": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉙": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉚": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉛": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉜": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉝": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉞": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉟": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉠": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉡": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉢": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉣": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉤": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉥": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉦": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉧": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉨": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉩": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉪": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓉫": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓉬": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉭": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉮": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉯": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓉰": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓉱": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉲": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉳": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓉴": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓉵": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉶": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉷": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓉸": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓉹": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉺": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉻": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉼": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉽": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓉾": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓉿": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊀": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓊁": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊂": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊃": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊄": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊅": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊆": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊇": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊈": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊉": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊊": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓊋": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊌": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓊍": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊎": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊏": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊐": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊑": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊒": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓊓": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓊔": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊕": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓊖": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓊗": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓊘": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓊙": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓊚": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓊛": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊜": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊝": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓊞": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊟": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊠": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊡": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊢": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊣": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊤": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊥": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊦": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊧": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊨": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊩": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊪": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓊫": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓊬": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊭": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓊮": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊯": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊰": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊱": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊲": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊳": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊴": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊵": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊶": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊷": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊸": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊹": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊺": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊻": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊼": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊽": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊾": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓊿": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓋀": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋁": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋂": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋃": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋄": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋅": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋆": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋇": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋈": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋉": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋊": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋋": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋌": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋍": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋎": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋏": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋐": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋑": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋒": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋓": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋔": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋕": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋖": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋗": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋘": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋙": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋚": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋛": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋜": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋝": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋞": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋟": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋠": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋡": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋢": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋣": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋤": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓋥": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋦": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓋧": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓋨": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋩": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓋪": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓋫": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓋬": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓋭": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋮": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓋯": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓋰": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋱": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋲": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓋳": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋴": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋵": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋶": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋷": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋸": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋹": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋺": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓋻": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓋼": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋽": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋾": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓋿": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌀": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌁": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌂": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌃": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌄": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌅": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌆": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓌇": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌈": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌉": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌊": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌋": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌌": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌍": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌎": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌏": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌐": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌑": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌒": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌓": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌔": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌕": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌖": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌗": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌘": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌙": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌚": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌛": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌜": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌝": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓌞": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌟": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌠": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌡": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌢": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌣": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌤": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌥": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌦": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓌧": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌨": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓌩": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌪": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌫": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌬": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌭": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌮": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌯": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌰": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌱": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌲": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌳": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌴": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌵": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌶": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌷": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌸": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓌹": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌺": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌻": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌼": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌽": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌾": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓌿": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓍀": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓍁": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓍂": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍃": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍄": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍅": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓍆": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍇": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍈": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍉": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍊": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓍋": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍌": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍍": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍎": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍏": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍐": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍑": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍒": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍓": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍔": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓍕": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍖": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍗": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍘": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍙": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍚": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍛": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍜": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍝": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍞": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍟": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍠": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓍡": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍢": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓍣": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓍤": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍥": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍦": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍧": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍨": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍩": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍪": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓍫": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍬": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓍭": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍮": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍯": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍰": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍱": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓍲": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓍳": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍴": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍵": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍶": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓍷": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍸": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓍹": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍺": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍻": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍼": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓍽": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓍾": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓍿": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎀": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎁": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎂": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎃": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎄": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎅": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎆": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓎇": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎈": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎉": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎊": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎋": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎌": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎍": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎎": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎏": {
+      "shape": "wide",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓎐": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎑": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎒": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎓": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎔": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎕": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎖": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎗": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎘": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎙": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎚": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎛": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎜": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎝": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎞": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎟": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎠": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎡": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎢": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎣": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎤": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎥": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎦": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎧": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎨": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎩": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎪": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎫": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎬": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎭": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓎮": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎯": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎰": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎱": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎲": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎳": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎴": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎵": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎶": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎷": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓎸": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎹": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓎺": {
+      "shape": "wide",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓎻": {
+      "shape": "wide",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓎼": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓎽": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓎾": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓎿": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏀": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏁": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏂": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏃": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏄": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏅": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏆": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏇": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏈": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏉": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓏊": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓏋": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓏌": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓏍": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏎": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏏": {
+      "shape": "wide",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓏐": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓏑": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏒": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏓": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏔": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏕": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏖": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓏗": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓏘": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓏙": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏚": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏛": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏜": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏝": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏞": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏟": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏠": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏡": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓏢": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏣": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏤": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓏥": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓏦": {
+      "shape": "wide",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓏧": {
+      "shape": "wide",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓏨": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓏩": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓏪": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏫": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏬": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓏭": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓏮": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓏯": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓏰": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓏱": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏲": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓏳": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓏴": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓏵": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓏶": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏷": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓏸": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓏹": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓏺": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓏻": {
+      "shape": "tall",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓏼": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓏽": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓏾": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓏿": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐀": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐁": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐂": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐃": {
+      "shape": "wide",
+      "size": "compact",
+      "needs_review": true
+    },
+    "𓐄": {
+      "shape": "wide",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓐅": {
+      "shape": "wide",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓐆": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓐇": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓐈": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐉": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐊": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐋": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐌": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐍": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓐎": {
+      "shape": "squareish",
+      "size": "compact",
+      "needs_review": false
+    },
+    "𓐏": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓐐": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓐑": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐒": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐓": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐔": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐕": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓐖": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐗": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐘": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐙": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐚": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐛": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐜": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐝": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐞": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": true
+    },
+    "𓐟": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐠": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐡": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐢": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐣": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐤": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐥": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐦": {
+      "shape": "wide",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐧": {
+      "shape": "squareish",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐨": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐩": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐪": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐫": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐬": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐭": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐮": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    },
+    "𓐯": {
+      "shape": "tall",
+      "size": "normal",
+      "needs_review": false
+    }
+  }
+}
