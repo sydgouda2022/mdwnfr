@@ -193,7 +193,7 @@ class VisibleInkComposition(unittest.TestCase):
         top=second['y']+b['y']
         # The last column is incomplete, so the natural preceding-row
         # 20%-height gap remains and only the terminal whitespace disappears.
-        self.assertAlmostEqual(top-bottom,a['height']/2,places=4)
+        self.assertAlmostEqual(top-bottom,a['height']*.20,places=4)
         self.assertAlmostEqual(placements[-1]['quadrat']['flexible_gaps'][-1],0)
 
     def test_asymmetric_neighbors_have_one_preceding_twenty_percent_gap(self):
@@ -264,7 +264,7 @@ class VisibleInkComposition(unittest.TestCase):
     def test_completed_page_column_expands_each_word_equally(self):
         from mdwnfr.document import new_document,transaction,validated_margins,SURFACES
         doc=new_document('Fit the remaining column')
-        for i in range(34):
+        for i in range(80):
             doc=transaction(doc,{'op':'insert_word','index':i,'signs':['𓅓']})
         result=layout_document(doc)
         first=[col for page in result['pages'] for col in page['columns']
