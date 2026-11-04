@@ -127,6 +127,9 @@ class FinalBirdInkClearance(unittest.TestCase):
                 doc['items']=items
                 result=layout_document(doc)
                 for page,art in bird_placements(result):
+                    self.assertGreaterEqual(art['x'],-1e-6)
+                    self.assertLessEqual(art['x']+art['width_mm'],
+                                         page['width']+1e-6)
                     ink=[]
                     for col in page['columns']:
                         if col['kind']!='words':
