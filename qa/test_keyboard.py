@@ -63,11 +63,10 @@ class KeyboardConsumerTests(unittest.TestCase):
                     validate_signs([sign])
 
     def test_other_keyboard_page_covers_every_remaining_font_glyph(self):
-        import re
         source = (ROOT / 'web/keyboard_extra.mjs').read_text(encoding='utf-8')
-        match = re.search(r'OTHER_SIGNS=Object.freeze\((\[.*\])\.map\(Object.freeze\)\)', source)
-        self.assertIsNotNone(match)
-        extra = json.loads(match.group(1))
+        start = source.index('OTHER_SIGNS=Object.freeze(') + len('OTHER_SIGNS=Object.freeze(')
+        end = source.index('.map(Object.freeze))', start)
+        extra = json.loads(source[start:end])
         outlines = glyph_geometry()
         self.assertEqual(len(extra), 818)
         glyphs = [entry['glyph'] for entry in extra]
@@ -76,19 +75,9 @@ class KeyboardConsumerTests(unittest.TestCase):
         self.assertTrue(all(entry['code'] == f"U+{ord(entry['glyph']):05X}"
                             and entry['name'] == '' for entry in extra))
         catalog_source = (ROOT / 'web/vendor/hieroglyphic/keyboard_catalog.js').read_text(encoding='utf-8')
-        catalog_match = re.search(r'SIGN_CATALOG=(\{.*\});\s*
-        outlines = glyph_geometry()
-        self.assertEqual(len(outlines), 1072)
-        for sign in ('𓅓', '𓇋', '𓏏'):
-            self.assertIn(sign, outlines)
-            self.assertEqual(validate_signs([sign]), [sign])
-
-
-if __name__ == '__main__':
-    unittest.main()
-, catalog_source)
-        self.assertIsNotNone(catalog_match)
-        catalog = json.loads(catalog_match.group(1))
+        catalog_start = catalog_source.index('SIGN_CATALOG=') + len('SIGN_CATALOG=')
+        catalog_end = catalog_source.rindex(';')
+        catalog = json.loads(catalog_source[catalog_start:catalog_end])
         curated = {entry['glyph'] for group in catalog.values() for entry in group}
         self.assertTrue(set(glyphs).isdisjoint(curated))
         self.assertEqual(len(curated | set(glyphs)), len(outlines))
