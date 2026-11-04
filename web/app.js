@@ -1025,16 +1025,21 @@ function showDraftPage(d,page,placement){
  d.previewPage=page;
  if(!d.firstPositionShown){
   d.firstPositionShown=true;
-  // Do not zoom the entire page into a tiny duplicate inspector.
+  // Keep the *whole* editable object reachable above the mobile sheet.
+  // Otherwise a press on obscured ink dismisses the draft instead of moving it.
   slot.shell.scrollIntoView({behavior:'auto',block:'nearest',inline:'nearest'});
   if(innerWidth<=720){
    requestAnimationFrame(()=>{
     if(insertDraft!==d||d.dragging||!actual.isConnected)return;
+    const area=$('canvas-area');
     const sheet=$('insert-sheet').getBoundingClientRect();
-    const handle=actual.querySelector('.art-resize.bottom-right')||actual;
-    const bounds=handle.getBoundingClientRect();
-    const overlap=bounds.bottom-sheet.top+18;
-    if(overlap>0)$('canvas-area').scrollTop+=overlap;
+    const viewport=area.getBoundingClientRect();
+    const rect=actual.getBoundingClientRect();
+    const safeTop=viewport.top+22,safeBottom=Math.min(viewport.bottom,sheet.top)-22;
+    const space=Math.max(44,safeBottom-safeTop);
+    const displacement=rect.height>space?rect.top-safeTop:
+      Math.max(rect.bottom-safeBottom,Math.min(0,rect.top-safeTop));
+    if(Math.abs(displacement)>2)area.scrollTop+=displacement;
    });
   }
  }

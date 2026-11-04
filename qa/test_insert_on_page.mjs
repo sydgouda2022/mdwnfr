@@ -38,9 +38,14 @@ for(const [name,engine,width,height] of [
     ?inspector.width<viewport.width-150
     :inspector.height<viewport.height*.60&&inspector.y>viewport.height*.32,
    'iPad uses a side inspector; iPhone leaves the writing page visible above its sheet');
+  await page.waitForTimeout(120);
   const current=await draft.boundingBox();
   const startX=current.x+Math.min(24,current.width*.5);
   const startY=current.y+Math.min(24,current.height*.5);
+  const uncovered=await page.evaluate(({x,y})=>
+   Boolean(document.elementFromPoint(x,y)?.closest('.draft-object')),
+   {x:startX,y:startY});
+  assert.ok(uncovered,'Move target must be uncovered by the Insert sheet');
   await page.mouse.move(startX,startY);
   await page.mouse.down();
   await page.mouse.move(startX+24,startY+24,{steps:5});
