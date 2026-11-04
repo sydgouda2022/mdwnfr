@@ -117,7 +117,13 @@ def classify_sign_bounds(bounds:tuple[float,...]|list[float])->dict:
     review=(abs(aspect-TALL_BELOW_ASPECT)<=TALL_REVIEW_MARGIN or
             abs(aspect-WIDE_ABOVE_ASPECT)<=WIDE_REVIEW_MARGIN or
             abs(extent-COMPACT_BELOW_EXTENT_EM)<=SIZE_REVIEW_MARGIN_EM)
-    return {'shape':shape,'size':size,'needs_review':review}
+    # A four-way quadrat class makes the two measured dimensions usable
+    # without conflating shape with size. Compact signs form the small class
+    # regardless of aspect ratio; otherwise the shape determines the class.
+    quadrat_class=('small' if size=='compact' else
+                   {'squareish':'square','tall':'tall','wide':'wide'}[shape])
+    return {'shape':shape,'size':size,'quadrat_class':quadrat_class,
+            'needs_review':review}
 
 
 @lru_cache(maxsize=1)
@@ -204,8 +210,10 @@ def compose(signs:list[str],column_width:float,
         if i+1>=len(signs):
             return None
         first,second=profiles[signs[i]],profiles[signs[i+1]]
-        compatible=(first['size']=='compact' or second['size']=='compact' or
-                    (first['shape']=='tall' and second['shape']=='tall'))
+        compatible=(first['quadrat_class']=='small' or
+                    second['quadrat_class']=='small' or
+                    (first['quadrat_class']=='tall' and
+                     second['quadrat_class']=='tall'))
         if not compatible:
             return None
         indices=(i,i+1)
@@ -253,16 +261,16 @@ def compose(signs:list[str],column_width:float,
         indices=(i,i+1,i+2)
         # Both reading orders are allowed: tall host first or tall host last.
         first,last=profiles[signs[i]],profiles[signs[i+2]]
-        if first['shape']=='tall' and first['size']=='normal':
+        if first['quadrat_class']=='tall':
             host=i
             companions=(i+1,i+2)
-        elif last['shape']=='tall' and last['size']=='normal':
+        elif last['quadrat_class']=='tall':
             host=i+2
             companions=(i,i+1)
         else:
             return None
-        if not all(profiles[signs[j]]['size']=='compact' or
-                   profiles[signs[j]]['shape']=='wide' for j in companions):
+        if not all(profiles[signs[j]]['quadrat_class'] in ('small','wide')
+                   for j in companions):
             return None
         b,c=companions
 
