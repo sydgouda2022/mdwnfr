@@ -78,7 +78,17 @@ try{
    await page.reload({waitUntil:'domcontentloaded'});
    await page.waitForFunction(()=>document.getElementById('offline-notice')?.hidden===true,
     null,{timeout:60000});
-   await page.waitForFunction(()=>document.getElementById('create-document')?.disabled===false,null,{timeout:180000});
+   try{
+    await page.waitForFunction(()=>document.getElementById('create-document')?.disabled===false,null,{timeout:180000});
+   }catch(error){
+    console.error('OFFLINE RESTART DIAGNOSTICS',JSON.stringify({
+     state:await page.locator('#state').textContent().catch(()=>null),
+     libraryState:await page.locator('#library-state').textContent().catch(()=>null),
+     libraryError:await page.locator('#library-error').textContent().catch(()=>null),
+     pageErrors:errors
+    }));
+    throw error;
+   }
    await page.locator('#create-document').click();
    await page.locator('#editor-screen').waitFor({state:'visible'});
    assert.equal(await page.locator('#font-size').inputValue(),'10');
