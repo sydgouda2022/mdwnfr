@@ -62,6 +62,11 @@ class KeyboardConsumerTests(unittest.TestCase):
                 with self.assertRaises(DocumentError):
                     validate_signs([sign])
 
+    def test_extra_keyboard_module_is_in_offline_shell(self):
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from offline_publication import SHELL
+        self.assertIn('keyboard_extra.mjs', SHELL)
+
     def test_other_keyboard_page_covers_every_remaining_font_glyph(self):
         source = (ROOT / 'web/keyboard_extra.mjs').read_text(encoding='utf-8')
         start = source.index('OTHER_SIGNS=Object.freeze(') + len('OTHER_SIGNS=Object.freeze(')
