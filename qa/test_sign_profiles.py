@@ -71,6 +71,17 @@ class SignShapeSizeProfiles(unittest.TestCase):
         self.assertEqual(counts, {
             "square": 429, "tall": 284, "wide": 276, "small": 83
         })
+        self.assertEqual(sum(p["needs_review"] for p in profiles.values()), 229)
+
+    def test_classifier_thresholds_and_compact_override_are_explicit(self):
+        from mdwnfr.quadrat import classify_sign_bounds
+        self.assertEqual(classify_sign_bounds((0, 0, .70, 1.0))["quadrat_class"], "square")
+        self.assertEqual(classify_sign_bounds((0, 0, .699, 1.0))["quadrat_class"], "tall")
+        self.assertEqual(classify_sign_bounds((0, 0, 1.40, 1.0))["quadrat_class"], "square")
+        self.assertEqual(classify_sign_bounds((0, 0, 1.401, 1.0))["quadrat_class"], "wide")
+        for bounds in ((0, 0, .30, .60), (0, 0, .60, .30), (0, 0, .55, .55)):
+            with self.subTest(bounds=bounds):
+                self.assertEqual(classify_sign_bounds(bounds)["quadrat_class"], "small")
 
     def test_catalogue_matches_measured_outlines(self):
         check = subprocess.run(
