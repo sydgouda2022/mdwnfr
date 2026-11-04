@@ -86,6 +86,7 @@ try{
    assert.ok(keyboardLayout.numeralsFirst,'Numerals appear above all sign keys');
    assert.ok(keyboardLayout.gap>=-3&&keyboardLayout.gap<=12,
      'Keyboard sits immediately above footer, without wasted gap');
+  await page.locator('#clear').click();
   await page.locator('.tab[data-tab="others"]').click();
   assert.equal(await page.locator('#keys button').count(),818,
     'Other page exposes every remaining installed-font glyph');
