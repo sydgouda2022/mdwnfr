@@ -101,6 +101,47 @@ class FinalBirdInkClearance(unittest.TestCase):
                           for p in col['placements']],
                           [i['id'] for i in doc['items'] if i['type']=='word'])
 
+
+    def test_two_birds_do_not_strand_following_text_on_trailing_page_edge(self):
+        # Mirrors the mobile browser fixture at its larger 22 pt font size.
+        for direction in ('rtl','ltr'):
+            with self.subTest(direction=direction):
+                doc=new_document('Two floating birds',direction=direction,
+                                 surface='A4',font_size_pt=22)
+                items=[]
+                count=0
+                def add_words(n):
+                    nonlocal count
+                    for _ in range(n):
+                        items.append(word(SPELLINGS[count % len(SPELLINGS)]))
+                        count+=1
+                add_words(18)
+                horus=clipart('horus-falcon-raster',60,'auto')
+                horus['y_align']=.22
+                items.append(horus)
+                add_words(185)
+                bennu=clipart('bennu',60,'auto')
+                bennu['y_align']=.29
+                items.append(bennu)
+                add_words(280)
+                doc['items']=items
+                result=layout_document(doc)
+                for page,art in bird_placements(result):
+                    ink=[]
+                    for col in page['columns']:
+                        if col['kind']!='words':
+                            continue
+                        for placed in col['placements']:
+                            for glyph in placed['quadrat']['signs']:
+                                gx=(glyph['x'] if direction=='ltr' else
+                                    result['column_width_mm']-glyph['x']-glyph['width'])
+                                ink.append((placed['x']+gx,placed['y']+glyph['y'],
+                                            glyph['width'],glyph['height']))
+                    shared=[(x,y,w,h) for x,y,w,h in ink
+                            if x<art['x']+art['width_mm'] and x+w>art['x']]
+                    self.assertTrue(shared,
+                        f"{direction}: {art['artwork_id']} isolated at page {page['index']}")
+
     def test_resizing_both_birds_keeps_collision_and_compact_parity(self):
         for bird in BIRDS:
             for direction in ('ltr','rtl'):
