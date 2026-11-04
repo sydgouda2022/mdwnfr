@@ -20,17 +20,20 @@ class SignShapeSizeProfiles(unittest.TestCase):
         cls.source = json.loads(GEOMETRY.read_text(encoding="utf-8"))
 
     def test_all_1072_signs_are_independently_classified(self):
-        self.assertEqual(self.data["format"], "mdwnfr-sign-shape-size-v1")
+        self.assertEqual(self.data["format"], "mdwnfr-sign-shape-size-v2")
         self.assertEqual(self.data["font_sha256"], self.source["font_sha256"])
         profiles = self.data["profiles"]
         self.assertEqual(len(profiles), 1072)
         self.assertEqual(set(profiles), set(self.source["glyphs"]))
         for profile in profiles.values():
+            self.assertGreater(profile["width_em"], 0)
+            self.assertGreater(profile["height_em"], 0)
             self.assertIn(profile["shape"], {"squareish", "tall", "wide"})
             self.assertIn(profile["size"], {"normal", "compact"})
             self.assertIn(profile["quadrat_class"], {"square", "tall", "wide", "small"})
             self.assertIs(type(profile["needs_review"]), bool)
-            self.assertEqual(set(profile), {"shape", "size", "quadrat_class", "needs_review"})
+            self.assertEqual(set(profile), {"width_em", "height_em", "shape", "size",
+                                            "quadrat_class", "needs_review"})
 
     def test_user_examples_have_expected_shape_and_size(self):
         profiles = self.data["profiles"]
@@ -69,19 +72,21 @@ class SignShapeSizeProfiles(unittest.TestCase):
             key = profile["quadrat_class"]
             counts[key] = counts.get(key, 0) + 1
         self.assertEqual(counts, {
-            "square": 429, "tall": 284, "wide": 276, "small": 83
+            "square": 494, "tall": 275, "wide": 220, "small": 83
         })
-        self.assertEqual(sum(p["needs_review"] for p in profiles.values()), 229)
+        self.assertEqual(sum(p["needs_review"] for p in profiles.values()), 203)
 
-    def test_classifier_thresholds_and_compact_override_are_explicit(self):
+    def test_classifier_uses_independent_width_and_height_thresholds(self):
         from mdwnfr.quadrat import classify_sign_bounds
         self.assertEqual(classify_sign_bounds((0, 0, .70, 1.0))["quadrat_class"], "square")
         self.assertEqual(classify_sign_bounds((0, 0, .699, 1.0))["quadrat_class"], "tall")
-        self.assertEqual(classify_sign_bounds((0, 0, 1.40, 1.0))["quadrat_class"], "square")
-        self.assertEqual(classify_sign_bounds((0, 0, 1.401, 1.0))["quadrat_class"], "wide")
-        for bounds in ((0, 0, .30, .60), (0, 0, .60, .30), (0, 0, .55, .55)):
-            with self.subTest(bounds=bounds):
-                self.assertEqual(classify_sign_bounds(bounds)["quadrat_class"], "small")
+        self.assertEqual(classify_sign_bounds((0, 0, 1.0, .70))["quadrat_class"], "square")
+        self.assertEqual(classify_sign_bounds((0, 0, 1.0, .699))["quadrat_class"], "wide")
+        self.assertEqual(classify_sign_bounds((0, 0, .699, .699))["quadrat_class"], "small")
+        # One small dimension does not make a tall/wide sign a small sign.
+        self.assertEqual(classify_sign_bounds((0, 0, .30, 1.0))["quadrat_class"], "tall")
+        self.assertEqual(classify_sign_bounds((0, 0, 1.0, .30))["quadrat_class"], "wide")
+        self.assertTrue(classify_sign_bounds((0, 0, .70, 1.0))["needs_review"])
 
     def test_catalogue_matches_measured_outlines(self):
         check = subprocess.run(
@@ -126,12 +131,15 @@ class SignShapeSizeProfiles(unittest.TestCase):
         self.assertNotIn("sign_profiles.json",worker)
         self.assertNotIn("sign_profiles.json",publication)
 
-    def test_size_is_longest_extent_not_bbox_area(self):
+    def test_shape_and_longest_extent_remain_secondary_diagnostics(self):
         profiles = self.data["profiles"]
-        # A very thin, wide glyph must not be called compact just because its
-        # bounding-box area is small. Compactness and aspect ratio are separate.
+        # N35 is wide and low, but its longest dimension is normal-sized.
+        # Q3 is small in both dimensions. The quadrat class uses width and
+        # height independently, not the secondary aspect/extent summaries.
         self.assertEqual(profiles["𓈖"]["size"], "normal")
+        self.assertEqual(profiles["𓈖"]["quadrat_class"], "wide")
         self.assertEqual(profiles["𓊪"]["size"], "compact")
+        self.assertEqual(profiles["𓊪"]["quadrat_class"], "small")
 
 
 if __name__ == "__main__":
