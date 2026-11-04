@@ -25,7 +25,7 @@ const caches={
   if(!entries.has(k))entries.set(k,new Map());
   const cache=entries.get(k);
   return {
-   async match(path){return cache.get(path)},
+   async match(path){const value=cache.get(path);return value instanceof Response?value.clone():value},
    async put(path,response){cache.set(path,response)}
   };
  }
