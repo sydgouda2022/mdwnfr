@@ -29,8 +29,8 @@ for(const [label,engine,width,height] of [
    }));
   });
   const count=async n=>{
-   await page.waitForFunction(n=>document.getElementById('wordcount')?.textContent===n+' words',
-    n,{timeout:90000});
+   await page.waitForFunction(n=>document.getElementById('wordcount')?.textContent===
+    n+' '+(n===1?'word':'words'),n,{timeout:90000});
    await page.waitForFunction(n=>document.querySelectorAll('.word').length===n,
     n,{timeout:90000});
   };
