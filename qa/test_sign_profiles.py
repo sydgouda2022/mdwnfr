@@ -28,8 +28,9 @@ class SignShapeSizeProfiles(unittest.TestCase):
         for profile in profiles.values():
             self.assertIn(profile["shape"], {"squareish", "tall", "wide"})
             self.assertIn(profile["size"], {"normal", "compact"})
+            self.assertIn(profile["quadrat_class"], {"square", "tall", "wide", "small"})
             self.assertIs(type(profile["needs_review"]), bool)
-            self.assertEqual(set(profile), {"shape", "size", "needs_review"})
+            self.assertEqual(set(profile), {"shape", "size", "quadrat_class", "needs_review"})
 
     def test_user_examples_have_expected_shape_and_size(self):
         profiles = self.data["profiles"]
@@ -43,6 +44,33 @@ class SignShapeSizeProfiles(unittest.TestCase):
             with self.subTest(sign=sign):
                 self.assertEqual((profiles[sign]["shape"], profiles[sign]["size"]),
                                  (shape, size))
+
+    def test_four_quadrat_classes_match_published_shape_examples(self):
+        # The four-way typology follows Polis (2018), pp. 294–295:
+        # tall/broad, tall/narrow, low/broad and low/narrow signs.
+        profiles = self.data["profiles"]
+        examples = [
+            ("𓅐", "square"),  # G14: tall and broad / full quadrat
+            ("𓏃", "square"),  # W17: tall and broad / full quadrat
+            ("𓊢", "tall"),    # P6: tall and narrow
+            ("𓊹", "tall"),    # R8: tall and narrow
+            ("𓋹", "tall"),    # S34: tall and narrow
+            ("𓂋", "wide"),    # D21: low and broad
+            ("𓌕", "wide"),    # T11: low and broad
+            ("𓎡", "wide"),    # V31: low and broad
+            ("𓊪", "small"),   # Q3: low and narrow
+            ("𓎼", "small"),   # W11: low and narrow
+        ]
+        for sign, expected in examples:
+            with self.subTest(sign=sign):
+                self.assertEqual(profiles[sign]["quadrat_class"], expected)
+        counts = {}
+        for profile in profiles.values():
+            key = profile["quadrat_class"]
+            counts[key] = counts.get(key, 0) + 1
+        self.assertEqual(counts, {
+            "square": 429, "tall": 284, "wide": 276, "small": 83
+        })
 
     def test_catalogue_matches_measured_outlines(self):
         check = subprocess.run(
