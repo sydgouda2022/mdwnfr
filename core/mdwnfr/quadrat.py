@@ -1,11 +1,10 @@
-"""Silhouette-first, deterministic hieroglyphic column composition.
+"""Silhouette-first, deterministic hieroglyphic quadrat composition.
 
-The document fixes ONE column width. Glyph proportions and bearings come from
-the actual outlines of the same verified font served to the browser. The
-horizontal gaps around ink silhouettes equal half their visible widths.
-Each row contributes exactly ONE following gap of half its tallest visible
-sign's height. No extra gap before the first row or at word boundaries.
-The full row's height is determined by its tallest sign. No distortion.
+Only three reading-order patterns are permitted: one sign, two signs beside
+one another, or one tall sign beside a stack of two smaller signs. Visible
+ink outlines determine clearance; glyphs keep their natural aspect ratios.
+Rows have a 20% visible-height trailing gap, also used across word boundaries.
+The column compositor may justify those gaps without changing glyph ink.
 """
 from __future__ import annotations
 from dataclasses import dataclass, asdict
@@ -17,6 +16,7 @@ import json, math
 DATA_PATH=Path(__file__).resolve().parent/'data'/'glyph_geometry.json'
 NARROW_RATIO=.65
 PAIR_HEIGHT_PARITY=.60
+VERTICAL_GAP_RATIO=.20
 
 
 @dataclass(frozen=True)
@@ -163,10 +163,55 @@ def compose(signs:list[str],column_width:float,
         return ratio*h,h
 
     @lru_cache(maxsize=None)
+    def stacked(index:int):
+        """Measure A beside b/c from actual ink scans, not character boxes.
+
+        A must be tall enough for the two smaller signs and their natural
+        20% gap. The shape-facing advance is sampled over all three ink
+        silhouettes at their actual vertical offsets.
+        """
+        if index+2>=len(signs) or ratios[index]>NARROW_RATIO:
+            return None
+        a=dimensions(ratios[index],width/2,boosts[index])
+        b=dimensions(ratios[index+1],2*width/7,boosts[index+1])
+        c=dimensions(ratios[index+2],2*width/7,boosts[index+2])
+        wa,ha=a;wb,hb=b;wc,hc=c
+        inner_gap=VERTICAL_GAP_RATIO*hb
+        stack_height=hb+inner_gap+hc
+        if stack_height>ha+1e-9:
+            return None
+        by=(ha-stack_height)/2
+        cy=by+hb+inner_gap
+        right_width=max(wb,wc)
+        max_facing=None
+        left_scans=ink_scans[signs[index]]
+        for right_index,(rw,rh),offset in ((index+1,b,by),(index+2,c,cy)):
+            right_scans=ink_scans[signs[right_index]]
+            for step in range(256):
+                sample=(step+.5)*ha/256
+                if not offset<=sample<offset+rh:
+                    continue
+                left=left_scans[min(63,int(sample/ha*64))]
+                right=right_scans[min(63,int((sample-offset)/rh*64))]
+                if left is None or right is None:
+                    continue
+                facing=left[1]*wa/64-right[0]*rw/64
+                max_facing=facing if max_facing is None else max(max_facing,facing)
+        clearance=(wa+right_width)/4
+        advance=(wa+clearance if max_facing is None else
+                 min(wa+clearance,
+                     max_facing+clearance+max(wa,right_width)/64))
+        if advance+right_width>width+1e-9:
+            return None
+        return (ha,advance,right_width,by,cy,(a,b,c))
+
+    @lru_cache(maxsize=None)
     def choose(index:int)->tuple[float,tuple[tuple[int,...],...]]:
         if index==len(signs):return 0.0,()
         _,single_h=dimensions(ratios[index],width/2,boosts[index])
         rest,candidate=choose(index+1)
+        # Single-sign lines are the default. Use an alternative only when
+        # it fits at natural proportions and genuinely improves height.
         choices=[(single_h+rest,((index,),)+candidate)]
         if (index+1<len(signs) and ratios[index]<=NARROW_RATIO and
             ratios[index+1]<=NARROW_RATIO):
@@ -175,41 +220,52 @@ def compose(signs:list[str],column_width:float,
             if min(h1,h2)/max(h1,h2)>=PAIR_HEIGHT_PARITY:
                 rest,candidate=choose(index+2)
                 choices.append((max(h1,h2)+rest,((index,index+1),)+candidate))
+        triple=stacked(index)
+        if triple is not None:
+            rest,candidate=choose(index+3)
+            choices.append((triple[0]+rest,((index,index+1,index+2),)+candidate))
         return min(choices,key=lambda choice:choice[0])
 
     rows=choose(0)[1]
-    heights=[max(dimensions(ratios[i],width/2 if len(row)==1 else
-                            2*width/7,boosts[i])[1] for i in row) for row in rows]
-    # One half-height space AFTER each row; never double-count it.
-    gaps=[height/2 for height in heights]
+    heights=[stacked(row[0])[0] if len(row)==3 else
+             max(dimensions(ratios[i],width/2 if len(row)==1 else
+                            2*width/7,boosts[i])[1] for i in row)
+             for row in rows]
+    # One gap after each composed row; no double counting at word boundaries.
+    gaps=[height*VERTICAL_GAP_RATIO for height in heights]
     placed=[None]*len(signs)
     y=0.0
     for row_number,row in enumerate(rows):
         row_height=heights[row_number]
-        limit=width/2 if len(row)==1 else 2*width/7
-        dims=[dimensions(ratios[i],limit,boosts[i]) for i in row]
-        if len(row)==1:
-            w=dims[0][0]
-            # Local left/right clearance is w/2. Distribute additional slack.
-            xs=[(width-2*w)/2+w/2]
+        if len(row)==3:
+            _,advance,right_width,by,cy,dims=stacked(row[0])
+            a,b,c=dims
+            slack=max(0.0,(width-advance-right_width)/2)
+            xs=(slack,
+                slack+advance+(right_width-b[0])/2,
+                slack+advance+(right_width-c[0])/2)
+            offsets=(0.0,by,cy)
         else:
-            w1,w2=dims[0][0],dims[1][0]
-            advance=_silhouette_advance(ink_scans[signs[row[0]]],
-                                        ink_scans[signs[row[1]]],
-                                        w1,dims[0][1],w2,dims[1][1])
-            # Left and right external clearances are half their respective
-            # ink widths; unused column slack is distributed symmetrically.
-            occupied=w1/2+advance+w2+w2/2
-            slack=max(0.0,width-occupied)/2
-            xs=[slack+w1/2,slack+w1/2+advance]
-        for (w,h),x,index in zip(dims,xs,row):
-            ink_y=y+(row_height-h)/2
+            limit=width/2 if len(row)==1 else 2*width/7
+            dims=[dimensions(ratios[i],limit,boosts[i]) for i in row]
+            if len(row)==1:
+                w=dims[0][0]
+                xs=[(width-w)/2]
+            else:
+                w1,w2=dims[0][0],dims[1][0]
+                advance=_silhouette_advance(ink_scans[signs[row[0]]],
+                                            ink_scans[signs[row[1]]],
+                                            w1,dims[0][1],w2,dims[1][1])
+                occupied=w1/2+advance+w2+w2/2
+                slack=max(0.0,width-occupied)/2
+                xs=[slack+w1/2,slack+w1/2+advance]
+            offsets=[(row_height-h)/2 for w,h in dims]
+        for (w,h),x,offset,index in zip(dims,xs,offsets,row):
+            ink_y=y+offset
             left,bottom,right,top=bounds[signs[index]]
             em=h/(top-bottom)
             placed[index]=SignBox(signs[index],x,ink_y,w,h,em,
                                   x-left*em,ink_y+top*em)
-        # Include the final row's trailing space so the same gap applies
-        # across word boundaries without an additional layout margin.
         y+=row_height+gaps[row_number]
 
     return Quadrat(width,y,tuple(placed),tuple(rows),tuple(gaps))
