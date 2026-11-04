@@ -8,7 +8,7 @@ import hashlib
 import json
 from pathlib import Path
 
-# Always-cached shell includes every Python module imported by the browser RPC core.
+# Always-cached shell includes every statically imported browser module plus every Python module used by the RPC core.
 SHELL = (
     'index.html', 'style.css', 'boot.mjs', 'app.js', 'keyboard_extra.mjs', 'editor_controls.mjs', 'hieroglyph_facing.mjs', 'worker.js', 'storage.js',
     'manifest.webmanifest', 'runtime-status.json','keyboard-prediction-worker.mjs','keyboard-release-pin.json',
