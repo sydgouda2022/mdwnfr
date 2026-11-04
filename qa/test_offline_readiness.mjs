@@ -52,6 +52,6 @@ assert.match(uncontrolled.textContent,/not controlling this tab/);
 assert.equal((await inspect({complete:false})).hidden,false);
 assert.equal((await inspect({format:'wrong-format'})).hidden,false);
 assert.equal((await inspect({offlineReady:false})).hidden,false);
-assert.match((await inspect({cached:[],entries:full})).textContent,/not installed|incomplete/);
+assert.match((await inspect({cached:[],entries:full})).textContent,/not installed|incomplete|No complete offline file inventory/);
 assert.match((await inspect({offlineReady:false})).textContent,/missing its local Python runtime/);
 console.log('PASS: offline readiness distinguishes complete, incomplete and inactive device installs');
