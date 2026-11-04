@@ -142,7 +142,7 @@ try{
   const more=page.locator('#doc-list .document-more').first();
    assert.equal(await more.getAttribute('aria-expanded'),'false');
    await more.click();
-   assert.deepEqual(await page.locator('#doc-list .document-menu:not([hidden]) button').allTextContents(),['Rename','Delete']);
+   assert.deepEqual(await page.locator('#doc-list .document-menu:not([hidden]) button').allTextContents(),['Rename','Export file','Move to Trash']);
    await page.locator('.library-toolbar h2').click();
    assert.equal(await page.locator('#doc-list .document-menu:not([hidden])').count(),0);
    assert.equal(await page.locator('#doc-list .document-preview').count(),1);
