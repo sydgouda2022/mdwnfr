@@ -140,7 +140,12 @@ class FinalBirdInkClearance(unittest.TestCase):
                     shared=[(x,y,w,h) for x,y,w,h in ink
                             if x<art['x']+art['width_mm'] and x+w>art['x']]
                     self.assertTrue(shared,
-                        f"{direction}: {art['artwork_id']} isolated at page {page['index']}")
+                        f"{direction}: {art['artwork_id']} isolated at page {page['index']}; "
+                        f"art x={art['x']:.2f}..{art['x']+art['width_mm']:.2f}, "
+                        f"word glyph x-range={min((x for x,_,_,_ in ink),default=-1):.2f}"
+                        f"..{max((x+w for x,_,w,_ in ink),default=-1):.2f}; "
+                        f"columns={len(page['columns'])}, words={len(ink)}, "
+                        f"intersect={len(shared)}")
 
     def test_resizing_both_birds_keeps_collision_and_compact_parity(self):
         for bird in BIRDS:
