@@ -1,4 +1,4 @@
-"""Classify each shipped hieroglyph by independently measured shape and size.
+"""Export measured width/height and four-way quadrat classes for all shipped signs.
 
 This is a preliminary mechanical inventory, not a historical placement rule.
 The composition engine must not infer mandatory pairings from these labels.
@@ -60,11 +60,11 @@ def main() -> None:
         actual = json.loads(TARGET.read_text(encoding="utf-8"))
         if actual != expected:
             raise SystemExit("Sign profiles are missing, stale, or inconsistent with the shipped glyph geometry")
-        print("Verified", len(actual["profiles"]), "shape/size profiles")
+        print("Verified", len(actual["profiles"]), "quadrat profiles")
     else:
         TARGET.write_text(json.dumps(expected, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
                           encoding="utf-8")
-        print("Wrote", len(expected["profiles"]), "shape/size profiles:", TARGET)
+        print("Wrote", len(expected["profiles"]), "quadrat profiles:", TARGET)
 
 
 if __name__ == "__main__":
