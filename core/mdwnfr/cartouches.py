@@ -111,50 +111,57 @@ def typeset_cartouche(obj: dict, sign_width: float, available_width: float,
                'y':round(cursor,5),'height':round(q.height,5),'quadrat':_tag_quadrat(q,item)})
             cursor+=q.height+gap
     cw=round(cw,5);ch=round(ch,5)
-    # An Egyptian royal name-ring: a continuous rope loop with an ATTACHED
-    # terminal tie. The loop has semicircular ends, not quarter-circle UI
-    # corners. A vertical cartouche starts at its curved TOP and ends at its
-    # bottom terminal. Horizontal text starts at the curved leading end,
-    # with the tie on the trailing end (right for LTR, left for RTL).
+    # Preserve the established object bounds and word positions. The terminal
+    # is part of the same continuous stroke, but its reserved space remains
+    # outside the loop so following page content does not reflow unexpectedly.
     stroke=round(max(.26,.045*sign_width*scale),5)
     terminal_gap=max(.14*sign_width*scale,stroke*.8)
     terminal_space=terminal_gap+stroke*1.8
     if horizontal:
-        loop_w=cw;loop_h=ch; r=loop_h/2
-        # Reserve outer width for the raised rope/tie; content positions shift
-        # only when the RTL terminal is at the left.
-        tie_left=direction=='rtl'
+        loop_w=cw;loop_h=ch;r=loop_h/2
         w=loop_w+terminal_space;h=loop_h
+        tie_left=direction=='rtl'
         x0=terminal_space if tie_left else 0.0
         x1=x0+loop_w
-        path=(f'M {x0+r:.5f} 0 L {x1-r:.5f} 0 '
-              f'C {x1-r*.42:.5f} 0 {x1:.5f} {r*.42:.5f} {x1:.5f} {r:.5f} '
-              f'C {x1:.5f} {h-r*.42:.5f} {x1-r*.42:.5f} {h:.5f} {x1-r:.5f} {h:.5f} '
-              f'L {x0+r:.5f} {h:.5f} '
-              f'C {x0+r*.42:.5f} {h:.5f} {x0:.5f} {h-r*.42:.5f} {x0:.5f} {r:.5f} '
-              f'C {x0:.5f} {r*.42:.5f} {x0+r*.42:.5f} 0 {x0+r:.5f} 0 Z')
-        terminal_x=x0-terminal_gap if tie_left else x1+terminal_gap
-        # The tie crosses the rope's endpoint and is JOINED to the loop,
-        # rather than hovering as a disconnected line beside an oval.
-        anchor=x0 if tie_left else x1
-        path+=(f' M {anchor:.5f} {r:.5f} H {terminal_x:.5f} '
-               f'V {h*.06:.5f} V {h*.94:.5f}')
+        # Begin at the tie junction, trace the entire loop, return to that
+        # same point, then continue outward into the terminal tie.
         if tie_left:
-            for placement in placements: placement['x']=round(placement['x']+x0,5)
+            terminal_x=x0-terminal_gap
+            path=(f'M {x0:.5f} {r:.5f} '
+                  f'C {x0:.5f} {r*.42:.5f} {x0+r*.42:.5f} 0 {x0+r:.5f} 0 '
+                  f'L {x1-r:.5f} 0 '
+                  f'C {x1-r*.42:.5f} 0 {x1:.5f} {r*.42:.5f} {x1:.5f} {r:.5f} '
+                  f'C {x1:.5f} {h-r*.42:.5f} {x1-r*.42:.5f} {h:.5f} {x1-r:.5f} {h:.5f} '
+                  f'L {x0+r:.5f} {h:.5f} '
+                  f'C {x0+r*.42:.5f} {h:.5f} {x0:.5f} {h-r*.42:.5f} {x0:.5f} {r:.5f} '
+                  f'H {terminal_x:.5f} V {h*.06:.5f} V {h*.94:.5f}')
+            for placement in placements:
+                placement['x']=round(placement['x']+x0,5)
+        else:
+            terminal_x=x1+terminal_gap
+            path=(f'M {x1:.5f} {r:.5f} '
+                  f'C {x1:.5f} {r*.42:.5f} {x1-r*.42:.5f} 0 {x1-r:.5f} 0 '
+                  f'L {x0+r:.5f} 0 '
+                  f'C {x0+r*.42:.5f} 0 {x0:.5f} {r*.42:.5f} {x0:.5f} {r:.5f} '
+                  f'C {x0:.5f} {h-r*.42:.5f} {x0+r*.42:.5f} {h:.5f} {x0+r:.5f} {h:.5f} '
+                  f'L {x1-r:.5f} {h:.5f} '
+                  f'C {x1-r*.42:.5f} {h:.5f} {x1:.5f} {h-r*.42:.5f} {x1:.5f} {r:.5f} '
+                  f'H {terminal_x:.5f} V {h*.06:.5f} V {h*.94:.5f}')
         ending='left' if tie_left else 'right'
     else:
         loop_w=cw;loop_h=ch;r=loop_w/2
         w=loop_w;h=loop_h+terminal_space
-        path=(f'M {r:.5f} 0 '
+        tie_y=loop_h+terminal_gap
+        # The path starts at the bottom loop/tie junction, traverses the full
+        # capsule, returns to the junction, and continues into the end bar.
+        path=(f'M {r:.5f} {loop_h:.5f} '
+              f'C {r*.42:.5f} {loop_h:.5f} 0 {loop_h-r*.42:.5f} 0 {loop_h-r:.5f} '
+              f'V {r:.5f} C 0 {r*.42:.5f} {r*.42:.5f} 0 {r:.5f} 0 '
+              f'L {w-r:.5f} 0 '
               f'C {w-r*.42:.5f} 0 {w:.5f} {r*.42:.5f} {w:.5f} {r:.5f} '
               f'V {loop_h-r:.5f} '
               f'C {w:.5f} {loop_h-r*.42:.5f} {w-r*.42:.5f} {loop_h:.5f} {r:.5f} {loop_h:.5f} '
-              f'C {r*.42:.5f} {loop_h:.5f} 0 {loop_h-r*.42:.5f} 0 {loop_h-r:.5f} '
-              f'V {r:.5f} C 0 {r*.42:.5f} {r*.42:.5f} 0 {r:.5f} 0 Z')
-        tie_y=loop_h+terminal_gap
-        # A short continuous rope neck joins the bottom loop to its tie.
-        path+=(f' M {r:.5f} {loop_h:.5f} V {tie_y:.5f} '
-               f'H {w*.94:.5f} H {w*.06:.5f}')
+              f'V {tie_y:.5f} H {w*.94:.5f} H {w*.06:.5f}')
         ending='bottom'
     cw=round(w,5);ch=round(h,5)
     d=path

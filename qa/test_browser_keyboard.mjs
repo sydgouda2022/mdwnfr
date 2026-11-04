@@ -190,21 +190,21 @@ try{
   await table.locator('.table-cell-view').first().click();
   assert.equal(await page.locator('#format-panel').isVisible(),false,
     'Cell selection must not pop an inspector over the next touch');
+  await page.locator('#keyboard-panel').waitFor({state:'visible'});
+  await page.locator('#keyboard-close').click();
+  await page.locator('#keyboard-panel').waitFor({state:'hidden'});
   await page.locator('#format-toggle').click();
-   assert.equal(await page.locator('#table-controls').count(),0,'No second table editor');
-   assert.equal(await table.locator('.table-cell-view').count(),4);
-   const actualWidth=await table.evaluate(el=>el.getBoundingClientRect().width);
-   const inkColumnWidth=await page.locator('.word').first().evaluate(el=>el.getBoundingClientRect().width);
-   assert.ok(actualWidth>=inkColumnWidth*9,'Table remains readable');
-   await page.locator('#format-toggle').click();
-   await table.locator('.table-cell-view').first().click();
-   await page.locator('#object-action-edit').click();
-   await page.locator('#insert-dialog-backdrop').waitFor({state:'visible'});
-   await page.locator('#insert-table-cell-input').fill('𓅓𓏏');
-   await page.waitForFunction(()=>!document.getElementById('insert-sheet-confirm').disabled,null,{timeout:90000});
-   await page.locator('#insert-sheet-confirm').click();
-   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
-   await page.waitForFunction(()=>document.querySelectorAll('.table-object .table-cell-word .glyph-ink-svg text').length>=2,null,{timeout:90000});
+  assert.equal(await page.locator('#table-controls').count(),0,'No second table editor');
+  assert.equal(await table.locator('.table-cell-view').count(),4);
+  const actualWidth=await table.evaluate(el=>el.getBoundingClientRect().width);
+  const inkColumnWidth=await page.locator('.word').first().evaluate(el=>el.getBoundingClientRect().width);
+  assert.ok(actualWidth>=inkColumnWidth*9,'Table remains readable');
+  await page.locator('#format-toggle').click();
+  await table.locator('.table-cell-view').first().click();
+  await page.locator('#keyboard-panel').waitFor({state:'visible'});
+  await page.locator('#keys .key').first().click();
+  await page.locator('#suggestions .user-choice').first().click();
+  await page.waitForFunction(()=>document.querySelectorAll('.table-object .table-cell-word .glyph-ink-svg text').length>=1,null,{timeout:90000});
    // The four Insert screens are drafts. Cancel must never change the
   // document, even after a valid Python layout preview is rendered.
   if(!await page.locator('#format-panel').isVisible())await page.locator('#format-toggle').click();
@@ -237,10 +237,15 @@ try{
   await page.locator('#insert-sheet-confirm').click();
   await page.locator('#insert-dialog-backdrop').waitFor({state:'hidden'});
   await page.locator('.cartouche-object').first().waitFor({state:'visible',timeout:90000});
-  await page.locator('.cartouche-object').first().dblclick();
+  await page.locator('.cartouche-object').first().click();
+  await page.locator('#keyboard-panel').waitFor({state:'visible'});
+  await page.locator('#keyboard-close').click();
+  await page.locator('#keyboard-panel').waitFor({state:'hidden'});
+  await page.locator('#object-quick-actions').waitFor({state:'visible'});
+  await page.locator('#object-action-edit').click();
   await page.locator('#insert-screen-cartouche').waitFor({state:'visible'});
   assert.equal(await page.locator('input[name="insert-cartouche-direction"]:checked').inputValue(),
-    'horizontal','Existing cartouche reopens its same orientation editor');
+    'horizontal','The contextual Edit action preserves cartouche orientation');
   await page.locator('#insert-sheet-cancel').click();
 
   await page.locator('#format-toggle').click();
