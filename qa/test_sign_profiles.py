@@ -28,6 +28,8 @@ class SignShapeSizeProfiles(unittest.TestCase):
         for profile in profiles.values():
             self.assertGreater(profile["width_em"], 0)
             self.assertGreater(profile["height_em"], 0)
+            self.assertEqual(profile["width_em"], round(profile["width_em"], 6))
+            self.assertEqual(profile["height_em"], round(profile["height_em"], 6))
             self.assertIn(profile["shape"], {"squareish", "tall", "wide"})
             self.assertIn(profile["size"], {"normal", "compact"})
             self.assertIn(profile["quadrat_class"], {"square", "tall", "wide", "small"})
