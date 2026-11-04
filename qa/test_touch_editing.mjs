@@ -19,7 +19,7 @@ for(const engineName of engines){
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    page.setDefaultTimeout(45000);
    const count=async n=>{
-    await page.waitForFunction(n=>document.getElementById('wordcount')?.textContent===n+' words',n,{timeout:90000});
+    await page.waitForFunction(n=>document.getElementById('wordcount')?.textContent===n+' '+(n===1?'word':'words'),n,{timeout:90000});
     // The Python layout worker publishes asynchronously after the transaction.
     await page.waitForFunction(n=>document.querySelectorAll('.word').length===n,n,{timeout:90000});
    };
