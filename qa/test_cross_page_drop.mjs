@@ -49,7 +49,7 @@ for(const [name,engine,width,height] of [
   await page.locator('#library').click();
   await page.locator('#library-screen').waitFor({state:'visible'});
 
-  // Seed the canonical persistent record and library index in one IDB
+  // Seed enough text for multiple pages even with denser quadrat grouping.\n  // Seed the canonical persistent record and library index in one IDB
   // transaction while the editor is CLOSED. Every word and sign has a
   // stable ID; the Python engine still validates and composes the result.
   await page.evaluate(async()=>{
@@ -65,7 +65,7 @@ for(const [name,engine,width,height] of [
      req.onsuccess=()=>{
       const document=req.result[0];
       document.font_size_pt=26;
-      for(let i=0;i<860;i++){
+      for(let i=0;i<1800;i++){
        document.items.push({
         id:'qa-word-'+i,type:'word',
         signs:i%2?['𓅓','𓏏']:['𓈖'],
@@ -77,7 +77,7 @@ for(const [name,engine,width,height] of [
       docs.put(document);
       index.put({id:document.id,name:document.name,revision:document.revision,
        surface:document.surface,direction:document.direction,
-       item_count:document.items.length,word_count:860,
+       item_count:document.items.length,word_count:1800,
        created_at:new Date().toISOString(),updated_at:new Date().toISOString()});
      };
      tx.oncomplete=ok;tx.onerror=()=>bad(tx.error);
