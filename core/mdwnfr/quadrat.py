@@ -13,6 +13,7 @@ from typing import Mapping
 import json, math
 
 DATA_PATH=Path(__file__).resolve().parent/'data'/'glyph_geometry.json'
+CATEGORIES_PATH=Path(__file__).resolve().parent/'data'/'glyph_categories_unicode18.json'
 TALL_BELOW_ASPECT=.70
 WIDE_ABOVE_ASPECT=1.40
 COMPACT_BELOW_EXTENT_EM=.70
@@ -33,6 +34,7 @@ class SignBox:
     font_size:float
     text_x:float
     text_y:float
+    paint_order:int=0
 
 
 @dataclass(frozen=True)
@@ -95,6 +97,20 @@ def glyph_scanlines()->dict:
 
 def glyph_optical_factors()->dict:
     return _catalogue()[2]
+
+
+@lru_cache(maxsize=1)
+def glyph_categories()->dict:
+    \"\"\"Pinned Unicode 18 kEH_Cat ordering for the installed 1,072 glyphs.\"\"\"
+    source=json.loads(CATEGORIES_PATH.read_text(encoding='utf-8'))
+    categories=source.get('categories',{})
+    if (source.get('format')!='mdwnfr-unicode-hieroglyph-categories-v1' or
+        source.get('unicode_version')!='18.0.0' or
+        source.get('property')!='kEH_Cat' or
+        len(categories)!=1072 or set(categories)!=set(glyph_geometry()) or
+        any(not isinstance(value,str) or not value for value in categories.values())):
+        raise ValueError('Pinned Unicode 18 hieroglyph category metadata is incomplete')
+    return categories
 
 
 def classify_sign_bounds(bounds:tuple[float,...]|list[float])->dict:
@@ -296,6 +312,42 @@ def compose(signs:list[str],column_width:float,
         return result
 
     @lru_cache(maxsize=None)
+    def overlay_pair(i:int):
+        \"\"\"Centered z-axis overlay of one tall and one low-broad sign.
+
+        Unicode U+13436 aligns component midpoints and uses the maximum
+        component width/height as the composite bounds. This is intentional
+        superimposition, not a collision-free planar tabulation.
+        \"\"\"
+        if i+1>=len(signs):
+            return None
+        indices=(i,i+1)
+        if {profiles[signs[j]]['quadrat_class'] for j in indices}!={'tall','wide'}:
+            return None
+        categories=glyph_categories()
+        if any(signs[j] not in categories for j in indices):
+            return None
+        natural_widths=tuple(ratios[j]*natural_heights[j] for j in indices)
+        composite_width=max(natural_widths)
+        composite_height=max(natural_heights[j] for j in indices)
+        if composite_width<=0 or composite_height<=0:
+            return None
+        scale=min(width/composite_width,
+                  width*GROUP_HEIGHT_RATIO/composite_height)
+        if not math.isfinite(scale) or scale<=0:
+            return None
+        row_width=composite_width*scale
+        row_height=composite_height*scale
+        left=(width-row_width)/2
+        boxes=[]
+        for j,natural_w,natural_h in zip(indices,natural_widths,
+                                          (natural_heights[x] for x in indices)):
+            w,h=natural_w*scale,natural_h*scale
+            boxes.append((j,left+(row_width-w)/2,
+                          (row_height-h)/2,w,h))
+        return row_height,tuple(boxes)
+
+    @lru_cache(maxsize=None)
     def small_grid(i:int,count:int):
         """Place three or four compact signs in deterministic 2x2 tabulation."""
         if count not in (3,4) or i+count>len(signs):
@@ -432,6 +484,7 @@ def compose(signs:list[str],column_width:float,
                   *single_dimensions(index)),))),
             (2,horizontal(index)),
             (2,vertical_pair(index)),
+            (2,overlay_pair(index)),
             (3,small_grid(index,3)),
             (4,small_grid(index,4)),
             (3,tall_stack(index))):
