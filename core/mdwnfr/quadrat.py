@@ -13,6 +13,7 @@ from typing import Mapping
 import json, math
 
 DATA_PATH=Path(__file__).resolve().parent/'data'/'glyph_geometry.json'
+CATEGORIES_PATH=Path(__file__).resolve().parent/'data'/'glyph_categories_unicode18.json'
 TALL_BELOW_ASPECT=.70
 WIDE_ABOVE_ASPECT=1.40
 COMPACT_BELOW_EXTENT_EM=.70
@@ -33,6 +34,7 @@ class SignBox:
     font_size:float
     text_x:float
     text_y:float
+    paint_order:int=0
 
 
 @dataclass(frozen=True)
@@ -95,6 +97,20 @@ def glyph_scanlines()->dict:
 
 def glyph_optical_factors()->dict:
     return _catalogue()[2]
+
+
+@lru_cache(maxsize=1)
+def glyph_categories()->dict:
+    """Pinned Unicode 18 kEH_Cat metadata for the installed glyph set."""
+    source=json.loads(CATEGORIES_PATH.read_text(encoding='utf-8'))
+    categories=source.get('categories',{})
+    if (source.get('format')!='mdwnfr-unicode-hieroglyph-categories-v1' or
+        source.get('unicode_version')!='18.0.0' or
+        source.get('property')!='kEH_Cat' or
+        len(categories)!=1072 or set(categories)!=set(glyph_geometry()) or
+        any(not isinstance(value,str) or not value for value in categories.values())):
+        raise ValueError('Pinned Unicode 18 hieroglyph category metadata is incomplete')
+    return categories
 
 
 def classify_sign_bounds(bounds:tuple[float,...]|list[float])->dict:
@@ -180,7 +196,8 @@ def _shape_ratio(sign:str,glyph_metrics:Mapping[str,object]|None=None)->float:
 
 
 def compose(signs:list[str],column_width:float,
-            glyph_metrics:Mapping[str,object]|None=None)->Quadrat:
+            glyph_metrics:Mapping[str,object]|None=None,
+            overlay_pairs:tuple[tuple[int,int,int],...]=())->Quadrat:
     if (not signs or not isinstance(column_width,(int,float)) or
         not math.isfinite(column_width) or column_width<=0):
         raise ValueError('Nonempty signs and positive finite column width required')
@@ -195,6 +212,14 @@ def compose(signs:list[str],column_width:float,
                          bounds[s][3]-bounds[s][1]) for s in signs]
     boosts=[optics[s] for s in signs]
     gap=width*INNER_CLEARANCE_RATIO
+    overlay_map={}
+    for first,second,front in overlay_pairs:
+        if (type(first) is not int or type(second) is not int or
+            type(front) is not int or second!=first+1 or
+            first<0 or second>=len(signs) or front not in (-1,first,second) or
+            first in overlay_map or second in overlay_map):
+            raise ValueError('Invalid explicit overlay group')
+        overlay_map[first]=(second,front)
 
     # Keep the existing optically corrected standalone presentation.
     # Small signs are permitted to stand alone and grow proportionally.
@@ -294,6 +319,33 @@ def compose(signs:list[str],column_width:float,
                 return None
             result=fit(target)
         return result
+
+    @lru_cache(maxsize=None)
+    def overlay_pair(i:int):
+        """Centered U+13436 overlay requested explicitly by the document."""
+        if i not in overlay_map:
+            return None
+        second,_front=overlay_map[i]
+        indices=(i,second)
+        if {profiles[signs[j]]['quadrat_class'] for j in indices}!={'tall','wide'}:
+            return None
+        natural_widths=tuple(ratios[j]*natural_heights[j] for j in indices)
+        composite_width=max(natural_widths)
+        composite_height=max(natural_heights[j] for j in indices)
+        if composite_width<=0 or composite_height<=0:
+            return None
+        scale=min(width/composite_width,width*GROUP_HEIGHT_RATIO/composite_height)
+        if not math.isfinite(scale) or scale<=0:
+            return None
+        row_width=composite_width*scale
+        row_height=composite_height*scale
+        left=(width-row_width)/2
+        boxes=[]
+        for j,natural_w,natural_h in zip(indices,natural_widths,
+                                          (natural_heights[x] for x in indices)):
+            w,h=natural_w*scale,natural_h*scale
+            boxes.append((j,left+(row_width-w)/2,(row_height-h)/2,w,h))
+        return row_height,tuple(boxes)
 
     @lru_cache(maxsize=None)
     def small_grid(i:int,count:int):
@@ -432,6 +484,7 @@ def compose(signs:list[str],column_width:float,
                   *single_dimensions(index)),))),
             (2,horizontal(index)),
             (2,vertical_pair(index)),
+            (2,overlay_pair(index)),
             (3,small_grid(index,3)),
             (4,small_grid(index,4)),
             (3,tall_stack(index))):
@@ -456,14 +509,24 @@ def compose(signs:list[str],column_width:float,
     heights=[h for h,_ in layouts]
     gaps=[h*VERTICAL_GAP_RATIO for h in heights]
     placed=[None]*len(signs)
+    categories=None
     y=0.0
-    for (row_height,positions),row_gap in zip(layouts,gaps):
+    for row_indices,(row_height,positions),row_gap in zip(rows,layouts,gaps):
+        paint_rank={index:0 for index in row_indices}
+        if len(row_indices)==2 and row_indices[0] in overlay_map:
+            second,front=overlay_map[row_indices[0]]
+            if front==-1:
+                if categories is None:categories=glyph_categories()
+                front=max(row_indices,key=lambda j:(categories[signs[j]],ord(signs[j])))
+            back=second if front==row_indices[0] else row_indices[0]
+            paint_rank[back]=0
+            paint_rank[front]=1
         for index,x,dy,w,h in positions:
             ink_y=y+dy
             left,bottom,right,top=bounds[signs[index]]
             em=h/(top-bottom)
             placed[index]=SignBox(signs[index],x,ink_y,w,h,em,
-                                   x-left*em,ink_y+top*em)
+                                   x-left*em,ink_y+top*em,paint_rank[index])
         y+=row_height+row_gap
     return Quadrat(width,y,tuple(placed),tuple(rows),tuple(gaps))
 
