@@ -328,6 +328,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
    duplicating formatting or editing state. */
  .word-quick-actions{
  width:max-content;max-width:calc(100vw - 8px);gap:0;padding:4px;
+ flex-wrap:wrap;justify-content:center;
  bottom:calc(78px + env(safe-area-inset-bottom,0px))
 }
 .word-quick-actions button{min-width:44px;min-height:44px;padding:8px 6px;font-size:12px}
@@ -347,6 +348,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 @media(max-width:390px){
  .word-quick-actions{
   left:50%;right:auto;transform:translateX(-50%);gap:0;
+  flex-wrap:wrap;justify-content:center;
   bottom:calc(82px + env(safe-area-inset-bottom,0px))
  }
  .word-quick-actions button{min-width:44px;padding:7px 4px}
