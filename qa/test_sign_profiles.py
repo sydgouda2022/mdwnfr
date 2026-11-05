@@ -130,7 +130,9 @@ class SignShapeSizeProfiles(unittest.TestCase):
         worker=(ROOT/"web/worker.js").read_text(encoding="utf-8")
         publication=(ROOT/"tools/offline_publication.py").read_text(encoding="utf-8")
         self.assertIn("/home/pyodide/mdwnfr/data/glyph_geometry.json",worker)
+        self.assertIn("/home/pyodide/mdwnfr/data/glyph_categories_unicode18.json",worker)
         self.assertIn("core/mdwnfr/data/glyph_geometry.json",publication)
+        self.assertIn("core/mdwnfr/data/glyph_categories_unicode18.json",publication)
         self.assertNotIn("sign_profiles.json",worker)
         self.assertNotIn("sign_profiles.json",publication)
 
