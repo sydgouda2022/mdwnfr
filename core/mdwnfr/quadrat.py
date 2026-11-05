@@ -509,14 +509,20 @@ def compose(signs:list[str],column_width:float,
     heights=[h for h,_ in layouts]
     gaps=[h*VERTICAL_GAP_RATIO for h in heights]
     placed=[None]*len(signs)
+    categories=glyph_categories()
     y=0.0
-    for (row_height,positions),row_gap in zip(layouts,gaps):
+    for row_indices,(row_height,positions),row_gap in zip(rows,layouts,gaps):
+        is_overlay=(len(row_indices)==2 and
+                    {profiles[signs[j]]['quadrat_class'] for j in row_indices}=={'tall','wide'})
+        paint_indices=(sorted(row_indices,key=lambda j:(categories[signs[j]],ord(signs[j])))
+                       if is_overlay else list(row_indices))
+        paint_rank={index:rank for rank,index in enumerate(paint_indices)}
         for index,x,dy,w,h in positions:
             ink_y=y+dy
             left,bottom,right,top=bounds[signs[index]]
             em=h/(top-bottom)
             placed[index]=SignBox(signs[index],x,ink_y,w,h,em,
-                                   x-left*em,ink_y+top*em)
+                                  x-left*em,ink_y+top*em,paint_rank[index])
         y+=row_height+row_gap
     return Quadrat(width,y,tuple(placed),tuple(rows),tuple(gaps))
 
@@ -537,7 +543,7 @@ def _adjust_row_gaps(quadrat:Quadrat,changes:list[float])->Quadrat:
             sign=quadrat.signs[index]
             revised[index]=SignBox(sign.sign,sign.x,sign.y+shift,
                                    sign.width,sign.height,sign.font_size,
-                                   sign.text_x,sign.text_y+shift)
+                                   sign.text_x,sign.text_y+shift,sign.paint_order)
         shift+=corrected[row_number]-gaps[row_number]
     return Quadrat(quadrat.width,
                    quadrat.height+sum(corrected)-sum(gaps),
