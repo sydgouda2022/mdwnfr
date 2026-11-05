@@ -2718,6 +2718,8 @@ function updateObjectQuickActions(){
   const overlay=stackable?(words[0].overlays||[])[0]:null;
   $('word-action-stack').hidden=!stackable;
   $('word-action-stack').textContent=overlay?'Unstack':'Stack';
+  $('word-action-stack').setAttribute('aria-label',
+   overlay?'Remove overlay from selected signs':'Stack selected adjacent signs');
   $('word-action-reverse').hidden=!overlay;
   $('word-action-bold').setAttribute('aria-pressed',
    String(words.every(word=>word.bold)));
