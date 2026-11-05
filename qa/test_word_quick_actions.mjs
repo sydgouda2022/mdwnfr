@@ -23,7 +23,7 @@ for(const [label,engine,width,height] of [
   await page.locator('#create-document').click();
   await page.locator('#editor-screen').waitFor({state:'visible'});
   await page.evaluate(()=>{
-   const dt=new DataTransfer();dt.setData('text/plain','𓅓𓏏 𓈖 𓂋');
+   const dt=new DataTransfer();dt.setData('text/plain','𓂝𓎛 𓈖 𓂋');
    document.dispatchEvent(new ClipboardEvent('paste',{
     clipboardData:dt,bubbles:true,cancelable:true
    }));
@@ -44,6 +44,24 @@ for(const [label,engine,width,height] of [
    'No object-toolbar duplication for words');
   assert.equal(await page.locator('#format-panel').isVisible(),false,
    'Selecting a quadrat must not open desktop-like Format');
+
+  // Overlay is explicit: only this measured tall+wide pair exposes Stack.
+  const stack=page.locator('#word-action-stack');
+  const reverse=page.locator('#word-action-reverse');
+  assert.equal(await stack.isVisible(),true);
+  assert.equal(await reverse.isVisible(),false);
+  const drawnOrder=()=>page.locator('.word[data-index="0"] .glyph-ink-svg text')
+   .evaluateAll(nodes=>nodes.map(node=>node.textContent));
+  await stack.click();
+  await page.waitForFunction(()=>document.getElementById('word-action-stack')?.textContent==='Unstack');
+  assert.deepEqual(await drawnOrder(),['𓂝','𓎛']);
+  assert.equal(await reverse.isVisible(),true);
+  await reverse.click();
+  await page.waitForFunction(()=>document.querySelectorAll('.word[data-index="0"] .glyph-ink-svg text')[0]?.textContent==='𓎛');
+  assert.deepEqual(await drawnOrder(),['𓎛','𓂝']);
+  await stack.click();
+  await page.waitForFunction(()=>document.getElementById('word-action-stack')?.textContent==='Stack');
+  assert.deepEqual(await drawnOrder(),['𓂝','𓎛']);
 
   // Touch-only range selection cannot depend on desktop Shift+click.
   // Deliver the same long-press pointer events WebKit/Chromium dispatch:
