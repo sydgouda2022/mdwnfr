@@ -2714,6 +2714,11 @@ function updateObjectQuickActions(){
  }
  if(words.length){
   $('word-action-edit').hidden=words.length!==1;
+  const stackable=words.length===1&&words[0].signs.length===2;
+  const overlay=stackable?(words[0].overlays||[])[0]:null;
+  $('word-action-stack').hidden=!stackable;
+  $('word-action-stack').textContent=overlay?'Unstack':'Stack';
+  $('word-action-reverse').hidden=!overlay;
   $('word-action-bold').setAttribute('aria-pressed',
    String(words.every(word=>word.bold)));
   $('word-action-black').setAttribute('aria-pressed',
@@ -2735,6 +2740,28 @@ $('object-action-delete').onclick=async()=>{
 $('word-action-edit').onclick=()=>{
  const words=selectedWholeWords();
  if(words.length===1&&!insertDraft)openWord(words[0].id);
+};
+$('word-action-stack').onclick=async()=>{
+ const words=selectedWholeWords();
+ if(words.length!==1||words[0].signs.length!==2||insertDraft)return;
+ const target=words[0],current=target.overlays||[];
+ const overlays=current.length?[]:[{symbols:target.symbol_ids.slice(),front:null}];
+ await apply({op:'set_word_overlays',id:target.id,overlays});
+};
+$('word-action-reverse').onclick=async()=>{
+ const words=selectedWholeWords();
+ if(words.length!==1||words[0].signs.length!==2||insertDraft)return;
+ const target=words[0],overlay=(target.overlays||[])[0];
+ if(!overlay)return;
+ let front=overlay.front;
+ if(!front){
+  const node=[...document.querySelectorAll('.word')].find(el=>el.dataset.id===target.id);
+  const geometry=node&&renderedWordInk.get(node);
+  front=geometry?.signs.find(g=>g.paint_order===1)?.id||target.symbol_ids[1];
+ }
+ const next=target.symbol_ids.find(id=>id!==front);
+ if(next)await apply({op:'set_word_overlays',id:target.id,
+  overlays:[{symbols:overlay.symbols.slice(),front:next}]});
 };
 $('word-action-bold').onclick=()=>{
  const words=selectedWholeWords();
