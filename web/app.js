@@ -2700,6 +2700,18 @@ function selectedWholeWords(){
  const items=selectedItems();
  return items.length&&items.every(item=>item.type==='word')?items:[];
 }
+function overlayEligibleWord(word){
+ if(!word||word.type!=='word'||word.signs.length!==2)return false;
+ const node=[...document.querySelectorAll('.word')].find(el=>el.dataset.id===word.id);
+ const geometry=node&&renderedWordInk.get(node);
+ if(!geometry||geometry.signs.length!==2)return false;
+ const classes=geometry.signs.map(g=>{
+  if(!(g.font_size>0))return 'invalid';
+  const w=g.width/g.font_size,h=g.height/g.font_size;
+  return w>=.70&&h>=.70?'square':h>=.70?'tall':w>=.70?'wide':'small';
+ });
+ return classes.includes('tall')&&classes.includes('wide');
+}
 function updateObjectQuickActions(){
  const available=!!doc&&!editorScreen.hidden&&!insertDraft&&!activePanel&&
   $('edit-menu').hidden;
@@ -2714,7 +2726,7 @@ function updateObjectQuickActions(){
  }
  if(words.length){
   $('word-action-edit').hidden=words.length!==1;
-  const stackable=words.length===1&&words[0].signs.length===2;
+  const stackable=words.length===1&&overlayEligibleWord(words[0]);
   const overlay=stackable?(words[0].overlays||[])[0]:null;
   $('word-action-stack').hidden=!stackable;
   $('word-action-stack').textContent=overlay?'Unstack':'Stack';
