@@ -301,7 +301,7 @@ function drawQuadratInk(host,quadrat,color,bold){
  if(reverseVisualQuadrat(direction))
   layer.setAttribute('transform',`translate(${quadrat.width} 0) scale(-1 1)`);
  svg.append(layer);
- for(const glyph of quadrat.signs){
+ for(const glyph of [...quadrat.signs].sort((a,b)=>(a.paint_order??0)-(b.paint_order??0))){
   const text=document.createElementNS(ns,'text');text.textContent=glyph.sign;
    if(glyph.id)text.setAttribute('data-symbol-id',glyph.id);
   text.setAttribute('x',String(glyph.text_x));
