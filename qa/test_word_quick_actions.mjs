@@ -52,15 +52,23 @@ for(const [label,engine,width,height] of [
   assert.equal(await reverse.isVisible(),false);
   const drawnOrder=()=>page.locator('.word[data-index="0"] .glyph-ink-svg text')
    .evaluateAll(nodes=>nodes.map(node=>node.textContent));
+  const waitForDrawnOrder=expected=>page.waitForFunction(expected=>{
+   const nodes=[...document.querySelectorAll('.word[data-index="0"] .glyph-ink-svg text')];
+   return nodes.length===expected.length&&nodes.every((node,index)=>node.textContent===expected[index]);
+  },expected,{timeout:90000});
   await stack.click();
   await page.waitForFunction(()=>document.getElementById('word-action-stack')?.textContent==='Unstack');
+  // The action label updates from the session delta before asynchronous
+  // reflow replaces the page's SVG. Wait for the rendered projection itself.
+  await waitForDrawnOrder(['𓂝','𓎛']);
   assert.deepEqual(await drawnOrder(),['𓂝','𓎛']);
   assert.equal(await reverse.isVisible(),true);
   await reverse.click();
-  await page.waitForFunction(()=>document.querySelectorAll('.word[data-index="0"] .glyph-ink-svg text')[0]?.textContent==='𓎛');
+  await waitForDrawnOrder(['𓎛','𓂝']);
   assert.deepEqual(await drawnOrder(),['𓎛','𓂝']);
   await stack.click();
   await page.waitForFunction(()=>document.getElementById('word-action-stack')?.textContent==='Stack');
+  await waitForDrawnOrder(['𓂝','𓎛']);
   assert.deepEqual(await drawnOrder(),['𓂝','𓎛']);
 
   // Touch-only range selection cannot depend on desktop Shift+click.
