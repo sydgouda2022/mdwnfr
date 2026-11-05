@@ -547,7 +547,7 @@ def _adjust_row_gaps(quadrat:Quadrat,changes:list[float])->Quadrat:
             sign=quadrat.signs[index]
             revised[index]=SignBox(sign.sign,sign.x,sign.y+shift,
                                    sign.width,sign.height,sign.font_size,
-                                   sign.text_x,sign.text_y+shift)
+                                   sign.text_x,sign.text_y+shift,sign.paint_order)
         shift+=corrected[row_number]-gaps[row_number]
     return Quadrat(quadrat.width,
                    quadrat.height+sum(corrected)-sum(gaps),
