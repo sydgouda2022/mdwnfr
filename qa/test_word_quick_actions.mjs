@@ -208,8 +208,8 @@ for(const [label,engine,width,height] of [
   await pairPicker.selectOption('0');
   await page.locator('#word-action-stack').click();
   await page.waitForFunction(()=>document.getElementById('word-action-stack')?.textContent==='Unstack');
-  await waitForDrawnOrder(['𓂝','𓎛','𓂝','𓎛']);
-  assert.deepEqual(await drawnOrder(),['𓂝','𓎛','𓂝','𓎛']);
+  await waitForDrawnOrderAt(3,['𓂝','𓎛','𓂝','𓎛']);
+  assert.deepEqual(await drawnOrderAt(3),['𓂝','𓎛','𓂝','𓎛']);
 
   await page.locator('.word').first().click();
   await bar.waitFor({state:'visible'});
