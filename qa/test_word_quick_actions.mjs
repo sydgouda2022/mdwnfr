@@ -68,6 +68,31 @@ for(const [label,engine,width,height] of [
   // reflow replaces the page's SVG. Wait for the rendered projection itself.
   await waitForDrawnOrder(['𓂝','𓎛']);
   assert.deepEqual(await drawnOrder(),['𓂝','𓎛']);
+  // Verify the visible ink itself is centered, not merely the glyph-cell boxes.
+  const inkCentersFor=id=>page.locator('.word').evaluateAll(nodes=>{
+   const word=nodes.find(node=>node.dataset.id===id);
+   return word?[...word.querySelectorAll('.glyph-ink-svg text')].map(node=>{
+    const ctx=document.createElement('canvas').getContext('2d');
+    const size=Number(node.getAttribute('font-size'));
+    ctx.font=size+'px "MdwNfr Hieroglyphs"';
+    const metrics=ctx.measureText(node.textContent);
+    if(!metrics.actualBoundingBoxRight||!metrics.actualBoundingBoxAscent)
+     throw Error('Overlay glyph has no measurable visible ink');
+    const x=Number(node.getAttribute('x'))+
+     (metrics.actualBoundingBoxRight-metrics.actualBoundingBoxLeft)/2;
+    const y=Number(node.getAttribute('y'))+
+     (metrics.actualBoundingBoxDescent-metrics.actualBoundingBoxAscent)/2;
+    const matrix=node.getScreenCTM();
+    if(!matrix)throw Error('Overlay glyph has no screen transform');
+    return{x:matrix.a*x+matrix.c*y+matrix.e,
+     y:matrix.b*x+matrix.d*y+matrix.f};
+   }):[];
+  });
+  const inkCenters=await inkCentersFor(firstWordId);
+  assert.equal(inkCenters.length,2,'Both overlay signs must paint visible ink');
+  assert.ok(Math.hypot(inkCenters[0].x-inkCenters[1].x,
+   inkCenters[0].y-inkCenters[1].y)<=1.5,
+   'The visible ink centers, not only their em boxes, must align');
   assert.equal(await reverse.isVisible(),true);
   await reverse.click();
   await waitForDrawnOrder(['𓎛','𓂝']);
