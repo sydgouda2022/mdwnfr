@@ -101,7 +101,7 @@ def glyph_optical_factors()->dict:
 
 @lru_cache(maxsize=1)
 def glyph_categories()->dict:
-    \"\"\"Pinned Unicode 18 kEH_Cat ordering for the installed 1,072 glyphs.\"\"\"
+    """Pinned Unicode 18 kEH_Cat ordering for the installed 1,072 glyphs."""
     source=json.loads(CATEGORIES_PATH.read_text(encoding='utf-8'))
     categories=source.get('categories',{})
     if (source.get('format')!='mdwnfr-unicode-hieroglyph-categories-v1' or
@@ -313,12 +313,12 @@ def compose(signs:list[str],column_width:float,
 
     @lru_cache(maxsize=None)
     def overlay_pair(i:int):
-        \"\"\"Centered z-axis overlay of one tall and one low-broad sign.
+        """Centered z-axis overlay of one tall and one low-broad sign.
 
         Unicode U+13436 aligns component midpoints and uses the maximum
         component width/height as the composite bounds. This is intentional
         superimposition, not a collision-free planar tabulation.
-        \"\"\"
+        """
         if i+1>=len(signs):
             return None
         indices=(i,i+1)
