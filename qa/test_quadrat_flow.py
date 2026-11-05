@@ -7,7 +7,8 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'core'))
 from mdwnfr.api import handle_json
-from mdwnfr.document import new_document, transaction, assert_document, DocumentError
+from mdwnfr.document import new_document, transaction, assert_document, DocumentError, word
+from mdwnfr.session import DocumentSession
 from copy import deepcopy
 from mdwnfr.quadrat import compose, glyph_profiles, glyph_categories
 from mdwnfr.layout import layout_document
@@ -63,6 +64,35 @@ class QuadratWorkflowTests(unittest.TestCase):
                         profile['width_em']/profile['height_em'],places=6)
                 self.assertEqual([g['paint_order'] for g in boxes],
                                  [0,1] if front==1 else [1,0])
+
+    def test_overlay_edit_round_trips_through_session_delta_and_history(self):
+        d36='𓂝'
+        v28='𓎛'
+        document=new_document()
+        target=word([d36,v28])
+        document['items']=[target]
+        session=DocumentSession()
+        session.open(document)
+
+        receipt=session.edit({
+            'op':'set_word_overlays','id':target['id'],
+            'overlays':[{'symbols':target['symbol_ids'],'front':target['symbol_ids'][1]}],
+            'base_revision':0
+        })
+        self.assertEqual(receipt['revision'],1)
+        self.assertEqual(receipt['change']['kind'],'update')
+        updated=receipt['change']['updates'][0]['object']
+        self.assertEqual(updated['overlays'][0]['front'],target['symbol_ids'][1])
+
+        undone=session.history('undo')
+        self.assertEqual(undone['revision'],2)
+        self.assertEqual(undone['change']['kind'],'update')
+        self.assertEqual(undone['change']['updates'][0]['object']['overlays'],[])
+
+        redone=session.history('redo')
+        self.assertEqual(redone['revision'],3)
+        self.assertEqual(redone['change']['updates'][0]['object']['overlays'][0]['front'],
+                         target['symbol_ids'][1])
 
     def test_three_and_four_small_signs_use_compact_two_by_two_patterns(self):
         small=[s for s,p in glyph_profiles().items()
