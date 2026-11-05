@@ -220,6 +220,9 @@ def compose(signs:list[str],column_width:float,
             first<0 or second>=len(signs) or front not in (-1,first,second) or
             first in overlay_members or second in overlay_members):
             raise ValueError('Invalid explicit overlay group')
+        if {profiles[signs[first]]['quadrat_class'],
+            profiles[signs[second]]['quadrat_class']}!={'tall','wide'}:
+            raise ValueError('Centered overlay currently requires one tall and one wide sign')
         overlay_map[first]=(second,front)
         overlay_members.update((first,second))
 
