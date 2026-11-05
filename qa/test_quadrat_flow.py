@@ -137,5 +137,29 @@ class QuadratWorkflowTests(unittest.TestCase):
         self.assertEqual(next_doc['items'][0]['lexicon_ref'],'tla:2')
         self.assertEqual(first['items'][0]['signs'],['𓅓','𓏏'])
 
+
+    def test_tall_narrow_and_low_broad_signs_stack_in_both_orders(self):
+        profiles=glyph_profiles()
+        tall=next(s for s,p in profiles.items()
+                  if p['quadrat_class']=='tall')
+        wide=next(s for s,p in profiles.items()
+                  if p['quadrat_class']=='wide')
+        for spelling in ([tall,wide],[wide,tall]):
+            with self.subTest(spelling=spelling):
+                shape=compose(list(spelling),20).payload()
+                self.assertEqual(shape['rows'],[[0,1]])
+                first,second=shape['signs']
+                self.assertLess(first['y']+first['height'],second['y']+1e-7)
+                self.assertAlmostEqual(first['x']+first['width']/2,10,places=5)
+                self.assertAlmostEqual(second['x']+second['width']/2,10,places=5)
+                for glyph in shape['signs']:
+                    bounds=__import__('mdwnfr.quadrat',fromlist=['glyph_geometry']).glyph_geometry()[glyph['sign']]
+                    ratio=(bounds[2]-bounds[0])/(bounds[3]-bounds[1])
+                    self.assertAlmostEqual(glyph['width']/glyph['height'],ratio,places=5)
+                    self.assertGreaterEqual(glyph['x'],0)
+                    self.assertLessEqual(glyph['x']+glyph['width'],20.00001)
+                    self.assertGreaterEqual(glyph['y'],0)
+                    self.assertLessEqual(glyph['y']+glyph['height'],shape['height']+1e-5)
+
 if __name__=='__main__':
     unittest.main()
