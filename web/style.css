@@ -331,6 +331,12 @@ button:disabled{opacity:.42;cursor:not-allowed}
  bottom:calc(78px + env(safe-area-inset-bottom,0px))
 }
 .word-quick-actions button{min-width:44px;min-height:44px;padding:8px 6px;font-size:12px}
+.word-quick-actions select{
+ min-height:44px;max-width:92px;padding:6px 5px;border:0;border-radius:9px;
+ background:#edf3f8;color:#163b62;font:600 12px system-ui;touch-action:manipulation
+}
+.word-quick-actions select[hidden]{display:none}
+
 .word-quick-actions .word-ink-dot{
  display:inline-block;width:17px;height:17px;border-radius:50%;
  border:2px solid #fff;outline:1px solid #9dabba;vertical-align:middle
