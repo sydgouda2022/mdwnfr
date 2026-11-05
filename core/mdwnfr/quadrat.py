@@ -509,7 +509,10 @@ def compose(signs:list[str],column_width:float,
     heights=[h for h,_ in layouts]
     gaps=[h*VERTICAL_GAP_RATIO for h in heights]
     placed=[None]*len(signs)
-    categories=glyph_categories()
+    has_overlay=any(len(row)==2 and
+                    {profiles[signs[j]]['quadrat_class'] for j in row}=={'tall','wide'}
+                    for row in rows)
+    categories=glyph_categories() if has_overlay else {}
     y=0.0
     for row_indices,(row_height,positions),row_gap in zip(rows,layouts,gaps):
         is_overlay=(len(row_indices)==2 and
