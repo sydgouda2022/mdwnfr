@@ -157,12 +157,20 @@ def _logical_auto_flip(owner:dict, logical_x:float, image_w:float,
     return _physical_auto_flip(owner,physical_x,page_w,direction,papyrus)
 
 
+def _overlay_pairs_for_word(item: dict) -> tuple[tuple[int,int,int], ...]:
+    positions={uid:index for index,uid in enumerate(item['symbol_ids'])}
+    return tuple((positions[o['symbols'][0]],positions[o['symbols'][1]],
+                  positions[o['front']] if o.get('front') else -1)
+                 for o in item.get('overlays',[]))
+
+
 @lru_cache(maxsize=32768)
 def _cached_quadrat(spelling: tuple[str, ...], width: float,
-                    ratios: tuple[float, ...]):
+                    ratios: tuple[float, ...],
+                    overlay_pairs: tuple[tuple[int,int,int], ...] = ()):
     # Using normalized outline ratios in the key means a font metric change
     # cannot reuse stale sign geometry. Quadrat is an immutable dataclass.
-    return compose(list(spelling), width, dict(zip(spelling, ratios)))
+    return compose(list(spelling), width, dict(zip(spelling, ratios)),overlay_pairs)
 
 
 def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
@@ -402,10 +410,12 @@ def _layout(doc: dict, glyph_metrics: dict | None,
     warnings = []
 
     @lru_cache(maxsize=8192)
-    def quadrat_for(signs):
+    def quadrat_for(item):
+        signs=tuple(item['signs'])
+        overlays=_overlay_pairs_for_word(item)
         ratios = tuple(_shape_ratio(sign, metrics) for sign in signs)
         before = _cached_quadrat.cache_info().misses
-        shape = _cached_quadrat(signs, width, ratios)
+        shape = _cached_quadrat(signs, width, ratios,overlays)
         stats['composed_quadrats'] += _cached_quadrat.cache_info().misses - before
         return shape
 
@@ -584,7 +594,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
 
     def insert_word(item):
         nonlocal lane_cursor,slot
-        shape=quadrat_for(tuple(item['signs']))
+        shape=quadrat_for(item)
         if shape.height>usable_height+1e-8:
             raise DocumentError('Quadrat exceeds writing height; reduce font size')
         while True:
@@ -1062,7 +1072,7 @@ def expand_compact_page(page: dict, document_by_id: dict[str, dict],
             signs = obj['signs']
             spelling = tuple(signs)
             ratios = tuple(_shape_ratio(sign, glyph_metrics) for sign in spelling)
-            source=_cached_quadrat(spelling,column_width,ratios)
+            source=_cached_quadrat(spelling,column_width,ratios,_overlay_pairs_for_word(obj))
             last_ink=(ident in column.get('sector_terminal_ids',())
                       or (column.get('terminal_gap_removed')
                           and entry_index==len(column['placements'])-1))
