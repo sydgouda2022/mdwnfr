@@ -326,8 +326,8 @@ button:disabled{opacity:.42;cursor:not-allowed}
 /* Google Docs-style whole-word formatting, kept off the writing area.
    Six compact finger-sized actions use the existing transactions rather than
    duplicating formatting or editing state. */
-.word-quick-actions{
- width:max-content;max-width:calc(100vw - 24px);gap:2px;
+ .word-quick-actions{
+ width:max-content;max-width:calc(100vw - 8px);gap:0;padding:4px;
  bottom:calc(78px + env(safe-area-inset-bottom,0px))
 }
 .word-quick-actions button{min-width:44px;min-height:44px;padding:8px 6px;font-size:12px}
@@ -340,7 +340,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 .word-quick-actions button[aria-pressed="true"]{background:#dceaf6;color:#0f4f85}
 @media(max-width:390px){
  .word-quick-actions{
-  left:50%;right:auto;transform:translateX(-50%);gap:1px;
+  left:50%;right:auto;transform:translateX(-50%);gap:0;
   bottom:calc(82px + env(safe-area-inset-bottom,0px))
  }
  .word-quick-actions button{min-width:44px;padding:7px 4px}
