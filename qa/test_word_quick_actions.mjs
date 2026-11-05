@@ -50,12 +50,14 @@ for(const [label,engine,width,height] of [
   const reverse=page.locator('#word-action-reverse');
   assert.equal(await stack.isVisible(),true);
   assert.equal(await reverse.isVisible(),false);
-  const drawnOrder=()=>page.locator('.word[data-index="0"] .glyph-ink-svg text')
+  const drawnOrderAt=index=>page.locator('.word[data-index="'+index+'"] .glyph-ink-svg text')
    .evaluateAll(nodes=>nodes.map(node=>node.textContent));
-  const waitForDrawnOrder=expected=>page.waitForFunction(expected=>{
-   const nodes=[...document.querySelectorAll('.word[data-index="0"] .glyph-ink-svg text')];
-   return nodes.length===expected.length&&nodes.every((node,index)=>node.textContent===expected[index]);
-  },expected,{timeout:90000});
+  const waitForDrawnOrderAt=(index,expected)=>page.waitForFunction(({index,expected})=>{
+   const nodes=[...document.querySelectorAll('.word[data-index="'+index+'"] .glyph-ink-svg text')];
+   return nodes.length===expected.length&&nodes.every((node,i)=>node.textContent===expected[i]);
+  },{index,expected},{timeout:90000});
+  const drawnOrder=()=>drawnOrderAt(0);
+  const waitForDrawnOrder=expected=>waitForDrawnOrderAt(0,expected);
   await stack.click();
   await page.waitForFunction(()=>document.getElementById('word-action-stack')?.textContent==='Unstack');
   // The action label updates from the session delta before asynchronous
@@ -201,8 +203,8 @@ for(const [label,engine,width,height] of [
   await pairPicker.selectOption('2');
   await page.locator('#word-action-stack').click();
   await page.waitForFunction(()=>document.getElementById('word-action-stack')?.textContent==='Unstack');
-  await waitForDrawnOrder(['𓂝','𓎛','𓂝','𓎛']);
-  assert.deepEqual(await drawnOrder(),['𓂝','𓎛','𓂝','𓎛']);
+  await waitForDrawnOrderAt(3,['𓂝','𓎛','𓂝','𓎛']);
+  assert.deepEqual(await drawnOrderAt(3),['𓂝','𓎛','𓂝','𓎛']);
   await pairPicker.selectOption('0');
   await page.locator('#word-action-stack').click();
   await page.waitForFunction(()=>document.getElementById('word-action-stack')?.textContent==='Unstack');
