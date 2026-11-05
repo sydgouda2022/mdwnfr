@@ -34,6 +34,9 @@ async function boot() {
     const ink=await fetch('/core/mdwnfr/data/glyph_geometry.json',{cache:'force-cache'});
     if(!ink.ok)throw new Error('Verified glyph silhouettes are unavailable');
     pyodide.FS.writeFile('/home/pyodide/mdwnfr/data/glyph_geometry.json',await ink.text());
+    const categories=await fetch('/core/mdwnfr/data/glyph_categories_unicode18.json',{cache:'force-cache'});
+    if(!categories.ok)throw new Error('Unicode 18 hieroglyph overlay categories are unavailable');
+    pyodide.FS.writeFile('/home/pyodide/mdwnfr/data/glyph_categories_unicode18.json',await categories.text());
     const contour=await fetch('/core/mdwnfr/data/artwork_silhouettes.json',{cache:'force-cache'});
     if(!contour.ok)throw new Error('Installed artwork silhouettes not available');
     pyodide.FS.writeFile('/home/pyodide/mdwnfr/data/artwork_silhouettes.json',await contour.text());
