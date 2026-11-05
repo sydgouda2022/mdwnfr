@@ -213,13 +213,15 @@ def compose(signs:list[str],column_width:float,
     boosts=[optics[s] for s in signs]
     gap=width*INNER_CLEARANCE_RATIO
     overlay_map={}
+    overlay_members=set()
     for first,second,front in overlay_pairs:
         if (type(first) is not int or type(second) is not int or
             type(front) is not int or second!=first+1 or
             first<0 or second>=len(signs) or front not in (-1,first,second) or
-            first in overlay_map or second in overlay_map):
+            first in overlay_members or second in overlay_members):
             raise ValueError('Invalid explicit overlay group')
         overlay_map[first]=(second,front)
+        overlay_members.update((first,second))
 
     # Keep the existing optically corrected standalone presentation.
     # Small signs are permitted to stand alone and grow proportionally.
