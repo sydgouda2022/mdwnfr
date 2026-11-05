@@ -23,7 +23,7 @@ for(const [label,engine,width,height] of [
   await page.locator('#create-document').click();
   await page.locator('#editor-screen').waitFor({state:'visible'});
   await page.evaluate(()=>{
-   const dt=new DataTransfer();dt.setData('text/plain','𓂝𓎛 𓈖 𓂋');
+   const dt=new DataTransfer();dt.setData('text/plain','𓂝𓎛 𓈖 𓂋 𓂝𓎛𓂝𓎛');
    document.dispatchEvent(new ClipboardEvent('paste',{
     clipboardData:dt,bubbles:true,cancelable:true
    }));
@@ -34,7 +34,7 @@ for(const [label,engine,width,height] of [
    await page.waitForFunction(n=>document.querySelectorAll('.word').length===n,
     n,{timeout:90000});
   };
-  await count(3);
+  await count(4);
   await page.locator('.word').first().click();
   const bar=page.locator('#word-quick-actions');
   await bar.waitFor({state:'visible'});
@@ -185,11 +185,29 @@ for(const [label,engine,width,height] of [
   assert.equal(await page.locator('#word-action-edit').isVisible(),false);
   await page.locator('#word-action-copy').click();
   await page.locator('#word-action-delete').click();
-  await count(1);
+  await count(2);
   assert.equal(await bar.isVisible(),false,
    'The action strip must vanish after deletion');
   await page.keyboard.press('Control+z');
-  await count(3);
+  await count(4);
+
+  // A longer word exposes an explicit adjacent-pair picker. Logical
+  // reading order remains unchanged when the second pair is overlaid.
+  await page.locator('.word[data-index="3"]').click();
+  await bar.waitFor({state:'visible'});
+  const pairPicker=page.locator('#word-action-pair');
+  assert.equal(await pairPicker.isVisible(),true);
+  assert.deepEqual(await pairPicker.locator('option').allTextContents(),['1–2','3–4']);
+  await pairPicker.selectOption('2');
+  await page.locator('#word-action-stack').click();
+  await page.waitForFunction(()=>document.getElementById('word-action-stack')?.textContent==='Unstack');
+  await waitForDrawnOrder(['𓂝','𓎛','𓂝','𓎛']);
+  assert.deepEqual(await drawnOrder(),['𓂝','𓎛','𓂝','𓎛']);
+  await pairPicker.selectOption('0');
+  await page.locator('#word-action-stack').click();
+  await page.waitForFunction(()=>document.getElementById('word-action-stack')?.textContent==='Unstack');
+  await waitForDrawnOrder(['𓂝','𓎛','𓂝','𓎛']);
+  assert.deepEqual(await drawnOrder(),['𓂝','𓎛','𓂝','𓎛']);
 
   await page.locator('.word').first().click();
   await bar.waitFor({state:'visible'});
