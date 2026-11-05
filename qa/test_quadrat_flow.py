@@ -9,7 +9,7 @@ sys.path.insert(0,str(ROOT/'core'))
 from mdwnfr.api import handle_json
 from mdwnfr.document import new_document, transaction, assert_document, DocumentError
 from copy import deepcopy
-from mdwnfr.quadrat import compose, glyph_profiles
+from mdwnfr.quadrat import compose, glyph_profiles, glyph_categories
 from mdwnfr.layout import layout_document
 from mdwnfr.layout_sync import summarize_layout
 
@@ -38,6 +38,31 @@ class QuadratWorkflowTests(unittest.TestCase):
         self.assertLess(first['y']+first['height'],second['y']+1e-7)
         self.assertAlmostEqual(first['x']+first['width']/2,10,places=5)
         self.assertAlmostEqual(second['x']+second['width']/2,10,places=5)
+
+    def test_tall_wide_pair_is_not_overlaid_without_explicit_request(self):
+        shape=compose(['𓂝','𓎛'],20).payload()
+        self.assertNotEqual(shape['rows'],[[0,1]])
+
+    def test_explicit_centered_overlay_preserves_logical_order_and_front_choice(self):
+        d36='𓂝'
+        v28='𓎛'
+        self.assertLess(glyph_categories()[d36],glyph_categories()[v28])
+        for spelling,front in (([d36,v28],1),([v28,d36],0)):
+            with self.subTest(spelling=spelling):
+                shape=compose(list(spelling),20,overlay_pairs=((0,1,front),)).payload()
+                self.assertEqual(shape['rows'],[[0,1]])
+                self.assertEqual([g['sign'] for g in shape['signs']],list(spelling))
+                boxes=shape['signs']
+                self.assertAlmostEqual(boxes[0]['x']+boxes[0]['width']/2,
+                                       boxes[1]['x']+boxes[1]['width']/2,places=6)
+                self.assertAlmostEqual(boxes[0]['y']+boxes[0]['height']/2,
+                                       boxes[1]['y']+boxes[1]['height']/2,places=6)
+                for box in boxes:
+                    profile=glyph_profiles()[box['sign']]
+                    self.assertAlmostEqual(box['width']/box['height'],
+                        profile['width_em']/profile['height_em'],places=6)
+                self.assertEqual([g['paint_order'] for g in boxes],
+                                 [0,1] if front==1 else [1,0])
 
     def test_three_and_four_small_signs_use_compact_two_by_two_patterns(self):
         small=[s for s,p in glyph_profiles().items()
