@@ -409,7 +409,6 @@ def _layout(doc: dict, glyph_metrics: dict | None,
     overlay = None            # [base_slot, object_span, current_slot_index]
     warnings = []
 
-    @lru_cache(maxsize=8192)
     def quadrat_for(item):
         signs=tuple(item['signs'])
         overlays=_overlay_pairs_for_word(item)
