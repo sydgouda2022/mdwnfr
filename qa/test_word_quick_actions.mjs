@@ -51,9 +51,10 @@ for(const [label,engine,width,height] of [
   assert.equal(await stack.isVisible(),true);
   assert.equal(await reverse.isVisible(),false);
   const firstWordId=await page.locator('.word').first().getAttribute('data-id');
-  const drawnOrderFor=id=>page.locator('.word').filter({has:page.locator('[data-symbol-id]')})
-   .evaluateAll(nodes=>nodes.find(node=>node.dataset.id===id)?
-    [...nodes.find(node=>node.dataset.id===id).querySelectorAll('.glyph-ink-svg text')].map(n=>n.textContent):[]);
+  const drawnOrderFor=id=>page.locator('.word').evaluateAll(nodes=>{
+   const word=nodes.find(node=>node.dataset.id===id);
+   return word?[...word.querySelectorAll('.glyph-ink-svg text')].map(n=>n.textContent):[];
+  });
   const waitForDrawnOrderFor=(id,expected)=>page.waitForFunction(({id,expected})=>{
    const word=[...document.querySelectorAll('.word')].find(node=>node.dataset.id===id);
    const nodes=word?[...word.querySelectorAll('.glyph-ink-svg text')]:[];
