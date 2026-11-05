@@ -262,7 +262,12 @@ def compose(signs:list[str],column_width:float,
         if i+1>=len(signs):
             return None
         classes={profiles[signs[j]]['quadrat_class'] for j in (i,i+1)}
-        if not classes.issubset({'wide','small'}):
+        # Polis §3.3 documents centered stacking of tall-narrow with low-broad
+        # signs, with either sign above the other. Keep that attested pair
+        # distinct from the existing wide/compact tabulation pattern.
+        wide_compact=classes.issubset({'wide','small'})
+        tall_wide=classes=={'tall','wide'}
+        if not (wide_compact or tall_wide):
             return None
 
         def fit(target_height:float):
