@@ -276,7 +276,7 @@ def validate_word_overlays(overlays: Any, signs: list[str],
         front=overlay.get('front')
         if (not isinstance(members,list) or len(members)!=2 or
             members[0]==members[1] or any(uid not in positions for uid in members) or
-            abs(positions[members[0]]-positions[members[1]])!=1 or
+            positions[members[1]]!=positions[members[0]]+1 or
             any(uid in used for uid in members) or
             (front is not None and front not in members)):
             raise DocumentError('Overlay groups must reference adjacent, distinct symbols')
