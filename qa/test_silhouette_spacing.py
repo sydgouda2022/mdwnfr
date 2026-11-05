@@ -781,4 +781,63 @@ class ArtworkWordFlow(unittest.TestCase):
                 if c['kind']=='words' for p in c['placements']],
                 [o['id'] for o in doc['items'] if o['type']=='word'])
 
+
+    def test_all_four_quadrat_classes_have_a_standalone_fallback(self):
+        from mdwnfr.quadrat import glyph_profiles
+        profiles=glyph_profiles()
+        for quadrat_class in ('square','tall','wide','small'):
+            sign=next((s for s,p in profiles.items()
+                       if p['quadrat_class']==quadrat_class),None)
+            with self.subTest(quadrat_class=quadrat_class):
+                self.assertIsNotNone(sign)
+                q=compose([sign],C)
+                self.assertEqual(q.rows,((0,),))
+                self.assertEqual([g.sign for g in q.signs],[sign])
+                glyph=q.signs[0]
+                self.assertGreater(glyph.width,0)
+                self.assertGreater(glyph.height,0)
+                self.assertGreaterEqual(glyph.x,0)
+                self.assertLessEqual(glyph.x+glyph.width,C+1e-7)
+
+    def test_pattern_matrix_preserves_order_identity_ratio_and_bounds(self):
+        from mdwnfr.quadrat import glyph_profiles
+        profiles=glyph_profiles()
+        by_class={}
+        for quadrat_class in ('square','tall','wide','small'):
+            by_class[quadrat_class]=[
+                sign for sign,p in profiles.items()
+                if p['quadrat_class']==quadrat_class
+            ]
+            self.assertGreaterEqual(len(by_class[quadrat_class]),2,
+                                    quadrat_class)
+        fixtures=(
+            ('tall-small',[by_class['tall'][0],by_class['small'][0]]),
+            ('small-tall',[by_class['small'][0],by_class['tall'][0]]),
+            ('wide-small',[by_class['wide'][0],by_class['small'][1]]),
+            ('small-wide',[by_class['small'][1],by_class['wide'][0]]),
+            ('tall-two-small',[by_class['tall'][0],
+                               by_class['small'][0],by_class['small'][1]]),
+            ('two-wide',[by_class['wide'][0],by_class['wide'][1]]),
+            ('three-small',[by_class['small'][0],by_class['small'][1],
+                            by_class['small'][2]]),
+            ('square-alone',[by_class['square'][0]]),
+        )
+        for label,spelling in fixtures:
+            with self.subTest(pattern=label):
+                q=compose(spelling,C)
+                self.assertEqual([g.sign for g in q.signs],spelling)
+                flattened=[index for row in q.rows for index in row]
+                self.assertEqual(sorted(flattened),list(range(len(spelling))))
+                self.assertEqual(len(flattened),len(set(flattened)))
+                for glyph in q.signs:
+                    bounds=glyph_geometry()[glyph.sign]
+                    natural=(bounds[2]-bounds[0])/(bounds[3]-bounds[1])
+                    near(self,glyph.width/glyph.height,natural)
+                    self.assertGreater(glyph.width,0)
+                    self.assertGreater(glyph.height,0)
+                    self.assertGreaterEqual(glyph.x,-1e-7)
+                    self.assertGreaterEqual(glyph.y,-1e-7)
+                    self.assertLessEqual(glyph.x+glyph.width,C+1e-7)
+                    self.assertLessEqual(glyph.y+glyph.height,q.height+1e-7)
+
 if __name__=='__main__':unittest.main()
