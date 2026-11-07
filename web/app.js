@@ -453,7 +453,8 @@ function paintPageContent(slot,p,shell){
     });
     node.addEventListener('dblclick',e=>{e.stopPropagation();selectWord(item.id);openNestedKeyboard();});
     node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectWord(item.id);openNestedKeyboard();}});
-    node.addEventListener('pointerdown',e=>beginObjectDrag(e,item,c,p,node));
+    // Cartouche taps are text-entry gestures. Moving is handled only by
+    // the dedicated .art-move grip, so pointer capture cannot swallow the tap.
     const geometry=item.cartouche;
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
     svg.setAttribute('class','cartouche-outline');svg.setAttribute('viewBox',geometry.view_box);
