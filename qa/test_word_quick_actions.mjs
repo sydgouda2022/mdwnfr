@@ -230,7 +230,7 @@ for(const [label,engine,width,height] of [
   await bar.waitFor({state:'visible'});
   const pairPicker=page.locator('#word-action-pair');
   assert.equal(await pairPicker.isVisible(),true);
-  assert.deepEqual(await pairPicker.locator('option').allTextContents(),['1–2','3–4']);
+  assert.deepEqual(await pairPicker.locator('option').allTextContents(),['1–2','2–3','3–4']);
   await pairPicker.selectOption('2');
   await page.locator('#word-action-stack').click();
   await page.waitForFunction(()=>document.getElementById('word-action-stack')?.textContent==='Unstack');
