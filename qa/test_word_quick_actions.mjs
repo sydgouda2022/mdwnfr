@@ -51,10 +51,10 @@ for(const [label,engine,width,height] of [
   assert.equal(await stack.isVisible(),true);
   assert.equal(await reverse.isVisible(),false);
   const firstWordId=await page.locator('.word').first().getAttribute('data-id');
-  const drawnOrderFor=id=>page.locator('.word').evaluateAll(nodes=>{
+  const drawnOrderFor=id=>page.locator('.word').evaluateAll((nodes,id)=>{
    const word=nodes.find(node=>node.dataset.id===id);
    return word?[...word.querySelectorAll('.glyph-ink-svg text')].map(n=>n.textContent):[];
-  });
+  },id);
   const waitForDrawnOrderFor=(id,expected)=>page.waitForFunction(({id,expected})=>{
    const word=[...document.querySelectorAll('.word')].find(node=>node.dataset.id===id);
    const nodes=word?[...word.querySelectorAll('.glyph-ink-svg text')]:[];
@@ -69,7 +69,7 @@ for(const [label,engine,width,height] of [
   await waitForDrawnOrder(['𓂝','𓎛']);
   assert.deepEqual(await drawnOrder(),['𓂝','𓎛']);
   // Verify the visible ink itself is centered, not merely the glyph-cell boxes.
-  const inkCentersFor=id=>page.locator('.word').evaluateAll(nodes=>{
+  const inkCentersFor=id=>page.locator('.word').evaluateAll((nodes,id)=>{
    const word=nodes.find(node=>node.dataset.id===id);
    return word?[...word.querySelectorAll('.glyph-ink-svg text')].map(node=>{
     const ctx=document.createElement('canvas').getContext('2d');
@@ -87,7 +87,7 @@ for(const [label,engine,width,height] of [
     return{x:matrix.a*x+matrix.c*y+matrix.e,
      y:matrix.b*x+matrix.d*y+matrix.f};
    }):[];
-  });
+  },id);
   const inkCenters=await inkCentersFor(firstWordId);
   assert.equal(inkCenters.length,2,'Both overlay signs must paint visible ink');
   assert.ok(Math.hypot(inkCenters[0].x-inkCenters[1].x,
