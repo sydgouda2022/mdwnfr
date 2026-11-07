@@ -64,11 +64,9 @@ for(const [label,engine,width,height] of [
   const waitForDrawnOrder=expected=>waitForDrawnOrderFor(firstWordId,expected);
   await stack.click();
   await page.waitForFunction(()=>document.getElementById('word-action-stack')?.textContent==='Unstack');
-  // The action label updates from the session delta before asynchronous
-  // reflow replaces the page's SVG. Wait for the rendered projection itself.
-  await waitForDrawnOrder(['𓂝','𓎛']);
-  assert.deepEqual(await drawnOrder(),['𓂝','𓎛']);
-  // Verify the visible ink itself is centered, not merely the glyph-cell boxes.
+  // Two ordinary adjacent signs already appear in one SVG, so glyph count
+  // alone is not proof that the asynchronous overlay reflow has completed.
+  // Wait for the measured visible-ink centers to coincide in the rendered DOM.
   const inkCentersFor=id=>page.locator('.word').evaluateAll((nodes,id)=>{
    const word=nodes.find(node=>node.dataset.id===id);
    return word?[...word.querySelectorAll('.glyph-ink-svg text')].map(node=>{
@@ -77,17 +75,36 @@ for(const [label,engine,width,height] of [
     ctx.font=size+'px "MdwNfr Hieroglyphs"';
     const metrics=ctx.measureText(node.textContent);
     if(!metrics.actualBoundingBoxRight||!metrics.actualBoundingBoxAscent)
-     throw Error('Overlay glyph has no measurable visible ink');
+     return null;
     const x=Number(node.getAttribute('x'))+
      (metrics.actualBoundingBoxRight-metrics.actualBoundingBoxLeft)/2;
     const y=Number(node.getAttribute('y'))+
      (metrics.actualBoundingBoxDescent-metrics.actualBoundingBoxAscent)/2;
     const matrix=node.getScreenCTM();
-    if(!matrix)throw Error('Overlay glyph has no screen transform');
+    if(!matrix)return null;
     return{x:matrix.a*x+matrix.c*y+matrix.e,
      y:matrix.b*x+matrix.d*y+matrix.f};
    }):[];
   },id);
+  await page.waitForFunction(({id,expected})=>{
+   const word=[...document.querySelectorAll('.word')].find(node=>node.dataset.id===id);
+   const nodes=word?[...word.querySelectorAll('.glyph-ink-svg text')]:[];
+   if(nodes.length!==expected.length||!nodes.every((node,i)=>node.textContent===expected[i]))return false;
+   const centers=nodes.map(node=>{
+    const ctx=document.createElement('canvas').getContext('2d');
+    const size=Number(node.getAttribute('font-size'));
+    ctx.font=size+'px "MdwNfr Hieroglyphs"';
+    const m=ctx.measureText(node.textContent);
+    if(!m.actualBoundingBoxRight||!m.actualBoundingBoxAscent)return null;
+    const x=Number(node.getAttribute('x'))+(m.actualBoundingBoxRight-m.actualBoundingBoxLeft)/2;
+    const y=Number(node.getAttribute('y'))+(m.actualBoundingBoxDescent-m.actualBoundingBoxAscent)/2;
+    const matrix=node.getScreenCTM();
+    return matrix?{x:matrix.a*x+matrix.c*y+matrix.e,y:matrix.b*x+matrix.d*y+matrix.f}:null;
+   });
+   return centers.every(Boolean)&&Math.hypot(centers[0].x-centers[1].x,
+    centers[0].y-centers[1].y)<=1.5;
+  },{id:firstWordId,expected:['𓂝','𓎛']},{timeout:90000});
+  assert.deepEqual(await drawnOrder(),['𓂝','𓎛']);
   const inkCenters=await inkCentersFor(firstWordId);
   assert.equal(inkCenters.length,2,'Both overlay signs must paint visible ink');
   assert.ok(Math.hypot(inkCenters[0].x-inkCenters[1].x,
