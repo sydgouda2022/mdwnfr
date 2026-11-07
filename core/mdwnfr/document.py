@@ -195,7 +195,7 @@ def word(signs: list[str], color: str = "#192433", bold: bool = False,
     glyphs=validate_signs(signs)
     return {
         "id": fresh_id(), "type": "word", "signs":glyphs,
-        "symbol_ids":[fresh_id() for _ in glyphs],
+        "symbol_ids":[fresh_id() for _ in glyphs], "overlays":[],
         "color": color, "bold": bool(bold), "lexicon_ref": lexicon_ref
     }
 
@@ -255,9 +255,42 @@ def replace_nested_word(existing: dict | None, signs: list[str]) -> dict:
     glyphs=validate_signs(signs)
     if existing is None:
         return word(glyphs)
+    new_ids=reconcile_symbol_ids(existing,glyphs)
     return {**existing, 'signs':glyphs,
-            'symbol_ids':reconcile_symbol_ids(existing,glyphs),
+            'symbol_ids':new_ids,
+            'overlays':filter_word_overlays(existing,new_ids),
             'lexicon_ref':existing.get('lexicon_ref') if existing['signs']==glyphs else None}
+
+
+def validate_word_overlays(overlays: Any, signs: list[str],
+                           symbol_ids: list[str]) -> list[dict]:
+    if not isinstance(overlays,list) or len(overlays)>len(signs)//2:
+        raise DocumentError('Invalid word overlay groups')
+    positions={uid:index for index,uid in enumerate(symbol_ids)}
+    used=set()
+    result=[]
+    for overlay in overlays:
+        if not isinstance(overlay,dict):
+            raise DocumentError('Invalid word overlay group')
+        members=overlay.get('symbols')
+        front=overlay.get('front')
+        if (not isinstance(members,list) or len(members)!=2 or
+            members[0]==members[1] or any(uid not in positions for uid in members) or
+            positions[members[1]]!=positions[members[0]]+1 or
+            any(uid in used for uid in members) or
+            (front is not None and front not in members)):
+            raise DocumentError('Overlay groups must reference adjacent, distinct symbols')
+        used.update(members)
+        result.append({'symbols':members.copy(),'front':front})
+    return result
+
+
+def filter_word_overlays(existing: dict, symbol_ids: list[str]) -> list[dict]:
+    try:
+        return validate_word_overlays(existing.get('overlays',[]),
+                                      existing.get('signs',[]),symbol_ids)
+    except DocumentError:
+        return []
 
 
 def validate_word_record(obj: dict) -> None:
@@ -277,6 +310,7 @@ def validate_word_record(obj: dict) -> None:
     if len(set(atoms))!=len(atoms) or any(
             not isinstance(uid,str) or not uid or len(uid)>128 for uid in atoms):
         raise DocumentError('Invalid symbol identity')
+    validate_word_overlays(obj.get('overlays',[]),obj['signs'],atoms)
 
 
 def assert_document(doc: dict) -> None:
@@ -581,6 +615,14 @@ def transaction(document: dict, action: dict) -> dict:
             raise DocumentError("Invalid insertion index")
         items.insert(index, word(action["signs"], action.get("color", "#192433"),
                                  action.get("bold", False), action.get("lexicon_ref")))
+    elif op == "set_word_overlays":
+        idx=_locate(items,action.get("id",""))
+        if idx<0 or items[idx].get("type")!="word":
+            raise DocumentError("Overlay target must be a word")
+        updated=items[idx].copy()
+        updated["overlays"]=validate_word_overlays(
+            action.get("overlays"),updated["signs"],updated["symbol_ids"])
+        items[idx]=updated
     elif op in ("replace_signs", "set_word_style", "delete", "move"):
         idx = _locate(items, action.get("id", ""))
         if idx < 0:
@@ -602,6 +644,7 @@ def transaction(document: dict, action: dict) -> dict:
                 atom_ids=reconcile_symbol_ids(items[idx],glyphs)
             items[idx]["signs"]=glyphs
             items[idx]["symbol_ids"]=atom_ids
+            items[idx]["overlays"]=filter_word_overlays(items[idx],atom_ids)
             items[idx]["lexicon_ref"] = action.get("lexicon_ref")
         elif op == "set_word_style":
             if items[idx]["type"] != "word":

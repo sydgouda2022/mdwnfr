@@ -64,6 +64,13 @@ def recorded_transaction(document: dict, action: dict) -> dict:
         redo = {'op':'replace_signs','id':action['id'],'signs':deepcopy(updated['signs']),
                 'symbol_ids':symbol_ids_for_word(updated),
                 'lexicon_ref':updated.get('lexicon_ref')}
+    elif op == 'set_word_overlays':
+        old = next(item for item in before if item['id'] == action['id'])
+        updated = next(item for item in after if item['id'] == action['id'])
+        undo = {'op':'set_word_overlays','id':old['id'],
+                'overlays':deepcopy(old.get('overlays', []))}
+        redo = {'op':'set_word_overlays','id':updated['id'],
+                'overlays':deepcopy(updated.get('overlays', []))}
     elif op == 'set_word_style':
         old = next(item for item in before if item['id'] == action['id'])
         updated = next(item for item in after if item['id'] == action['id'])
