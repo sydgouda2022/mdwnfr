@@ -74,7 +74,7 @@ class DocumentSession:
             by_id = {item['id']: (i,item) for i,item in enumerate(after['items'])}
             return {'kind':'update','updates':[
                 {'index':by_id[ch['id']][0],'object':by_id[ch['id']][1]} for ch in action['styles']]}
-        if op in ('replace_signs','set_word_style','set_word_overlays','set_clipart','set_image',
+        if op in ('replace_signs','set_word_style','set_clipart','set_image',
                   'set_table_cell','table_insert_row','table_delete_row',
                   'table_insert_column','table_delete_column','set_table_width','replace_table',
                   'set_cartouche_orientation','set_cartouche_words','replace_cartouche',
