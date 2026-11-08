@@ -40,73 +40,14 @@ class QuadratWorkflowTests(unittest.TestCase):
         self.assertAlmostEqual(first['x']+first['width']/2,10,places=5)
         self.assertAlmostEqual(second['x']+second['width']/2,10,places=5)
 
-    def test_tall_wide_pair_is_not_overlaid_without_explicit_request(self):
-        shape=compose(['𓂝','𓎛'],20).payload()
-        self.assertNotEqual(shape['rows'],[[0,1]])
-
-    def test_explicit_centered_overlay_preserves_logical_order_and_front_choice(self):
-        d36='𓂝'
-        v28='𓎛'
-        self.assertLess(glyph_categories()[d36],glyph_categories()[v28])
-        for spelling,front in (([d36,v28],1),([v28,d36],0)):
-            with self.subTest(spelling=spelling):
-                shape=compose(list(spelling),20,overlay_pairs=((0,1,front),)).payload()
-                self.assertEqual(shape['rows'],[[0,1]])
-                self.assertEqual([g['sign'] for g in shape['signs']],list(spelling))
-                boxes=shape['signs']
-                self.assertAlmostEqual(boxes[0]['x']+boxes[0]['width']/2,
-                                       boxes[1]['x']+boxes[1]['width']/2,places=6)
-                self.assertAlmostEqual(boxes[0]['y']+boxes[0]['height']/2,
-                                       boxes[1]['y']+boxes[1]['height']/2,places=6)
-                for box in boxes:
-                    profile=glyph_profiles()[box['sign']]
-                    self.assertAlmostEqual(box['width']/box['height'],
-                        profile['width_em']/profile['height_em'],places=6)
-                self.assertEqual([g['paint_order'] for g in boxes],
-                                 [0,1] if front==1 else [1,0])
-
-    def test_two_disjoint_centered_overlays_share_one_word(self):
-        spelling=['𓂝','𓎛','𓂝','𓎛']
-        shape=compose(spelling,20,overlay_pairs=((0,1,1),(2,3,2))).payload()
-        self.assertEqual(shape['rows'],[[0,1],[2,3]])
-        self.assertEqual([item['sign'] for item in shape['signs']],spelling)
-        boxes=shape['signs']
-        for first in (0,2):
-            with self.subTest(pair=first):
-                self.assertAlmostEqual(boxes[first]['x']+boxes[first]['width']/2,
-                    boxes[first+1]['x']+boxes[first+1]['width']/2,places=6)
-                self.assertAlmostEqual(boxes[first]['y']+boxes[first]['height']/2,
-                    boxes[first+1]['y']+boxes[first+1]['height']/2,places=6)
-        self.assertEqual([box['paint_order'] for box in boxes],[0,1,1,0])
-
-    def test_overlay_edit_round_trips_through_session_delta_and_history(self):
-        d36='𓂝'
-        v28='𓎛'
+    def test_overlay_commands_are_not_part_of_the_document_model(self):
         document=new_document()
-        target=word([d36,v28])
+        target=word(['𓂝','𓎛'])
         document['items']=[target]
-        session=DocumentSession()
-        session.open(document)
-
-        receipt=session.edit({
-            'op':'set_word_overlays','id':target['id'],
-            'overlays':[{'symbols':target['symbol_ids'],'front':target['symbol_ids'][1]}],
-            'base_revision':0
-        })
-        self.assertEqual(receipt['revision'],1)
-        self.assertEqual(receipt['change']['kind'],'update')
-        updated=receipt['change']['updates'][0]['object']
-        self.assertEqual(updated['overlays'][0]['front'],target['symbol_ids'][1])
-
-        undone=session.history('undo')
-        self.assertEqual(undone['revision'],2)
-        self.assertEqual(undone['change']['kind'],'update')
-        self.assertEqual(undone['change']['updates'][0]['object']['overlays'],[])
-
-        redone=session.history('redo')
-        self.assertEqual(redone['revision'],3)
-        self.assertEqual(redone['change']['updates'][0]['object']['overlays'][0]['front'],
-                         target['symbol_ids'][1])
+        self.assertNotIn('overlays',target)
+        with self.assertRaises(ValueError):
+            transaction(document,{'op':'set_word_overlays','id':target['id'],
+                                  'overlays':[]})
 
     def test_three_and_four_small_signs_use_compact_two_by_two_patterns(self):
         small=[s for s,p in glyph_profiles().items()
