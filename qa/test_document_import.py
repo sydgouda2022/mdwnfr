@@ -31,6 +31,22 @@ class ImportDocumentTests(unittest.TestCase):
         self.assertEqual(updated["items"][0]["overlays"][0]["front"],item["symbol_ids"][1])
         validate_word_record(updated["items"][0])
 
+    def test_disjoint_overlay_groups_survive_document_import(self):
+        item=word(["𓂝","𓎛","𓂝","𓎛"])
+        doc=new_document(direction="ltr")
+        doc["items"]=[item]
+        edited=transaction(doc,{"op":"set_word_overlays","id":item["id"],
+            "overlays":[
+                {"symbols":item["symbol_ids"][0:2],"front":item["symbol_ids"][1]},
+                {"symbols":item["symbol_ids"][2:4],"front":item["symbol_ids"][2]},
+            ]})
+        imported=handle({"method":"import_document","document":edited})["document"]
+        restored=imported["items"][0]
+        self.assertEqual(imported["direction"],"ltr")
+        self.assertEqual(restored["symbol_ids"],item["symbol_ids"])
+        self.assertEqual(restored["overlays"],edited["items"][0]["overlays"])
+        validate_word_record(restored)
+
     def test_overlay_groups_reject_nonadjacent_symbols(self):
         item=word(["𓂝","𓎛","𓀀"])
         doc=new_document()
