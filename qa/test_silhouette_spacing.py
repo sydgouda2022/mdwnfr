@@ -89,7 +89,7 @@ class VisibleInkComposition(unittest.TestCase):
         a=[[0,32] for _ in range(64)]
         b=[[32,64] for _ in range(64)]
         gap=_silhouette_advance(a,b,2.0,4.0,2.0,4.0,C*.10)
-        self.assertGreaterEqual(gap,C*.10)  # 5% column ink clearance
+        self.assertGreaterEqual(gap,C*.10)  # 10% column ink clearance
         self.assertLess(gap,3.0)    # bounding-rectangle gap would be 3.0
         for row_a,row_b in zip(a,b):
             free=(gap+row_b[0]*2/64)-(row_a[1]*2/64)
@@ -102,7 +102,7 @@ class VisibleInkComposition(unittest.TestCase):
             for r in rows:
                 if r is not None:self.assertTrue(0<=r[0]<r[1]<=64,sign)
 
-    def test_two_slender_glyphs_share_row_with_five_percent_clearance(self):
+    def test_two_slender_glyphs_share_row_with_ten_percent_clearance(self):
         q=compose(list('𓇋𓇋'),C)
         self.assertEqual(q.rows,((0,1),))
         a,b=q.signs
@@ -131,20 +131,20 @@ class VisibleInkComposition(unittest.TestCase):
 
 
     def test_m17_two_q3_fill_reference_height_proportionally(self):
-        # 20 mm column; 5% gap; the tall host establishes 15 mm of ink height.
+        # 20 mm column; 10% gap; the tall host establishes 15 mm of ink height.
         q=compose(['𓇋','𓊪','𓊪'],20.0)
         self.assertEqual(q.rows,((0,1,2),))
         a,b,c=q.signs
         near(self,a.height,15.0)
-        near(self,b.height,7.0)
-        near(self,c.height,7.0)
+        near(self,b.height,6.5)
+        near(self,c.height,6.5)
         near(self,b.width/b.height,(glyph_geometry()['𓊪'][2]-glyph_geometry()['𓊪'][0])/
              (glyph_geometry()['𓊪'][3]-glyph_geometry()['𓊪'][1]))
         near(self,b.y,a.y)
         near(self,c.y+c.height,a.y+a.height)
         near(self,c.y-b.y-b.height,2.0)
         self.assertGreater(b.x,a.x)
-        self.assertTrue(all(g.x>=0 and g.x+g.width<=20+1e-7 for g in q.signs))
+        self.assertTrue(all(g.x>=2-1e-7 and g.x+g.width<=18+1e-7 for g in q.signs))
         self.assertAlmostEqual((min(g.x for g in q.signs)+max(g.x+g.width for g in q.signs))/2,
                                10.0,places=6)
 
@@ -224,8 +224,8 @@ class VisibleInkComposition(unittest.TestCase):
         self.assertLessEqual(q.signs[0].height,C+1e-8)
         near(self,q.height,q.signs[0].height+C*.1)
         self.assertLessEqual(q.signs[0].height,C+1e-8)
-        self.assertGreaterEqual(q.signs[0].x,0)
-        self.assertLessEqual(q.signs[0].x+q.signs[0].width,C+1e-8)
+        self.assertGreaterEqual(q.signs[0].x,2-1e-7)
+        self.assertLessEqual(q.signs[0].x+q.signs[0].width,C-C*.1+1e-7)
 
     def test_svg_bearing_coordinates_match_ink_rectangle(self):
         for sign in '𓅓𓇋𓏏𓈖𓏺':
@@ -252,11 +252,11 @@ class VisibleInkComposition(unittest.TestCase):
         bottom=first['y']+a['y']+a['height']
         top=second['y']+b['y']
         # The last column is incomplete, so the natural preceding-row
-        # 20%-height gap remains and only the terminal whitespace disappears.
+        # column-derived gap remains and only the terminal whitespace disappears.
         self.assertAlmostEqual(top-bottom,C*.10,places=4)
         self.assertAlmostEqual(placements[-1]['quadrat']['flexible_gaps'][-1],0)
 
-    def test_asymmetric_neighbors_have_one_preceding_twenty_percent_gap(self):
+    def test_asymmetric_neighbors_have_one_preceding_column_gap(self):
         for sequence in ('𓅓𓈖', '𓈖𓅓', '𓅓𓅓', '𓈖𓈖'):
             q=compose(list(sequence),C)
             self.assertEqual(q.rows,((0,),(1,)))
@@ -267,7 +267,7 @@ class VisibleInkComposition(unittest.TestCase):
             near(self,q.height,first.height+next_sign.height+2*C*.1)
             self.assertEqual(len(q.flexible_gaps),2)
 
-    def test_several_rows_have_only_one_trailing_twenty_percent_gap(self):
+    def test_several_rows_use_one_column_gap_per_row(self):
         for sequence in ('𓅓𓏏𓈖𓇋', '𓇋𓇋𓅓𓏏', '𓏏𓅓𓅓'):
             q=compose(list(sequence),C)
             self.assertEqual(len(q.rows),len(q.flexible_gaps))
@@ -339,7 +339,7 @@ class VisibleInkComposition(unittest.TestCase):
         natural=compose(['𓅓'],result['column_width_mm'])
         # All available gaps are interior after closing the final ink edge.
         # N one-sign words therefore have N-1 distributable gaps; the final
-        # word's trailing 20%-height gap is removed, not enlarged.
+        # word's trailing column gap is removed, not enlarged.
         trailing=natural.flexible_gaps[-1]
         expected=(bottom-top-len(word_positions)*natural.height+trailing)/(len(word_positions)-1)
         self.assertGreater(expected,0.0)
