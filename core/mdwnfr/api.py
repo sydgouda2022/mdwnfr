@@ -26,6 +26,7 @@ def _discard_legacy_overlays(document: dict) -> None:
 def handle(request: dict) -> dict:
     name=request.get("method")
     if name=="session_open":
+        _discard_legacy_overlays(request["document"])
         return _document_session.open(request["document"])
     if name=="session_edit":
         return _document_session.edit(request["action"])
@@ -45,8 +46,10 @@ def handle(request: dict) -> dict:
         assert_document(restored)
         return {"document":restored}
     if name=="transact":
+        _discard_legacy_overlays(request["document"])
         return {"document":transaction(request["document"],request["action"])}
     if name=="layout_open":
+        _discard_legacy_overlays(request["document"])
         return _layout_document_session.open(request["document"], request.get("metrics"),
                                              request.get("summary_only", False))
     if name=="layout_sync":
@@ -60,6 +63,7 @@ def handle(request: dict) -> dict:
         return _layout_document_session.page(request["document_id"],
                                              request["revision"], request["index"])
     if name=="layout":
+        _discard_legacy_overlays(request["document"])
         layout, stats = _layout_session.calculate(request["document"], request.get("metrics"))
         return {"layout": layout, "layout_stats": stats}
     raise ValueError(f"Unknown RPC: {name}")
