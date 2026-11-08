@@ -22,39 +22,11 @@ class ImportDocumentTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             handle({"method":"import_document","document":doc})
 
-    def test_overlay_groups_use_adjacent_persistent_symbol_ids(self):
+    def test_legacy_overlay_metadata_is_ignored_on_import(self):
+        doc=new_document()
         item=word(["𓂝","𓎛"])
-        doc=new_document()
+        item["overlays"]=[{"symbols":item["symbol_ids"],"front":item["symbol_ids"][1]}]
         doc["items"]=[item]
-        updated=transaction(doc,{"op":"set_word_overlays","id":item["id"],
-            "overlays":[{"symbols":item["symbol_ids"],"front":item["symbol_ids"][1]}]})
-        self.assertEqual(updated["items"][0]["overlays"][0]["front"],item["symbol_ids"][1])
-        validate_word_record(updated["items"][0])
-
-    def test_disjoint_overlay_groups_survive_document_import(self):
-        item=word(["𓂝","𓎛","𓂝","𓎛"])
-        doc=new_document(direction="ltr")
-        doc["items"]=[item]
-        edited=transaction(doc,{"op":"set_word_overlays","id":item["id"],
-            "overlays":[
-                {"symbols":item["symbol_ids"][0:2],"front":item["symbol_ids"][1]},
-                {"symbols":item["symbol_ids"][2:4],"front":item["symbol_ids"][2]},
-            ]})
-        imported=handle({"method":"import_document","document":edited})["document"]
-        restored=imported["items"][0]
-        self.assertEqual(imported["direction"],"ltr")
-        self.assertEqual(restored["symbol_ids"],item["symbol_ids"])
-        self.assertEqual(restored["overlays"],edited["items"][0]["overlays"])
-        validate_word_record(restored)
-
-    def test_overlay_groups_reject_nonadjacent_symbols(self):
-        item=word(["𓂝","𓎛","𓀀"])
-        doc=new_document()
-        doc["items"]=[item]
-        with self.assertRaises(ValueError):
-            transaction(doc,{"op":"set_word_overlays","id":item["id"],
-                "overlays":[{"symbols":[item["symbol_ids"][0],item["symbol_ids"][2]],
-                             "front":item["symbol_ids"][0]}]})
-
-if __name__=="__main__":
-    unittest.main()
+        restored=import_document(export_document(doc))
+        self.assertEqual(restored["items"][0]["signs"],item["signs"])
+        self.assertNotIn("overlays",restored["items"][0])
