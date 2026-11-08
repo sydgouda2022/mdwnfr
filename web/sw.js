@@ -24,10 +24,19 @@ async function verifiedResponse(record) {
 async function reportInstallFailure(error) {
   const detail=String(error?.stack||error?.message||error);
   console.error('MdwNfr offline installation failed:',detail);
-  const clients=await self.clients.matchAll({type:'window',includeUncontrolled:true});
-  for(const client of clients)client.postMessage({
-    type:'mdwnfr-offline-install-error',message:detail
-  });
+  // Diagnostics must never mask the original install failure. Some test
+  // harnesses and older WebKit contexts expose only a partial Clients API.
+  try {
+    const clientsApi=self.clients;
+    if(typeof clientsApi?.matchAll!=='function')return;
+    const clients=await clientsApi.matchAll({type:'window',includeUncontrolled:true});
+    for(const client of clients)client.postMessage({
+      type:'mdwnfr-offline-install-error',message:detail
+    });
+  } catch(reportError) {
+    console.warn('Unable to notify clients about offline installation failure:',
+      String(reportError?.message||reportError));
+  }
 }
 
 self.addEventListener('install',event=>event.waitUntil((async()=>{
