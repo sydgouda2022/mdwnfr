@@ -11,6 +11,7 @@ for(const [label,engine] of engines){
  const profile=fs.mkdtempSync(path.join(os.tmpdir(),'mdwnfr-idb-'));
  let context=null;
  const pageErrors=[];
+ const consoleErrors=[];
  const launch=()=>engine.launchPersistentContext(profile,{
   headless:true,
   viewport:label==='chromium'?{width:390,height:844}:{width:1024,height:768},
@@ -60,7 +61,10 @@ for(const [label,engine] of engines){
       manifestAssets:publication?.assets?.length});
     }
     const notice=document.querySelector('#offline-notice');
-    return {controller:!!navigator.serviceWorker?.controller,
+    return {serviceWorkerSupported:'serviceWorker' in navigator,secureContext:isSecureContext,
+     bootDiagnostics:window.__mdwnfrServiceWorkerDiagnostics||null,
+     swResponse:await fetch('/sw.js').then(r=>({status:r.status,type:r.headers.get('content-type')})).catch(e=>({error:String(e)})),
+     pageConsoleErrors:window.__mdwnfrConsoleErrors||[],controller:!!navigator.serviceWorker?.controller,
      controllerScriptURL:navigator.serviceWorker?.controller?.scriptURL||null,
      registrationScope:registration?.scope||null,
      activeScriptURL:registration?.active?.scriptURL||null,
@@ -69,14 +73,14 @@ for(const [label,engine] of engines){
      online:navigator.onLine,noticeHidden:notice?.hidden,noticeText:notice?.textContent,
      libraryState:document.querySelector('#library-state')?.textContent,cachesInfo};
    });
-   throw new Error('Offline readiness failed: '+JSON.stringify(diagnostics)+'; '+error.message);
+   throw new Error('Offline readiness failed: '+JSON.stringify({...diagnostics,pageErrors,consoleErrors})+'; '+error.message);
   }
  };
  try{
   // A persistent browser profile is essential: a fresh incognito context would
   // not prove that IndexedDB survives an actual browser close/reopen.
   context=await launch();
-  context.on('page',page=>page.on('pageerror',error=>pageErrors.push(error.message)));
+  context.on('page',page=>{page.on('pageerror',error=>pageErrors.push(error.message));page.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text());});});
   const first=await context.newPage();
   await ready(first);
   const id='persistence-'+label;
