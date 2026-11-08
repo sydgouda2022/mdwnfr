@@ -330,7 +330,7 @@ def compose(signs:list[str],column_width:float,
             total=natural_heights[i]+natural_heights[i+1]
             widest=max(ratios[i]*available*natural_heights[i]/total,
                        ratios[i+1]*available*natural_heights[i+1]/total)
-            target=gap+available*width/widest
+            target=gap+available*(width-2*gap)/widest
             if target<width*.5:
                 return None
             result=fit(target)
