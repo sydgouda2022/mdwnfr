@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from math import ceil, isfinite
 from .quadrat import compose
+from .spacing import gap_for_column
 
 MAX_CARTOUCHE_WORDS = 48
 
@@ -56,10 +57,10 @@ def typeset_cartouche(obj: dict, sign_width: float, available_width: float,
     pad_cross=.22*sign_width+extra
     # Extra enclosure space does not scale or stretch document glyphs.
     pad_long=.85*sign_width+extra
-    gap=.15*sign_width
+    gap=gap_for_column(sign_width)
     if horizontal:
         word_width=sign_width
-        quadrats=[compose(w['signs'],word_width,metrics) for w in words]
+        quadrats=[compose(w['signs'],word_width,metrics,gap=gap) for w in words]
         natural_w=sum(q.width for q in quadrats)+gap*max(0,len(quadrats)-1)
         natural_h=max((q.height for q in quadrats),default=sign_width*.75)
         # Horizontal loop ends have semicircular crowns. At either end the
@@ -69,7 +70,7 @@ def typeset_cartouche(obj: dict, sign_width: float, available_width: float,
         required_h=natural_h+2*pad_cross
     else:
         word_width=sign_width
-        quadrats=[compose(w['signs'],word_width,metrics) for w in words]
+        quadrats=[compose(w['signs'],word_width,metrics,gap=gap) for w in words]
         natural_w=max((q.width for q in quadrats),default=word_width)
         natural_h=sum(q.height for q in quadrats)+gap*max(0,len(quadrats)-1)
         if not words:natural_h=sign_width*.75
@@ -82,7 +83,7 @@ def typeset_cartouche(obj: dict, sign_width: float, available_width: float,
     # Composition is solved at the final sign width, so the shape ratios remain
     # exact rather than scaling a stale glyph layout in the page renderer.
     content_width=round(word_width*scale,8)
-    quadrats=[compose(w['signs'],content_width,metrics) for w in words]
+    quadrats=[compose(w['signs'],content_width,metrics,gap=gap) for w in words]
     pad_cross*=scale;pad_long*=scale;gap*=scale
     if horizontal:
         inner_w=sum(q.width for q in quadrats)+gap*max(0,len(quadrats)-1)
@@ -115,7 +116,7 @@ def typeset_cartouche(obj: dict, sign_width: float, available_width: float,
     # is part of the same continuous stroke, but its reserved space remains
     # outside the loop so following page content does not reflow unexpectedly.
     stroke=round(max(.26,.045*sign_width*scale),5)
-    terminal_gap=max(.14*sign_width*scale,stroke*.8)
+    terminal_gap=max(gap*scale,stroke*.8)
     terminal_space=terminal_gap+stroke*1.8
     if horizontal:
         loop_w=cw;loop_h=ch;r=loop_h/2
