@@ -157,22 +157,14 @@ def _logical_auto_flip(owner:dict, logical_x:float, image_w:float,
     return _physical_auto_flip(owner,physical_x,page_w,direction,papyrus)
 
 
-def _overlay_pairs_for_word(item: dict) -> tuple[tuple[int,int,int], ...]:
-    positions={uid:index for index,uid in enumerate(item['symbol_ids'])}
-    return tuple((positions[o['symbols'][0]],positions[o['symbols'][1]],
-                  positions[o['front']] if o.get('front') else -1)
-                 for o in item.get('overlays',[]))
-
-
 @lru_cache(maxsize=32768)
 def _cached_quadrat(spelling: tuple[str, ...], width: float,
                     ratios: tuple[float, ...],
-                    overlay_pairs: tuple[tuple[int,int,int], ...] = (),
                     gap: float | None = None):
     # Using normalized outline ratios and the shared gap in the key prevents
     # stale geometry after either font metrics or column spacing changes.
     return compose(list(spelling), width, dict(zip(spelling, ratios)),
-                   overlay_pairs, gap=gap)
+                   gap=gap)
 
 
 def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
@@ -415,10 +407,9 @@ def _layout(doc: dict, glyph_metrics: dict | None,
 
     def quadrat_for(item):
         signs=tuple(item['signs'])
-        overlays=_overlay_pairs_for_word(item)
         ratios = tuple(_shape_ratio(sign, metrics) for sign in signs)
         before = _cached_quadrat.cache_info().misses
-        shape = _cached_quadrat(signs, width, ratios,overlays,gap)
+        shape = _cached_quadrat(signs, width, ratios,gap=gap)
         stats['composed_quadrats'] += _cached_quadrat.cache_info().misses - before
         return shape
 
@@ -1075,7 +1066,7 @@ def expand_compact_page(page: dict, document_by_id: dict[str, dict],
             signs = obj['signs']
             spelling = tuple(signs)
             ratios = tuple(_shape_ratio(sign, glyph_metrics) for sign in spelling)
-            source=_cached_quadrat(spelling,column_width,ratios,_overlay_pairs_for_word(obj))
+            source=_cached_quadrat(spelling,column_width,ratios)
             last_ink=(ident in column.get('sector_terminal_ids',())
                       or (column.get('terminal_gap_removed')
                           and entry_index==len(column['placements'])-1))
