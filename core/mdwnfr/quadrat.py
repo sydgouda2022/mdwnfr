@@ -10,7 +10,6 @@ from dataclasses import dataclass, asdict
 from functools import lru_cache
 from pathlib import Path
 from typing import Mapping
-from .spacing import gap_for_column
 import json, math
 
 DATA_PATH=Path(__file__).resolve().parent/'data'/'glyph_geometry.json'
@@ -21,6 +20,14 @@ COMPACT_BELOW_EXTENT_EM=.70
 QUADRAT_MIN_DIMENSION_EM=.70
 QUADRAT_REVIEW_MARGIN_EM=.07
 GROUP_HEIGHT_RATIO=.75
+
+
+def gap_for_column(column_width:float)->float:
+    """Return the shared default separation: exactly 10% of column width."""
+    if (type(column_width) not in (int,float) or
+            not math.isfinite(column_width) or column_width<=0):
+        raise ValueError('Column width must be a positive finite number')
+    return float(column_width)/10.0
 
 
 @dataclass(frozen=True)
