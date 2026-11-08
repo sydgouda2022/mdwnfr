@@ -13,7 +13,7 @@ const groups=[
 let chosen=null;
 for(const [tab,group] of groups){
   for(const sign of api.getSigns(group).map(item=>item.glyph)){
-    const candidate=api.predict(sign,{limit:80}).find(item=>
+    const candidate=api.predict(sign,{limit:8}).find(item=>
       item.source!=='RAMSES-CORPUS' && item.attested===true &&
       item.lexicalIdentityVerified===true && item.lexicon_ref &&
       [...item.text].length>1 && item.text.startsWith(sign));
