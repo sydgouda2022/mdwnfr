@@ -2701,30 +2701,6 @@ function selectedWholeWords(){
  const items=selectedItems();
  return items.length&&items.every(item=>item.type==='word')?items:[];
 }
-const overlayPairByWord=new Map();
-function overlayPairsForWord(word){
- if(!word||word.type!=='word')return [];
- const node=[...document.querySelectorAll('.word')].find(el=>el.dataset.id===word.id);
- const geometry=node&&renderedWordInk.get(node);
- if(!geometry||geometry.signs.length!==word.signs.length)return [];
- const classes=geometry.signs.map(g=>{
-  if(!(g.font_size>0))return 'invalid';
-  const w=g.width/g.font_size,h=g.height/g.font_size;
-  return w>=.70&&h>=.70?'square':h>=.70?'tall':w>=.70?'wide':'small';
- });
- const pairs=[];
- for(let i=0;i<classes.length-1;i++){
-  if(new Set([classes[i],classes[i+1]]).size===2&&
-     classes.slice(i,i+2).includes('tall')&&classes.slice(i,i+2).includes('wide'))
-   pairs.push({index:i,symbols:word.symbol_ids.slice(i,i+2)});
- }
- return pairs;
-}
-function selectedOverlayPair(word,pairs){
- if(!pairs.length)return null;
- const remembered=overlayPairByWord.get(word.id);
- return pairs.find(pair=>pair.index===remembered)||pairs[0];
-}
 function updateObjectQuickActions(){
  const available=!!doc&&!editorScreen.hidden&&!insertDraft&&!activePanel&&
   $('edit-menu').hidden;
@@ -2739,26 +2715,6 @@ function updateObjectQuickActions(){
  }
  if(words.length){
   $('word-action-edit').hidden=words.length!==1;
-  const pairs=words.length===1?overlayPairsForWord(words[0]):[];
-  const pair=words.length===1?selectedOverlayPair(words[0],pairs):null;
-  const overlay=pair?(words[0].overlays||[]).find(item=>
-   item.symbols[0]===pair.symbols[0]&&item.symbols[1]===pair.symbols[1]):null;
-  const pairPicker=$('word-action-pair');
-  pairPicker.hidden=pairs.length<2;
-  if(pairs.length>=2){
-   const options=pairs.map(item=>({value:String(item.index),label:(item.index+1)+'–'+(item.index+2)}));
-   pairPicker.replaceChildren(...options.map(item=>{
-    const option=document.createElement('option');option.value=item.value;
-    option.textContent=item.label;return option;
-   }));
-   pairPicker.value=String(pair.index);
-   pairPicker.setAttribute('aria-label','Choose adjacent signs to stack');
-  }
-  $('word-action-stack').hidden=!pair;
-  $('word-action-stack').textContent=overlay?'Unstack':'Stack';
-  $('word-action-stack').setAttribute('aria-label',
-   overlay?'Remove overlay from selected adjacent signs':'Stack selected adjacent signs');
-  $('word-action-reverse').hidden=!overlay;
   $('word-action-bold').setAttribute('aria-pressed',
    String(words.every(word=>word.bold)));
   $('word-action-black').setAttribute('aria-pressed',
@@ -2780,45 +2736,6 @@ $('object-action-delete').onclick=async()=>{
 $('word-action-edit').onclick=()=>{
  const words=selectedWholeWords();
  if(words.length===1&&!insertDraft)openWord(words[0].id);
-};
-$('word-action-pair').onchange=e=>{
- const words=selectedWholeWords();if(words.length!==1)return;
- const index=Number(e.target.value);
- if(Number.isInteger(index))overlayPairByWord.set(words[0].id,index);
- updateObjectQuickActions();
-};
-$('word-action-stack').onclick=async()=>{
- const words=selectedWholeWords();
- if(words.length!==1||insertDraft)return;
- const target=words[0],pair=selectedOverlayPair(target,overlayPairsForWord(target));
- if(!pair)return;
- const current=target.overlays||[];
- const exists=current.some(item=>item.symbols[0]===pair.symbols[0]&&
-  item.symbols[1]===pair.symbols[1]);
- const overlays=exists?current.filter(item=>item!==current.find(entry=>
-  entry.symbols[0]===pair.symbols[0]&&entry.symbols[1]===pair.symbols[1])):
-  [...current,{symbols:pair.symbols.slice(),front:null}];
- await apply({op:'set_word_overlays',id:target.id,overlays});
-};
-$('word-action-reverse').onclick=async()=>{
- const words=selectedWholeWords();
- if(words.length!==1||insertDraft)return;
- const target=words[0],pair=selectedOverlayPair(target,overlayPairsForWord(target));
- if(!pair)return;
- const overlay=(target.overlays||[]).find(item=>
-  item.symbols[0]===pair.symbols[0]&&item.symbols[1]===pair.symbols[1]);
- if(!overlay)return;
- let front=overlay.front;
- if(!front){
-  const node=[...document.querySelectorAll('.word')].find(el=>el.dataset.id===target.id);
-  const geometry=node&&renderedWordInk.get(node);
-  front=geometry?.signs.find(g=>g.id===overlay.symbols[1])?.paint_order===1?
-   overlay.symbols[1]:overlay.symbols[0];
- }
- const next=overlay.symbols.find(id=>id!==front);
- if(next)await apply({op:'set_word_overlays',id:target.id,
-  overlays:(target.overlays||[]).map(item=>item===overlay?
-   {...item,front:next}:item)});
 };
 $('word-action-bold').onclick=()=>{
  const words=selectedWholeWords();
