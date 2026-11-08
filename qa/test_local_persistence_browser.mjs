@@ -73,6 +73,12 @@ for(const [label,engine] of engines){
   },id);
   assert.equal(committed.revision,1);
   assert.ok(['tab-one','tab-two'].includes(committed.marker));
+  const indexed=await first.evaluate(async()=>{
+   const storage=await import('/storage.js');
+   return storage.list();
+  });
+  assert.equal(indexed.find(entry=>entry.id===id)?.revision,1,
+   'The document index must commit with the winning document revision');
   await context.close();context=null;
 
   // Reopen the SAME browser profile with networking disabled. The installed
