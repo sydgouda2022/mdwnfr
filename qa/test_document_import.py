@@ -27,6 +27,6 @@ class ImportDocumentTests(unittest.TestCase):
         item=word(["𓂝","𓎛"])
         item["overlays"]=[{"symbols":item["symbol_ids"],"front":item["symbol_ids"][1]}]
         doc["items"]=[item]
-        restored=import_document(export_document(doc))
+        restored=handle({"method":"import_document","document":doc})["document"]
         self.assertEqual(restored["items"][0]["signs"],item["signs"])
         self.assertNotIn("overlays",restored["items"][0])
