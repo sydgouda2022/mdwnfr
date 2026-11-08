@@ -119,7 +119,7 @@ class QuadratWorkflowTests(unittest.TestCase):
                 boxes=shape['signs']
                 self.assertGreater(max(b['y'] for b in boxes),
                                    min(b['y'] for b in boxes))
-                self.assertTrue(all(b['x']>=0 and b['x']+b['width']<=20.00001
+                self.assertTrue(all(b['x']>=2-1e-7 and b['x']+b['width']<=18+1e-7
                                     for b in boxes))
                 self.assertTrue(all(b['y']>=0 and
                                     b['y']+b['height']<=shape['height']+1e-5
