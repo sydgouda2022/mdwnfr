@@ -203,7 +203,6 @@ def _shape_ratio(sign:str,glyph_metrics:Mapping[str,object]|None=None)->float:
 
 def compose(signs:list[str],column_width:float,
             glyph_metrics:Mapping[str,object]|None=None,
-            overlay_pairs:tuple[tuple[int,int,int],...]=(),
             gap:float|None=None)->Quadrat:
     if (not signs or not isinstance(column_width,(int,float)) or
         not math.isfinite(column_width) or column_width<=0):
@@ -212,7 +211,6 @@ def compose(signs:list[str],column_width:float,
     bounds=glyph_geometry()
     ink_scans=glyph_scanlines()
     optics=glyph_optical_factors()
-    profiles=glyph_profiles()
     ratios=[_shape_ratio(s,glyph_metrics) for s in signs]
     natural_heights=[bounds[s][3]-bounds[s][1] for s in signs]
     natural_extents=[max(bounds[s][2]-bounds[s][0],
@@ -222,19 +220,6 @@ def compose(signs:list[str],column_width:float,
     gap=expected_gap if gap is None else float(gap)
     if not math.isclose(gap,expected_gap,rel_tol=1e-10,abs_tol=1e-10):
         raise ValueError('Layout gap must equal 10% of the active column width')
-    overlay_map={}
-    overlay_members=set()
-    for first,second,front in overlay_pairs:
-        if (type(first) is not int or type(second) is not int or
-            type(front) is not int or second!=first+1 or
-            first<0 or second>=len(signs) or front not in (-1,first,second) or
-            first in overlay_members or second in overlay_members):
-            raise ValueError('Invalid explicit overlay group')
-        if {profiles[signs[first]]['quadrat_class'],
-            profiles[signs[second]]['quadrat_class']}!={'tall','wide'}:
-            raise ValueError('Centered overlay currently requires one tall and one wide sign')
-        overlay_map[first]=(second,front)
-        overlay_members.update((first,second))
 
     # Keep the existing optically corrected standalone presentation.
     # Small signs are permitted to stand alone and grow proportionally.
@@ -336,32 +321,6 @@ def compose(signs:list[str],column_width:float,
             result=fit(target)
         return result
 
-    @lru_cache(maxsize=None)
-    def overlay_pair(i:int):
-        """Centered U+13436 overlay requested explicitly by the document."""
-        if i not in overlay_map:
-            return None
-        second,_front=overlay_map[i]
-        indices=(i,second)
-        if {profiles[signs[j]]['quadrat_class'] for j in indices}!={'tall','wide'}:
-            return None
-        natural_widths=tuple(ratios[j]*natural_heights[j] for j in indices)
-        composite_width=max(natural_widths)
-        composite_height=max(natural_heights[j] for j in indices)
-        if composite_width<=0 or composite_height<=0:
-            return None
-        scale=min(width/composite_width,width*GROUP_HEIGHT_RATIO/composite_height)
-        if not math.isfinite(scale) or scale<=0:
-            return None
-        row_width=composite_width*scale
-        row_height=composite_height*scale
-        left=(width-row_width)/2
-        boxes=[]
-        for j,natural_w,natural_h in zip(indices,natural_widths,
-                                          (natural_heights[x] for x in indices)):
-            w,h=natural_w*scale,natural_h*scale
-            boxes.append((j,left+(row_width-w)/2,(row_height-h)/2,w,h))
-        return row_height,tuple(boxes)
 
     @lru_cache(maxsize=None)
     def small_grid(i:int,count:int):
@@ -501,7 +460,6 @@ def compose(signs:list[str],column_width:float,
                   *single_dimensions(index)),))),
             (2,horizontal(index)),
             (2,vertical_pair(index)),
-            (2,overlay_pair(index)),
             (3,small_grid(index,3)),
             (4,small_grid(index,4)),
             (3,tall_stack(index))):
@@ -529,21 +487,12 @@ def compose(signs:list[str],column_width:float,
     categories=None
     y=0.0
     for row_indices,(row_height,positions),row_gap in zip(rows,layouts,gaps):
-        paint_rank={index:0 for index in row_indices}
-        if len(row_indices)==2 and row_indices[0] in overlay_map:
-            second,front=overlay_map[row_indices[0]]
-            if front==-1:
-                if categories is None:categories=glyph_categories()
-                front=max(row_indices,key=lambda j:(categories[signs[j]],ord(signs[j])))
-            back=second if front==row_indices[0] else row_indices[0]
-            paint_rank[back]=0
-            paint_rank[front]=1
         for index,x,dy,w,h in positions:
             ink_y=y+dy
             left,bottom,right,top=bounds[signs[index]]
             em=h/(top-bottom)
             placed[index]=SignBox(signs[index],x,ink_y,w,h,em,
-                                   x-left*em,ink_y+top*em,paint_rank[index])
+                                   x-left*em,ink_y+top*em,0)
         y+=row_height+row_gap
     return Quadrat(width,y,tuple(placed),tuple(rows),tuple(gaps))
 
