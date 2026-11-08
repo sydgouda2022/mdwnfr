@@ -71,6 +71,16 @@ class VisibleInkComposition(unittest.TestCase):
         self.assertEqual(data['font_sha256'],
                          'b792accc6207ca9caa59fc67f53926b6985a99d255dd432d7c68b68a6dfd62f8')
 
+    def test_one_shared_gap_is_ten_percent_of_column_width(self):
+        from mdwnfr.spacing import gap_for_column
+        from mdwnfr.layout import object_clearance_mm
+        for width in (6.0,20.0,41.5):
+            gap=gap_for_column(width)
+            near(self,gap,width/10.0)
+            near(self,object_clearance_mm(width),gap)
+            shape=compose(['𓅓'],width)
+            near(self,shape.flexible_gaps[-1],gap)
+
     def test_owl_uses_one_row_and_half_width_margins(self):
         q=compose(list('𓅓'),C)
         self.assertEqual(q.rows,((0,),))
