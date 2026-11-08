@@ -64,7 +64,7 @@ for(const [label,engine] of engines){
     return {serviceWorkerSupported:'serviceWorker' in navigator,secureContext:isSecureContext,
      bootDiagnostics:window.__mdwnfrServiceWorkerDiagnostics||null,
      swResponse:await fetch('/sw.js').then(r=>({status:r.status,type:r.headers.get('content-type')})).catch(e=>({error:String(e)})),
-     pageConsoleErrors:window.__mdwnfrConsoleErrors||[],controller:!!navigator.serviceWorker?.controller,
+     pageConsoleErrors:window.__mdwnfrConsoleErrors||[],serviceWorkerMessages:window.__mdwnfrServiceWorkerMessages||[],controller:!!navigator.serviceWorker?.controller,
      controllerScriptURL:navigator.serviceWorker?.controller?.scriptURL||null,
      registrationScope:registration?.scope||null,
      activeScriptURL:registration?.active?.scriptURL||null,
@@ -80,6 +80,12 @@ for(const [label,engine] of engines){
   // A persistent browser profile is essential: a fresh incognito context would
   // not prove that IndexedDB survives an actual browser close/reopen.
   context=await launch();
+  await context.addInitScript(()=>{
+   window.__mdwnfrServiceWorkerMessages=[];
+   if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',event=>{
+    window.__mdwnfrServiceWorkerMessages.push(event.data);
+   });
+  });
   context.on('page',page=>{page.on('pageerror',error=>pageErrors.push(error.message));page.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text());});});
   const first=await context.newPage();
   await ready(first);
