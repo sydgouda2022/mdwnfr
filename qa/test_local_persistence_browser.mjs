@@ -27,8 +27,20 @@ for(const [label,engine] of engines){
    const registration=await navigator.serviceWorker?.getRegistration();
    return registration?.active?.state==='activated';
   },null,{timeout:90000});
-  if(!await page.evaluate(()=>!!navigator.serviceWorker?.controller)){
+  // Activation and control are separate lifecycle milestones. Wait for the
+  // controllerchange event explicitly; a resolved registration.ready promise
+  // alone does not prove that this document is controlled.
+  const waitForController=()=>page.evaluate(()=>new Promise(resolve=>{
+   if(navigator.serviceWorker?.controller){resolve(true);return;}
+   if(!navigator.serviceWorker){resolve(false);return;}
+   const timer=setTimeout(()=>resolve(false),15000);
+   navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    clearTimeout(timer);resolve(!!navigator.serviceWorker.controller);
+   },{once:true});
+  }));
+  if(!await waitForController()){
    await page.reload({waitUntil:'domcontentloaded'});
+   await waitForController();
   }
   try{
    await page.waitForFunction(()=>!!navigator.serviceWorker?.controller&&
@@ -49,7 +61,11 @@ for(const [label,engine] of engines){
     }
     const notice=document.querySelector('#offline-notice');
     return {controller:!!navigator.serviceWorker?.controller,
+     controllerScriptURL:navigator.serviceWorker?.controller?.scriptURL||null,
+     registrationScope:registration?.scope||null,
+     activeScriptURL:registration?.active?.scriptURL||null,
      workerState:registration?.active?.state,installingState:registration?.installing?.state,
+     waitingState:registration?.waiting?.state||null,
      online:navigator.onLine,noticeHidden:notice?.hidden,noticeText:notice?.textContent,
      libraryState:document.querySelector('#library-state')?.textContent,cachesInfo};
    });
