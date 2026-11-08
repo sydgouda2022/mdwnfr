@@ -180,7 +180,6 @@ def typeset_table(obj:dict, sign_width:float, width_mm:float, usable_height:floa
                   metrics:dict|None=None, direction:str='rtl') -> dict:
     """One authoritative nested compositor, using the normal word quadrats."""
     from .quadrat import compose, _shape_ratio
-    from .spacing import gap_for_column
     from .document import symbol_ids_for_word
     values=evaluate_table(obj)
     ncols=len(obj['rows'][0]); nrows=len(obj['rows'])
@@ -216,8 +215,7 @@ def typeset_table(obj:dict, sign_width:float, width_mm:float, usable_height:floa
                 ratios={s:_shape_ratio(s,metrics or {}) for s in signs}
                 # Cells inherit the document's glyph scale. A wide
                 # table cell increases whitespace, not the hieroglyph font.
-                q=compose(signs,min(sign_width,each-2*padding),ratios,
-                           gap=gap_for_column(sign_width))
+                q=compose(signs,min(sign_width,each-2*padding),ratios)
                 quad=q.payload()
                 for glyph,uid in zip(quad['signs'],atom_ids):
                     glyph['id']=uid
