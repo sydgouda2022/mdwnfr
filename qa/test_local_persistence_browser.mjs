@@ -20,9 +20,41 @@ for(const [label,engine] of engines){
   await page.goto(origin,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.querySelector('#create-document')?.disabled===false,
    null,{timeout:180000});
-  await page.waitForFunction(()=>!!navigator.serviceWorker?.controller&&
-   document.querySelector('#offline-notice')?.hidden===true,
-   null,{timeout:90000});
+  // WebKit may finish installing/activating the worker after the first
+  // navigation without assigning it as this page's controller. Wait for an
+  // activated registration, then perform a real controlled navigation.
+  await page.waitForFunction(async()=>{
+   const registration=await navigator.serviceWorker?.getRegistration();
+   return registration?.active?.state==='activated';
+  },null,{timeout:90000});
+  if(!await page.evaluate(()=>!!navigator.serviceWorker?.controller)){
+   await page.reload({waitUntil:'domcontentloaded'});
+  }
+  try{
+   await page.waitForFunction(()=>!!navigator.serviceWorker?.controller&&
+    document.querySelector('#offline-notice')?.hidden===true,
+    null,{timeout:90000});
+  }catch(error){
+   const diagnostics=await page.evaluate(async()=>{
+    const registration=await navigator.serviceWorker?.getRegistration();
+    const names=await caches.keys();
+    const cachesInfo=[];
+    for(const name of names){
+     const cache=await caches.open(name);
+     const keys=await cache.keys();
+     const manifest=await cache.match('/offline-assets.json');
+     const publication=manifest?await manifest.json().catch(()=>null):null;
+     cachesInfo.push({name,keyCount:keys.length,manifestComplete:publication?.complete,
+      manifestAssets:publication?.assets?.length});
+    }
+    const notice=document.querySelector('#offline-notice');
+    return {controller:!!navigator.serviceWorker?.controller,
+     workerState:registration?.active?.state,installingState:registration?.installing?.state,
+     online:navigator.onLine,noticeHidden:notice?.hidden,noticeText:notice?.textContent,
+     libraryState:document.querySelector('#library-state')?.textContent,cachesInfo};
+   });
+   throw new Error('Offline readiness failed: '+JSON.stringify(diagnostics)+'; '+error.message);
+  }
  };
  try{
   // A persistent browser profile is essential: a fresh incognito context would
