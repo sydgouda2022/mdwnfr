@@ -49,9 +49,15 @@ async function boot() {
           }
         }catch(_){}
       }
-      if(coherent)void registration.update().catch(()=>{});
-      else{
-       await registration.update().catch(error=>{updateError=error;});
+      if(coherent){
+        // Updating an already active registration is safe in WebKit. On the
+        // first install, however, update() may reject while the registration
+        // has no active worker yet; register() has already started installation.
+        void registration.update().catch(error=>{swDiagnostics.updateError=String(error?.stack||error);});
+      }else{
+       if(registration.active){
+        await registration.update().catch(error=>{updateError=error;});
+       }
        await activate(registration.installing||registration.waiting||registration.active);
       }
     }catch(error){updateError=error;swDiagnostics.registrationError=String(error?.stack||error);}
