@@ -79,7 +79,7 @@ class VisibleInkComposition(unittest.TestCase):
         near(self,s.x,(C-s.width)/2)
         near(self,C-s.x-s.width,(C-s.width)/2)
         near(self,s.y,0.0)
-        near(self,q.height-s.y-s.height,s.height*.20)
+        near(self,q.height-s.y-s.height,C*.1)
         near(self,q.height,s.height+C*.1)
         self.assertEqual(len(q.flexible_gaps),1)
 
@@ -216,13 +216,13 @@ class VisibleInkComposition(unittest.TestCase):
             near(self,g.width,min(3*C/4,target*glyph_optical_factors()[sign]))
             self.assertGreaterEqual(g.width,C/2)
             self.assertLessEqual(g.width,3*C/4)
-            near(self,q.height,1.2*g.height)
+            near(self,q.height,g.height+C*.1)
 
     def test_ultranarrow_stroke_has_bounded_height(self):
         q=compose(list('𓏺'),C)
         self.assertEqual(q.rows,((0,),))
         self.assertLessEqual(q.signs[0].height,C+1e-8)
-        near(self,q.height,1.2*q.signs[0].height)
+        near(self,q.height,q.signs[0].height+C*.1)
         self.assertLessEqual(q.signs[0].height,C+1e-8)
         self.assertGreaterEqual(q.signs[0].x,0)
         self.assertLessEqual(q.signs[0].x+q.signs[0].width,C+1e-8)
