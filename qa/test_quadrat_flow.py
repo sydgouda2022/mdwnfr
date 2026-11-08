@@ -131,11 +131,11 @@ class QuadratWorkflowTests(unittest.TestCase):
                         if x_overlap>0:
                             vertical_gap=max(b['y']-(a['y']+a['height']),
                                              a['y']-(b['y']+b['height']))
-                            self.assertGreaterEqual(vertical_gap,0.999)
+                            self.assertGreaterEqual(vertical_gap,1.999)
                         elif y_overlap>0:
                             horizontal_gap=max(b['x']-(a['x']+a['width']),
                                                a['x']-(b['x']+b['width']))
-                            self.assertGreaterEqual(horizontal_gap,0.999)
+                            self.assertGreaterEqual(horizontal_gap,1.999)
 
     def test_navigation_preview_is_bounded_and_grounded_in_layout(self):
         doc=new_document('Geometry-driven pages')
