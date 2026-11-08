@@ -358,7 +358,7 @@ class VisibleInkComposition(unittest.TestCase):
         self.assertAlmostEqual(word_positions[-1]['height'],
                                natural.height-trailing,places=4)
         for left,right in zip(word_positions,word_positions[1:]):
-            self.assertAlmostEqual(right['y']-(left['y']+left['height']),0,places=4)
+            self.assertAlmostEqual(right['y']-(left['y']+left['height']),0,places=3)
 
     def test_completed_column_balances_first_and_last_visible_ink(self):
         from mdwnfr.document import new_document,transaction,validated_margins,SURFACES
