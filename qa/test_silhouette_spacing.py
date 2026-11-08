@@ -118,6 +118,8 @@ class VisibleInkComposition(unittest.TestCase):
         a,b=q.signs
         near(self,a.height,b.height)
         self.assertGreaterEqual(b.x-a.x-a.width,C*.10-1e-7)
+        self.assertGreaterEqual(a.x,C*.10-1e-7)
+        self.assertLessEqual(b.x+b.width,C-C*.10+1e-7)
         near(self,a.y,0.0)
         near(self,q.height-(a.y+a.height),C*.10)
         near(self,q.height,a.height+C*.1)
@@ -183,6 +185,8 @@ class VisibleInkComposition(unittest.TestCase):
         a,b=q.signs
         self.assertLess(a.x,b.x)
         self.assertGreaterEqual(b.x-a.x-a.width,20*.10-1e-7)
+        self.assertGreaterEqual(a.x,2-1e-7)
+        self.assertLessEqual(b.x+b.width,18+1e-7)
         self.assertGreater(a.height,b.height)  # Natural relative size is retained.
 
     def test_wide_normal_signs_remain_sequential_without_forced_pair(self):
