@@ -211,6 +211,7 @@ def compose(signs:list[str],column_width:float,
     bounds=glyph_geometry()
     ink_scans=glyph_scanlines()
     optics=glyph_optical_factors()
+    profiles=glyph_profiles()
     ratios=[_shape_ratio(s,glyph_metrics) for s in signs]
     natural_heights=[bounds[s][3]-bounds[s][1] for s in signs]
     natural_extents=[max(bounds[s][2]-bounds[s][0],
