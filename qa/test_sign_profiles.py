@@ -117,8 +117,8 @@ class SignShapeSizeProfiles(unittest.TestCase):
                 "from mdwnfr.quadrat import compose,glyph_profiles;"
                 "a,b,c=compose(['𓇋','𓊪','𓊪'],20).signs;"
                 "assert abs(a.height-15)<1e-6;"
-                "assert abs(b.height-7)<1e-6;"
-                "assert abs(c.height-7)<1e-6;"
+                "assert abs(b.height-6.5)<1e-6;"
+                "assert abs(c.height-6.5)<1e-6;"
                 "assert len(glyph_profiles())==1072"
             )
             environment={**os.environ,"PYTHONPATH":temp}

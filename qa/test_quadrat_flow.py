@@ -7,9 +7,10 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'core'))
 from mdwnfr.api import handle_json
-from mdwnfr.document import new_document, transaction, assert_document, DocumentError
+from mdwnfr.document import new_document, transaction, assert_document, DocumentError, word
+from mdwnfr.session import DocumentSession
 from copy import deepcopy
-from mdwnfr.quadrat import compose, glyph_profiles
+from mdwnfr.quadrat import compose, glyph_profiles, glyph_categories
 from mdwnfr.layout import layout_document
 from mdwnfr.layout_sync import summarize_layout
 
@@ -39,6 +40,15 @@ class QuadratWorkflowTests(unittest.TestCase):
         self.assertAlmostEqual(first['x']+first['width']/2,10,places=5)
         self.assertAlmostEqual(second['x']+second['width']/2,10,places=5)
 
+    def test_overlay_commands_are_not_part_of_the_document_model(self):
+        document=new_document()
+        target=word(['𓂝','𓎛'])
+        document['items']=[target]
+        self.assertNotIn('overlays',target)
+        with self.assertRaises(ValueError):
+            transaction(document,{'op':'set_word_overlays','id':target['id'],
+                                  'overlays':[]})
+
     def test_three_and_four_small_signs_use_compact_two_by_two_patterns(self):
         small=[s for s,p in glyph_profiles().items()
                if p['quadrat_class']=='small']
@@ -50,7 +60,7 @@ class QuadratWorkflowTests(unittest.TestCase):
                 boxes=shape['signs']
                 self.assertGreater(max(b['y'] for b in boxes),
                                    min(b['y'] for b in boxes))
-                self.assertTrue(all(b['x']>=0 and b['x']+b['width']<=20.00001
+                self.assertTrue(all(b['x']>=2-1e-7 and b['x']+b['width']<=18+1e-7
                                     for b in boxes))
                 self.assertTrue(all(b['y']>=0 and
                                     b['y']+b['height']<=shape['height']+1e-5
@@ -62,11 +72,11 @@ class QuadratWorkflowTests(unittest.TestCase):
                         if x_overlap>0:
                             vertical_gap=max(b['y']-(a['y']+a['height']),
                                              a['y']-(b['y']+b['height']))
-                            self.assertGreaterEqual(vertical_gap,0.999)
+                            self.assertGreaterEqual(vertical_gap,1.999)
                         elif y_overlap>0:
                             horizontal_gap=max(b['x']-(a['x']+a['width']),
                                                a['x']-(b['x']+b['width']))
-                            self.assertGreaterEqual(horizontal_gap,0.999)
+                            self.assertGreaterEqual(horizontal_gap,1.999)
 
     def test_navigation_preview_is_bounded_and_grounded_in_layout(self):
         doc=new_document('Geometry-driven pages')

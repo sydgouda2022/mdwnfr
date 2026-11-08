@@ -78,11 +78,11 @@ The compositor currently supports:
 2. Two consecutive signs sharing a horizontal row when the class rules and actual measured silhouettes permit it.
 3. A normal tall host beside two small or wide companions stacked vertically; the companions are proportionally sized to fill the host's height.
 
-Every candidate preserves input order, visible aspect ratio and measured ink clearance. Internal clearance is 5% of column width. The separate natural gap after a finished row is 20% of that row's visible height.
+Every candidate preserves input order, visible aspect ratio and measured ink clearance. All default separations use the same `gap = column_width / 10`, including internal horizontal/vertical spacing and the gap after a finished row.
 
 These three automatic patterns are an intentionally limited implementation, **not a complete model of all historically attested hieroglyphic grouping**. The scholarly literature also describes insertion, more general stacking, connecting, combining and kerning. Those require separate design decisions and evidence-based rules before being added to automatic layout.
 
-For a 20 mm column, M17 + Q3 + Q3 uses a 15 mm host, two 7 mm-high Q3 signs, and a 1 mm internal gap (5% of column width). The top and bottom of the stacked Q3 group align with the host.
+For a 20 mm column, M17 + Q3 + Q3 uses a 15 mm host, two 6.5 mm-high Q3 signs, and a 2 mm internal gap (10% of column width). The top and bottom of the stacked Q3 group align with the host.
 
 To run the composition regression suite:
 

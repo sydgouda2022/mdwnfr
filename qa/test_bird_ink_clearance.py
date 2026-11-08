@@ -2,7 +2,7 @@
 
 These are final-page, post-justification invariants for Horus/Bennu, not
 tests of the intermediate anchor solver. Actual catalogue masks, physical
-position, glyph rectangles, RTL facing and quarter-column clearance are used.
+position, glyph rectangles, RTL facing and shared 10%-of-column clearance are used.
 """
 import unittest
 from copy import deepcopy

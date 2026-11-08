@@ -23,7 +23,7 @@ for(const [label,engine,width,height] of [
   await page.locator('#create-document').click();
   await page.locator('#editor-screen').waitFor({state:'visible'});
   await page.evaluate(()=>{
-   const dt=new DataTransfer();dt.setData('text/plain','𓅓𓏏 𓈖 𓂋');
+   const dt=new DataTransfer();dt.setData('text/plain','𓂝𓎛 𓈖 𓂋 𓂝𓎛𓂝𓎛');
    document.dispatchEvent(new ClipboardEvent('paste',{
     clipboardData:dt,bubbles:true,cancelable:true
    }));
@@ -34,7 +34,7 @@ for(const [label,engine,width,height] of [
    await page.waitForFunction(n=>document.querySelectorAll('.word').length===n,
     n,{timeout:90000});
   };
-  await count(3);
+  await count(4);
   await page.locator('.word').first().click();
   const bar=page.locator('#word-quick-actions');
   await bar.waitFor({state:'visible'});
@@ -44,6 +44,11 @@ for(const [label,engine,width,height] of [
    'No object-toolbar duplication for words');
   assert.equal(await page.locator('#format-panel').isVisible(),false,
    'Selecting a quadrat must not open desktop-like Format');
+
+  assert.equal(await page.locator('#word-action-stack').count(),0,
+   'The editor must not expose any glyph overlay action');
+  assert.equal(await page.locator('#word-action-reverse').count(),0,
+   'The editor must not expose overlay paint-order controls');
 
   // Touch-only range selection cannot depend on desktop Shift+click.
   // Deliver the same long-press pointer events WebKit/Chromium dispatch:
@@ -159,11 +164,14 @@ for(const [label,engine,width,height] of [
   assert.equal(await page.locator('#word-action-edit').isVisible(),false);
   await page.locator('#word-action-copy').click();
   await page.locator('#word-action-delete').click();
-  await count(1);
+  await count(2);
   assert.equal(await bar.isVisible(),false,
    'The action strip must vanish after deletion');
   await page.keyboard.press('Control+z');
-  await count(3);
+  await count(4);
+
+  assert.equal(await page.locator('#word-action-pair').count(),0,
+   'The editor must not expose a pair picker for glyph overlap');
 
   await page.locator('.word').first().click();
   await bar.waitFor({state:'visible'});

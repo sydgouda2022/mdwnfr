@@ -255,8 +255,9 @@ def replace_nested_word(existing: dict | None, signs: list[str]) -> dict:
     glyphs=validate_signs(signs)
     if existing is None:
         return word(glyphs)
+    new_ids=reconcile_symbol_ids(existing,glyphs)
     return {**existing, 'signs':glyphs,
-            'symbol_ids':reconcile_symbol_ids(existing,glyphs),
+            'symbol_ids':new_ids,
             'lexicon_ref':existing.get('lexicon_ref') if existing['signs']==glyphs else None}
 
 

@@ -12,9 +12,21 @@ _layout_session = LayoutSession()
 _document_session = DocumentSession()
 _layout_document_session = LayoutDocumentSession()
 
+def _discard_legacy_overlays(document: dict) -> None:
+    """Drop obsolete overlap metadata when importing older saved documents."""
+    def clean(items):
+        for item in items:
+            if item.get("type")=="word":
+                item.pop("overlays",None)
+            elif item.get("type")=="cartouche":
+                clean(item.get("items",[]))
+    clean(document.get("items",[]))
+
+
 def handle(request: dict) -> dict:
     name=request.get("method")
     if name=="session_open":
+        _discard_legacy_overlays(request["document"])
         return _document_session.open(request["document"])
     if name=="session_edit":
         return _document_session.edit(request["action"])
@@ -27,14 +39,17 @@ def handle(request: dict) -> dict:
         incoming=request["document"]
         assert_document(incoming)
         restored=deepcopy(incoming)
+        _discard_legacy_overlays(restored)
         restored["id"]=fresh_id()
         restored["revision"]=0
         restored["name"]=(incoming["name"][:109]+" (imported)")[:120]
         assert_document(restored)
         return {"document":restored}
     if name=="transact":
+        _discard_legacy_overlays(request["document"])
         return {"document":transaction(request["document"],request["action"])}
     if name=="layout_open":
+        _discard_legacy_overlays(request["document"])
         return _layout_document_session.open(request["document"], request.get("metrics"),
                                              request.get("summary_only", False))
     if name=="layout_sync":
@@ -48,6 +63,7 @@ def handle(request: dict) -> dict:
         return _layout_document_session.page(request["document_id"],
                                              request["revision"], request["index"])
     if name=="layout":
+        _discard_legacy_overlays(request["document"])
         layout, stats = _layout_session.calculate(request["document"], request.get("metrics"))
         return {"layout": layout, "layout_stats": stats}
     raise ValueError(f"Unknown RPC: {name}")

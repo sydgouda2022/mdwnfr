@@ -38,7 +38,7 @@ class SpatialIndexParity(unittest.TestCase):
         rng = random.Random(414)
         for _ in range(350):
             width = rng.uniform(5, 30)
-            clearance = width / 4
+            clearance = width / 10
             index = {}
             for slot in range(rng.randrange(1, 60)):
                 glyphs = []

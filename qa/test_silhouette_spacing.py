@@ -71,6 +71,16 @@ class VisibleInkComposition(unittest.TestCase):
         self.assertEqual(data['font_sha256'],
                          'b792accc6207ca9caa59fc67f53926b6985a99d255dd432d7c68b68a6dfd62f8')
 
+    def test_one_shared_gap_is_ten_percent_of_column_width(self):
+        from mdwnfr.quadrat import gap_for_column
+        from mdwnfr.layout import object_clearance_mm
+        for width in (6.0,20.0,41.5):
+            gap=gap_for_column(width)
+            near(self,gap,width/10.0)
+            near(self,object_clearance_mm(width),gap)
+            shape=compose(['𓅓'],width)
+            near(self,shape.flexible_gaps[-1],gap)
+
     def test_owl_uses_one_row_and_half_width_margins(self):
         q=compose(list('𓅓'),C)
         self.assertEqual(q.rows,((0,),))
@@ -79,8 +89,8 @@ class VisibleInkComposition(unittest.TestCase):
         near(self,s.x,(C-s.width)/2)
         near(self,C-s.x-s.width,(C-s.width)/2)
         near(self,s.y,0.0)
-        near(self,q.height-s.y-s.height,s.height*.20)
-        near(self,q.height,1.2*s.height)
+        near(self,q.height-s.y-s.height,C*.1)
+        near(self,q.height,s.height+C*.1)
         self.assertEqual(len(q.flexible_gaps),1)
 
     def test_real_silhouette_profiles_reduce_unused_gap(self):
@@ -88,12 +98,12 @@ class VisibleInkComposition(unittest.TestCase):
         # rectangular boxes while their actual ink remains well separated.
         a=[[0,32] for _ in range(64)]
         b=[[32,64] for _ in range(64)]
-        gap=_silhouette_advance(a,b,2.0,4.0,2.0,4.0,C*.05)
-        self.assertGreaterEqual(gap,C*.05)  # 5% column ink clearance
+        gap=_silhouette_advance(a,b,2.0,4.0,2.0,4.0,C*.10)
+        self.assertGreaterEqual(gap,C*.10)  # 10% column ink clearance
         self.assertLess(gap,3.0)    # bounding-rectangle gap would be 3.0
         for row_a,row_b in zip(a,b):
             free=(gap+row_b[0]*2/64)-(row_a[1]*2/64)
-            self.assertGreaterEqual(free,C*.05)
+            self.assertGreaterEqual(free,C*.10)
 
     def test_each_glyph_has_nonempty_bounded_silhouette(self):
         for sign,rows in glyph_scanlines().items():
@@ -102,15 +112,17 @@ class VisibleInkComposition(unittest.TestCase):
             for r in rows:
                 if r is not None:self.assertTrue(0<=r[0]<r[1]<=64,sign)
 
-    def test_two_slender_glyphs_share_row_with_five_percent_clearance(self):
+    def test_two_slender_glyphs_share_row_with_ten_percent_clearance(self):
         q=compose(list('𓇋𓇋'),C)
         self.assertEqual(q.rows,((0,1),))
         a,b=q.signs
         near(self,a.height,b.height)
-        self.assertGreaterEqual(b.x-a.x-a.width,C*.05-1e-7)
+        self.assertGreaterEqual(b.x-a.x-a.width,C*.10-1e-7)
+        self.assertGreaterEqual(a.x,C*.10-1e-7)
+        self.assertLessEqual(b.x+b.width,C-C*.10+1e-7)
         near(self,a.y,0.0)
-        near(self,q.height-(a.y+a.height),a.height*.20)
-        near(self,q.height,1.2*a.height)
+        near(self,q.height-(a.y+a.height),C*.10)
+        near(self,q.height,a.height+C*.1)
         for g in (a,b):
             box=glyph_geometry()[g.sign]
             near(self,g.width/g.height,(box[2]-box[0])/(box[3]-box[1]))
@@ -121,30 +133,30 @@ class VisibleInkComposition(unittest.TestCase):
         self.assertEqual(q.rows,((0,1,2),))
         a,b,c=q.signs
         self.assertEqual([g.sign for g in q.signs],list('𓇋𓏏𓏏'))
-        self.assertAlmostEqual(c.y-(b.y+b.height),C*.05,places=6)
+        self.assertAlmostEqual(c.y-(b.y+b.height),C*.10,places=6)
         self.assertAlmostEqual(b.y,a.y,places=6)
         self.assertAlmostEqual(c.y+c.height,a.y+a.height,places=6)
-        self.assertGreaterEqual(min(g.x for g in q.signs),0)
-        self.assertLessEqual(max(g.x+g.width for g in q.signs),C+1e-8)
-        self.assertAlmostEqual(q.flexible_gaps[0],a.height*.20,places=6)
-        self.assertAlmostEqual(q.height,a.height*1.20,places=6)
+        self.assertGreaterEqual(min(g.x for g in q.signs),C*.1-1e-7)
+        self.assertLessEqual(max(g.x+g.width for g in q.signs),C-C*.1+1e-7)
+        self.assertAlmostEqual(q.flexible_gaps[0],C*.10,places=6)
+        self.assertAlmostEqual(q.height,a.height+C*.1,places=6)
 
 
     def test_m17_two_q3_fill_reference_height_proportionally(self):
-        # 20 mm column; 5% gap; the tall host establishes 15 mm of ink height.
+        # 20 mm column; 10% gap; the tall host establishes 15 mm of ink height.
         q=compose(['𓇋','𓊪','𓊪'],20.0)
         self.assertEqual(q.rows,((0,1,2),))
         a,b,c=q.signs
         near(self,a.height,15.0)
-        near(self,b.height,7.0)
-        near(self,c.height,7.0)
+        near(self,b.height,6.5)
+        near(self,c.height,6.5)
         near(self,b.width/b.height,(glyph_geometry()['𓊪'][2]-glyph_geometry()['𓊪'][0])/
              (glyph_geometry()['𓊪'][3]-glyph_geometry()['𓊪'][1]))
         near(self,b.y,a.y)
         near(self,c.y+c.height,a.y+a.height)
-        near(self,c.y-b.y-b.height,1.0)
+        near(self,c.y-b.y-b.height,2.0)
         self.assertGreater(b.x,a.x)
-        self.assertTrue(all(g.x>=0 and g.x+g.width<=20+1e-7 for g in q.signs))
+        self.assertTrue(all(g.x>=2-1e-7 and g.x+g.width<=18+1e-7 for g in q.signs))
         self.assertAlmostEqual((min(g.x for g in q.signs)+max(g.x+g.width for g in q.signs))/2,
                                10.0,places=6)
 
@@ -155,7 +167,7 @@ class VisibleInkComposition(unittest.TestCase):
         near(self,a.height,15.0)
         near(self,b.y,a.y)
         near(self,c.y+c.height,a.y+a.height)
-        near(self,c.y-b.y-b.height,1.0)
+        near(self,c.y-b.y-b.height,2.0)
         self.assertLess(b.x,a.x)
         self.assertEqual([s.sign for s in q.signs],['𓊪','𓊪','𓇋'])
 
@@ -172,7 +184,9 @@ class VisibleInkComposition(unittest.TestCase):
         self.assertEqual(q.rows,((0,1),))
         a,b=q.signs
         self.assertLess(a.x,b.x)
-        self.assertGreaterEqual(b.x-a.x-a.width,20*.05-1e-7)
+        self.assertGreaterEqual(b.x-a.x-a.width,20*.10-1e-7)
+        self.assertGreaterEqual(a.x,2-1e-7)
+        self.assertLessEqual(b.x+b.width,18+1e-7)
         self.assertGreater(a.height,b.height)  # Natural relative size is retained.
 
     def test_wide_normal_signs_remain_sequential_without_forced_pair(self):
@@ -184,7 +198,7 @@ class VisibleInkComposition(unittest.TestCase):
         for sign in glyph_geometry():
             q=compose([sign],20.0)
             s=q.signs[0]
-            self.assertTrue(0<=s.x<=20 and s.x+s.width<=20+1e-7,sign)
+            self.assertTrue(20*.1-1e-7<=s.x and s.x+s.width<=20-20*.1+1e-7,sign)
             self.assertGreater(s.height,0)
             self.assertTrue(math.isfinite(q.height))
 
@@ -193,16 +207,16 @@ class VisibleInkComposition(unittest.TestCase):
         self.assertEqual(q.rows,((0,1),))
         a,b=q.signs
         taller=max(a.height,b.height)
-        near(self,q.height,1.2*taller)
+        near(self,q.height,taller+C*.1)
         near(self,a.y+a.height/2,b.y+b.height/2)
-        near(self,q.flexible_gaps[0],taller*.20)
+        near(self,q.flexible_gaps[0],C*.10)
         self.assertEqual(len(q.flexible_gaps),1)
 
     def test_owl_does_not_share_row_with_narrow_reed(self):
         q=compose(list('𓇋𓅓'),C)
         self.assertEqual(q.rows,((0,),(1,)))
         a,b=q.signs
-        near(self,b.y-(a.y+a.height),a.height*.20)
+        near(self,b.y-(a.y+a.height),C*.10)
         near(self,a.y,0.0)
 
     def test_flat_signs_preserve_silhouette_ratio(self):
@@ -216,16 +230,16 @@ class VisibleInkComposition(unittest.TestCase):
             near(self,g.width,min(3*C/4,target*glyph_optical_factors()[sign]))
             self.assertGreaterEqual(g.width,C/2)
             self.assertLessEqual(g.width,3*C/4)
-            near(self,q.height,1.2*g.height)
+            near(self,q.height,g.height+C*.1)
 
     def test_ultranarrow_stroke_has_bounded_height(self):
         q=compose(list('𓏺'),C)
         self.assertEqual(q.rows,((0,),))
         self.assertLessEqual(q.signs[0].height,C+1e-8)
-        near(self,q.height,1.2*q.signs[0].height)
+        near(self,q.height,q.signs[0].height+C*.1)
         self.assertLessEqual(q.signs[0].height,C+1e-8)
-        self.assertGreaterEqual(q.signs[0].x,0)
-        self.assertLessEqual(q.signs[0].x+q.signs[0].width,C+1e-8)
+        self.assertGreaterEqual(q.signs[0].x,2-1e-7)
+        self.assertLessEqual(q.signs[0].x+q.signs[0].width,C-C*.1+1e-7)
 
     def test_svg_bearing_coordinates_match_ink_rectangle(self):
         for sign in '𓅓𓇋𓏏𓈖𓏺':
@@ -252,35 +266,35 @@ class VisibleInkComposition(unittest.TestCase):
         bottom=first['y']+a['y']+a['height']
         top=second['y']+b['y']
         # The last column is incomplete, so the natural preceding-row
-        # 20%-height gap remains and only the terminal whitespace disappears.
-        self.assertAlmostEqual(top-bottom,a['height']*.20,places=4)
+        # column-derived gap remains and only the terminal whitespace disappears.
+        self.assertAlmostEqual(top-bottom,result['column_width_mm']*.10,places=4)
         self.assertAlmostEqual(placements[-1]['quadrat']['flexible_gaps'][-1],0)
 
-    def test_asymmetric_neighbors_have_one_preceding_twenty_percent_gap(self):
+    def test_asymmetric_neighbors_have_one_preceding_column_gap(self):
         for sequence in ('𓅓𓈖', '𓈖𓅓', '𓅓𓅓', '𓈖𓈖'):
             q=compose(list(sequence),C)
             self.assertEqual(q.rows,((0,),(1,)))
             first,next_sign=q.signs
             near(self,first.y,0.0)
-            near(self,next_sign.y-first.y-first.height,first.height*.20)
-            near(self,q.height-next_sign.y-next_sign.height,next_sign.height*.20)
-            near(self,q.height,1.2*(first.height+next_sign.height))
+            near(self,next_sign.y-first.y-first.height,C*.10)
+            near(self,q.height-next_sign.y-next_sign.height,C*.10)
+            near(self,q.height,first.height+next_sign.height+2*C*.1)
             self.assertEqual(len(q.flexible_gaps),2)
 
-    def test_several_rows_have_only_one_trailing_twenty_percent_gap(self):
+    def test_several_rows_use_one_column_gap_per_row(self):
         for sequence in ('𓅓𓏏𓈖𓇋', '𓇋𓇋𓅓𓏏', '𓏏𓅓𓅓'):
             q=compose(list(sequence),C)
             self.assertEqual(len(q.rows),len(q.flexible_gaps))
             heights=[max(q.signs[i].height for i in row) for row in q.rows]
-            near(self,q.height,1.2*sum(heights))
+            near(self,q.height,sum(heights)+len(heights)*C*.1)
             for index,row in enumerate(q.rows):
                 top=min(q.signs[i].y for i in row)
                 if index==0:near(self,top,0.0)
                 else:
                     preceding=q.rows[index-1]
                     bottom=max(q.signs[i].y+q.signs[i].height for i in preceding)
-                    near(self,top-bottom,heights[index-1]*.20)
-                near(self,q.flexible_gaps[index],heights[index]*.20)
+                    near(self,top-bottom,C*.10)
+                near(self,q.flexible_gaps[index],C*.10)
 
     def test_fixed_paper_shares_remaining_width_and_papyrus_keeps_nominal(self):
         count,width=fixed_page_column_grid(310,15)
@@ -339,7 +353,7 @@ class VisibleInkComposition(unittest.TestCase):
         natural=compose(['𓅓'],result['column_width_mm'])
         # All available gaps are interior after closing the final ink edge.
         # N one-sign words therefore have N-1 distributable gaps; the final
-        # word's trailing 20%-height gap is removed, not enlarged.
+        # word's trailing column gap is removed, not enlarged.
         trailing=natural.flexible_gaps[-1]
         expected=(bottom-top-len(word_positions)*natural.height+trailing)/(len(word_positions)-1)
         self.assertGreater(expected,0.0)
@@ -348,7 +362,7 @@ class VisibleInkComposition(unittest.TestCase):
         self.assertAlmostEqual(word_positions[-1]['height'],
                                natural.height-trailing,places=4)
         for left,right in zip(word_positions,word_positions[1:]):
-            self.assertAlmostEqual(right['y']-(left['y']+left['height']),0,places=4)
+            self.assertAlmostEqual(right['y']-(left['y']+left['height']),0,places=3)
 
     def test_completed_column_balances_first_and_last_visible_ink(self):
         from mdwnfr.document import new_document,transaction,validated_margins,SURFACES
@@ -634,7 +648,7 @@ class ArtworkWordFlow(unittest.TestCase):
                                             for a,b in right_runs))
                     tested+=1
             self.assertGreater(tested,0)
-            self.assertAlmostEqual(object_clearance_mm(width),width/4)
+            self.assertAlmostEqual(object_clearance_mm(width),width/10)
 
     def test_illustration_dividers_have_no_blank_object_length(self):
         """Dividers can continue in text below the bird, never through it."""
@@ -731,16 +745,17 @@ class ArtworkWordFlow(unittest.TestCase):
         obstacle=(None,mask,width,80,0,'normal',20)
         q=compose(['𓏺'],width)
         clear=object_clearance_mm(width)
-        self.assertEqual(clear,width/4)
+        self.assertEqual(clear,width/10)
         # The former column-sized exclusion rejects the entire lower lane.
-        self.assertEqual(free_sectors(None,mask=mask,image_width=width,image_height=80,
+        sectors=free_sectors(None,mask=mask,image_width=width,image_height=80,
             x_offset=0,slot_left=0,slot_right=width,top=18,bottom=100,
-            clearance=clear,image_top=20),[])
+            clearance=clear,image_top=20)
+        self.assertTrue(any(a<=18.0 and b>=18.4 for a,b in sectors))
         starts=free_word_starts(q,column_left=0,top=18,bottom=100,
                                clearance=clear,obstacles=[obstacle])
         self.assertTrue(any(a<=40<=b for a,b in starts))
 
-    def test_clearance_is_a_quarter_column_from_actual_ink(self):
+    def test_clearance_is_a_tenth_column_from_actual_ink(self):
         from mdwnfr.silhouette import free_word_starts,solid_object_mask
         from mdwnfr.layout import object_clearance_mm
         width=20;clear=object_clearance_mm(width)

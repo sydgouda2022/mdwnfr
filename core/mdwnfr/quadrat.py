@@ -2,8 +2,8 @@
 
 Each sign is classified by its measured width and height relative to a virtual
 quadrat. Composition preserves logical sign order, visible aspect ratios and
-actual silhouette clearance. Internal clearance is 5% of column width; the
-existing 20% gap between finished rows/words remains independent.
+actual silhouette clearance. Every separation and column-side inset uses
+one shared gap derived as 10% of the active column width.
 """
 from __future__ import annotations
 from dataclasses import dataclass, asdict
@@ -13,14 +13,21 @@ from typing import Mapping
 import json, math
 
 DATA_PATH=Path(__file__).resolve().parent/'data'/'glyph_geometry.json'
+CATEGORIES_PATH=Path(__file__).resolve().parent/'data'/'glyph_categories_unicode18.json'
 TALL_BELOW_ASPECT=.70
 WIDE_ABOVE_ASPECT=1.40
 COMPACT_BELOW_EXTENT_EM=.70
 QUADRAT_MIN_DIMENSION_EM=.70
 QUADRAT_REVIEW_MARGIN_EM=.07
-INNER_CLEARANCE_RATIO=.05
 GROUP_HEIGHT_RATIO=.75
-VERTICAL_GAP_RATIO=.20
+
+
+def gap_for_column(column_width:float)->float:
+    """Return the shared default separation: exactly 10% of column width."""
+    if (type(column_width) not in (int,float) or
+            not math.isfinite(column_width) or column_width<=0):
+        raise ValueError('Column width must be a positive finite number')
+    return float(column_width)/10.0
 
 
 @dataclass(frozen=True)
@@ -33,6 +40,7 @@ class SignBox:
     font_size:float
     text_x:float
     text_y:float
+    paint_order:int=0
 
 
 @dataclass(frozen=True)
@@ -95,6 +103,20 @@ def glyph_scanlines()->dict:
 
 def glyph_optical_factors()->dict:
     return _catalogue()[2]
+
+
+@lru_cache(maxsize=1)
+def glyph_categories()->dict:
+    """Pinned Unicode 18 kEH_Cat metadata for the installed glyph set."""
+    source=json.loads(CATEGORIES_PATH.read_text(encoding='utf-8'))
+    categories=source.get('categories',{})
+    if (source.get('format')!='mdwnfr-unicode-hieroglyph-categories-v1' or
+        source.get('unicode_version')!='18.0.0' or
+        source.get('property')!='kEH_Cat' or
+        len(categories)!=1072 or set(categories)!=set(glyph_geometry()) or
+        any(not isinstance(value,str) or not value for value in categories.values())):
+        raise ValueError('Pinned Unicode 18 hieroglyph category metadata is incomplete')
+    return categories
 
 
 def classify_sign_bounds(bounds:tuple[float,...]|list[float])->dict:
@@ -180,7 +202,8 @@ def _shape_ratio(sign:str,glyph_metrics:Mapping[str,object]|None=None)->float:
 
 
 def compose(signs:list[str],column_width:float,
-            glyph_metrics:Mapping[str,object]|None=None)->Quadrat:
+            glyph_metrics:Mapping[str,object]|None=None,
+            gap:float|None=None)->Quadrat:
     if (not signs or not isinstance(column_width,(int,float)) or
         not math.isfinite(column_width) or column_width<=0):
         raise ValueError('Nonempty signs and positive finite column width required')
@@ -194,7 +217,10 @@ def compose(signs:list[str],column_width:float,
     natural_extents=[max(bounds[s][2]-bounds[s][0],
                          bounds[s][3]-bounds[s][1]) for s in signs]
     boosts=[optics[s] for s in signs]
-    gap=width*INNER_CLEARANCE_RATIO
+    expected_gap=gap_for_column(width)
+    gap=expected_gap if gap is None else float(gap)
+    if not math.isclose(gap,expected_gap,rel_tol=1e-10,abs_tol=1e-10):
+        raise ValueError('Layout gap must equal 10% of the active column width')
 
     # Keep the existing optically corrected standalone presentation.
     # Small signs are permitted to stand alone and grow proportionally.
@@ -244,16 +270,17 @@ def compose(signs:list[str],column_width:float,
             return occupied,height,placements
 
         occupied,height,placements=fit(scale)
-        if occupied>width+1e-8:
-            # Shrink uniformly if only a modest correction is required.
-            # Significant reduction is rejected to keep all signs legible.
-            scale*=max(0.0,(width-gap)/(occupied-gap))
+        usable_width=width-2*gap
+        if occupied>usable_width+1e-8:
+            # Keep a full shared gap at both column edges while shrinking
+            # every glyph uniformly; the internal gap itself never scales.
+            scale*=max(0.0,(usable_width-gap)/(occupied-gap))
             if scale<original_scale*.70:
                 return None
             occupied,height,placements=fit(scale)
-        if occupied>width+1e-7:
+        if occupied>usable_width+1e-7:
             return None
-        shift=(width-occupied)/2
+        shift=gap+(usable_width-occupied)/2
         return height,tuple((j,x+shift,y,w,h) for j,x,y,w,h in placements)
 
     @lru_cache(maxsize=None)
@@ -274,7 +301,7 @@ def compose(signs:list[str],column_width:float,
                      available*natural_heights[i+1]/total)
             widths=(ratios[i]*heights[0],ratios[i+1]*heights[1])
             widest=max(widths)
-            if widest>width:
+            if widest>width-2*gap:
                 return None
             boxes=[]
             for j,h,w,y0 in ((i,heights[0],widths[0],0.0),
@@ -289,11 +316,12 @@ def compose(signs:list[str],column_width:float,
             total=natural_heights[i]+natural_heights[i+1]
             widest=max(ratios[i]*available*natural_heights[i]/total,
                        ratios[i+1]*available*natural_heights[i+1]/total)
-            target=gap+available*width/widest
+            target=gap+available*(width-2*gap)/widest
             if target<width*.5:
                 return None
             result=fit(target)
         return result
+
 
     @lru_cache(maxsize=None)
     def small_grid(i:int,count:int):
@@ -304,9 +332,8 @@ def compose(signs:list[str],column_width:float,
                for j in range(i,i+count)):
             return None
         target=width*GROUP_HEIGHT_RATIO
-        # Reserve the same 5%-of-column-width clearance between every
-        # neighboring cell; outer margins are not counted as internal gaps.
-        cell_w=(width-gap)/2
+        # Reserve the shared gap between cells and at both column edges.
+        cell_w=(width-3*gap)/2
         cell_h=(target-gap)/2
         cells=([(0,0),(1,0),(0.5,1)] if count==3 else
                [(0,0),(1,0),(0,1),(1,1)])
@@ -315,7 +342,7 @@ def compose(signs:list[str],column_width:float,
             j=i+offset
             h=min(cell_h,cell_w/ratios[j])
             w=ratios[j]*h
-            cell_x=column*(cell_w+gap) if column in (0,1) else (width-cell_w)/2
+            cell_x=gap+column*(cell_w+gap) if column in (0,1) else (width-cell_w)/2
             cell_y=row*(cell_h+gap)
             x=cell_x+(cell_w-w)/2
             y=cell_y+(cell_h-h)/2
@@ -396,18 +423,20 @@ def compose(signs:list[str],column_width:float,
         if output is None:
             return None
         occupied,boxes=output
-        if occupied>width+1e-8:
-            # A bounded proportional reduction keeps the whole group intact.
-            desired*=max(0.0,(width-gap)/(occupied-gap))
+        usable_width=width-2*gap
+        if occupied>usable_width+1e-8:
+            # A bounded proportional reduction keeps the whole group intact
+            # and preserves the same gap at both column edges.
+            desired*=max(0.0,(usable_width-gap)/(occupied-gap))
             if desired<width*.5:
                 return None
             output=fit(desired)
             if output is None:
                 return None
             occupied,boxes=output
-        if occupied>width+1e-7:
+        if occupied>usable_width+1e-7:
             return None
-        shift=(width-occupied)/2-min(x for _,x,_,_,_ in boxes)
+        shift=gap+(usable_width-occupied)/2-min(x for _,x,_,_,_ in boxes)
         # Keep results in logical input order, not the physical drawing order.
         ordered=tuple(sorted(((j,x+shift,y,w,h) for j,x,y,w,h in boxes),
                              key=lambda box:box[0]))
@@ -440,7 +469,7 @@ def compose(signs:list[str],column_width:float,
             row_height,placed=layout
             nrows,remaining,area,rows,placements=choose(index+length)
             total_area=visible_ink_area(placed)+area
-            total_height=row_height*(1+VERTICAL_GAP_RATIO)+remaining
+            total_height=row_height+gap+remaining
             possibilities.append((nrows+1,total_height,total_area,
                                   ((tuple(range(index,index+length))),)+rows,
                                   ((row_height,placed),)+placements))
@@ -454,16 +483,17 @@ def compose(signs:list[str],column_width:float,
 
     _,_,_,rows,layouts=choose(0)
     heights=[h for h,_ in layouts]
-    gaps=[h*VERTICAL_GAP_RATIO for h in heights]
+    gaps=[gap for _ in heights]
     placed=[None]*len(signs)
+    categories=None
     y=0.0
-    for (row_height,positions),row_gap in zip(layouts,gaps):
+    for row_indices,(row_height,positions),row_gap in zip(rows,layouts,gaps):
         for index,x,dy,w,h in positions:
             ink_y=y+dy
             left,bottom,right,top=bounds[signs[index]]
             em=h/(top-bottom)
             placed[index]=SignBox(signs[index],x,ink_y,w,h,em,
-                                   x-left*em,ink_y+top*em)
+                                   x-left*em,ink_y+top*em,0)
         y+=row_height+row_gap
     return Quadrat(width,y,tuple(placed),tuple(rows),tuple(gaps))
 
@@ -484,7 +514,7 @@ def _adjust_row_gaps(quadrat:Quadrat,changes:list[float])->Quadrat:
             sign=quadrat.signs[index]
             revised[index]=SignBox(sign.sign,sign.x,sign.y+shift,
                                    sign.width,sign.height,sign.font_size,
-                                   sign.text_x,sign.text_y+shift)
+                                   sign.text_x,sign.text_y+shift,sign.paint_order)
         shift+=corrected[row_number]-gaps[row_number]
     return Quadrat(quadrat.width,
                    quadrat.height+sum(corrected)-sum(gaps),

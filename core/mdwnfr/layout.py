@@ -10,7 +10,7 @@ from copy import deepcopy
 from functools import lru_cache
 from math import ceil
 from .document import SURFACES, assert_document, DocumentError, artwork_catalog, validated_margins, symbol_ids_for_word
-from .quadrat import compose, expand_internal, expand_to_ink_bottom, _shape_ratio
+from .quadrat import compose, expand_internal, expand_to_ink_bottom, _shape_ratio, gap_for_column
 from .silhouette import free_sectors, free_word_starts, solid_object_mask, cartouche_object_mask, silhouettes_collide
 from .tables import typeset_table, paginate_table, TableError
 from .cartouches import typeset_cartouche, CartoucheError
@@ -22,13 +22,13 @@ LAYOUT_PARAMETERS = ('id', 'direction', 'surface', 'font_size_pt', 'papyrus_heig
 
 
 def object_clearance_mm(column_width: float) -> float:
-    """One quarter of the current column width between objects and visible ink.
+    """The shared 10%-of-column gap between objects and visible ink.
 
     The same physical distance applies to normal text, floated text, tables,
-    cartouches, raster images, and decorative dividers. It is not a percent of
-    object width or a static screen-pixel padding.
+    cartouches, raster images, and decorative dividers. It is derived from the
+    active writing-column width, never from object bounds or screen pixels.
     """
-    return column_width / 4.0
+    return gap_for_column(column_width)
 
 
 def divider_ink_runs(runs, bridge_mm: float) -> list[tuple[float, float]]:
@@ -159,16 +159,19 @@ def _logical_auto_flip(owner:dict, logical_x:float, image_w:float,
 
 @lru_cache(maxsize=32768)
 def _cached_quadrat(spelling: tuple[str, ...], width: float,
-                    ratios: tuple[float, ...]):
-    # Using normalized outline ratios in the key means a font metric change
-    # cannot reuse stale sign geometry. Quadrat is an immutable dataclass.
-    return compose(list(spelling), width, dict(zip(spelling, ratios)))
+                    ratios: tuple[float, ...],
+                    gap: float | None = None):
+    # Using normalized outline ratios and the shared gap in the key prevents
+    # stale geometry after either font metrics or column spacing changes.
+    return compose(list(spelling), width, dict(zip(spelling, ratios)),
+                   gap=gap)
 
 
 def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
                 page_height: float, page_capacity: int | None,
                 compact: bool = False, nested_masks: dict | None = None) -> list[dict]:
     margins = validated_margins(doc)
+    gap = gap_for_column(width)
     # Text columns alone consume writing slots. Floating objects are
     # zero-span overlays with independent silhouettes and clearance. Their
     # anchors may extend across several slots without reserving any of them.
@@ -252,7 +255,7 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
             slot += span
         # Lines are derived decoration, never inputs to text geometry.
         # They stop near actual silhouette ink (not its rectangular frame)
-        # and resume in unobstructed sectors after quarter-column clearance.
+        # and resume in unobstructed sectors after the shared column gap.
         artworks=[]
         for col in positioned:
             if col['kind']=='clipart' and col['placements']:
@@ -290,7 +293,7 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
             index = round((col['x']-margins['left'])/width)
             word_slots.setdefault(index, []).extend(col.get('text_runs', ()))
         divider_thickness = divider_stroke_mm(doc['font_size_pt'])
-        clearance = object_clearance_mm(width)
+        clearance = gap
         for index in sorted(word_slots):
             if index+1 not in word_slots:
                 continue
@@ -301,7 +304,7 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
             for art in artworks:
                 # The obstacle's actual 2D painted contour, not its square
                 # image frame, interrupts the decorative line. Apply the same
-                # quarter-column clearance as the text collision engine.
+                # same 10%-of-column gap as the text collision engine.
                 # Transparent areas may contain a divider if both word
                 # columns carry ink there; no page-layout decisions change.
                 remaining = []
@@ -360,6 +363,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         page_width, page_height = SURFACES[surface]
         usable_width = page_width - margins['left'] - margins['right']
         capacity, width = fixed_page_column_grid(usable_width, width)
+    gap = gap_for_column(width)
     top = margins['top']
     bottom = page_height - margins['bottom']
     usable_height = bottom - top
@@ -401,11 +405,11 @@ def _layout(doc: dict, glyph_metrics: dict | None,
     overlay = None            # [base_slot, object_span, current_slot_index]
     warnings = []
 
-    @lru_cache(maxsize=8192)
-    def quadrat_for(signs):
+    def quadrat_for(item):
+        signs=tuple(item['signs'])
         ratios = tuple(_shape_ratio(sign, metrics) for sign in signs)
         before = _cached_quadrat.cache_info().misses
-        shape = _cached_quadrat(signs, width, ratios)
+        shape = _cached_quadrat(signs, width, ratios,gap=gap)
         stats['composed_quadrats'] += _cached_quadrat.cache_info().misses - before
         return shape
 
@@ -429,7 +433,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         if not pending:
             return
         left = slot * width
-        clearance = object_clearance_mm(width)
+        clearance = gap
         nearby = [ob for ob in obstacles
                   if ob[4] - clearance < left + width
                   and ob[4] + ob[2] + clearance > left]
@@ -570,7 +574,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         if cached is not None:
             return cached
         lane_x=slot*width
-        clearance=object_clearance_mm(width)
+        clearance=gap
         nearby=[ob for ob in obstacles
                 if ob[4]-clearance<lane_x+width and ob[4]+ob[2]+clearance>lane_x]
         allowed=free_word_starts(shape,column_left=lane_x,
@@ -584,7 +588,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
 
     def insert_word(item):
         nonlocal lane_cursor,slot
-        shape=quadrat_for(tuple(item['signs']))
+        shape=quadrat_for(item)
         if shape.height>usable_height+1e-8:
             raise DocumentError('Quadrat exceeds writing height; reduce font size')
         while True:
@@ -694,7 +698,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                 # Moving an object in x does not force word flow to skip x.
                 scan=range(slot,(capacity-span+1) if capacity is not None
                            else slot+max(span,32)+ceil(abs(requested)/width)+2)
-                clearance=object_clearance_mm(width)
+                clearance=gap
                 pending_ink=[(slot*width+glyph.x, _y+glyph.y,
                               glyph.width,glyph.height)
                              for _,quadr,_y in pending for glyph in quadr.signs]

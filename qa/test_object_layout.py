@@ -251,12 +251,12 @@ class ObjectSequenceLayout(unittest.TestCase):
                           and c['x']+w>image['x']]
                     self.assertGreaterEqual(len(near),3)
                     lower=[c for c in near if any(
-                        p['y']>image['y']+image['height']+w/4
+                        p['y']>image['y']+image['height']+w/10
                         for p in c['placements'])]
                     self.assertGreaterEqual(len(lower),2,
                          'Dense following words must reclaim more than one column below Horus')
                     upper=[c for c in near if any(
-                        p['y']+p['height']<image['y']-w/4
+                        p['y']+p['height']<image['y']-w/10
                         for p in c['placements'])]
                     self.assertGreaterEqual(len(upper),2,
                          'Available top sectors above the silhouette must receive quadrats')

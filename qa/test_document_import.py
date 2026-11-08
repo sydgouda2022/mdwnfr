@@ -1,6 +1,6 @@
 import unittest
 from mdwnfr.api import handle
-from mdwnfr.document import new_document, word
+from mdwnfr.document import new_document, word, validate_word_record, transaction
 
 class ImportDocumentTests(unittest.TestCase):
     def test_import_is_validated_and_uses_new_document_id(self):
@@ -22,5 +22,17 @@ class ImportDocumentTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             handle({"method":"import_document","document":doc})
 
-if __name__=="__main__":
-    unittest.main()
+    def test_legacy_overlay_metadata_is_ignored_on_import(self):
+        doc=new_document()
+        item=word(["𓂝","𓎛"])
+        item["overlays"]=[{"symbols":item["symbol_ids"],"front":item["symbol_ids"][1]}]
+        doc["items"]=[item]
+        restored=handle({"method":"import_document","document":doc})["document"]
+        self.assertEqual(restored["items"][0]["signs"],item["signs"])
+        self.assertNotIn("overlays",restored["items"][0])
+        opened=handle({"method":"session_open","document":doc})
+        self.assertEqual(opened["revision"],0)
+        edited=handle({"method":"session_edit","action":{
+            "op":"set_word_style","id":item["id"],"bold":True,"base_revision":0}})
+        self.assertNotIn("overlays",edited["change"]["updates"][0]["object"])
+
