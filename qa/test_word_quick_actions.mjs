@@ -60,6 +60,24 @@ for(const [label,engine,width,height] of [
    const nodes=word?[...word.querySelectorAll('.glyph-ink-svg text')]:[];
    return nodes.length===expected.length&&nodes.every((node,i)=>node.textContent===expected[i]);
   },{id,expected},{timeout:90000});
+  const waitForOverlayCentersFor=(id,expected,firstIndex)=>page.waitForFunction(({id,expected,firstIndex})=>{
+   const word=[...document.querySelectorAll('.word')].find(node=>node.dataset.id===id);
+   const nodes=word?[...word.querySelectorAll('.glyph-ink-svg text')]:[];
+   if(nodes.length!==expected.length||!nodes.every((node,i)=>node.textContent===expected[i]))return false;
+   const centers=nodes.slice(firstIndex,firstIndex+2).map(node=>{
+    const ctx=document.createElement('canvas').getContext('2d');
+    const size=Number(node.getAttribute('font-size'));
+    ctx.font=size+'px "MdwNfr Hieroglyphs"';
+    const m=ctx.measureText(node.textContent);
+    if(!m.actualBoundingBoxRight||!m.actualBoundingBoxAscent)return null;
+    const x=Number(node.getAttribute('x'))+(m.actualBoundingBoxRight-m.actualBoundingBoxLeft)/2;
+    const y=Number(node.getAttribute('y'))+(m.actualBoundingBoxDescent-m.actualBoundingBoxAscent)/2;
+    const matrix=node.getScreenCTM();
+    return matrix?{x:matrix.a*x+matrix.c*y+matrix.e,y:matrix.b*x+matrix.d*y+matrix.f}:null;
+   });
+   return centers.every(Boolean)&&Math.hypot(centers[0].x-centers[1].x,
+    centers[0].y-centers[1].y)<=1.5;
+  },{id,expected,firstIndex},{timeout:90000});
   const drawnOrder=()=>drawnOrderFor(firstWordId);
   const waitForDrawnOrder=expected=>waitForDrawnOrderFor(firstWordId,expected);
   await stack.click();
@@ -252,11 +270,13 @@ for(const [label,engine,width,height] of [
   await page.locator('#word-action-stack').click();
   await page.waitForFunction(()=>document.getElementById('word-action-stack')?.textContent==='Unstack');
   await waitForDrawnOrderFor(longWordId,['𓂝','𓎛','𓂝','𓎛']);
+  await waitForOverlayCentersFor(longWordId,['𓂝','𓎛','𓂝','𓎛'],2);
   assert.deepEqual(await drawnOrderFor(longWordId),['𓂝','𓎛','𓂝','𓎛']);
   await pairPicker.selectOption('0');
   await page.locator('#word-action-stack').click();
   await page.waitForFunction(()=>document.getElementById('word-action-stack')?.textContent==='Unstack');
   await waitForDrawnOrderFor(longWordId,['𓂝','𓎛','𓂝','𓎛']);
+  await waitForOverlayCentersFor(longWordId,['𓂝','𓎛','𓂝','𓎛'],0);
   assert.deepEqual(await drawnOrderFor(longWordId),['𓂝','𓎛','𓂝','𓎛']);
 
   await page.locator('.word').first().click();
