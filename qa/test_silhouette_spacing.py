@@ -72,7 +72,7 @@ class VisibleInkComposition(unittest.TestCase):
                          'b792accc6207ca9caa59fc67f53926b6985a99d255dd432d7c68b68a6dfd62f8')
 
     def test_one_shared_gap_is_ten_percent_of_column_width(self):
-        from mdwnfr.spacing import gap_for_column
+        from mdwnfr.quadrat import gap_for_column
         from mdwnfr.layout import object_clearance_mm
         for width in (6.0,20.0,41.5):
             gap=gap_for_column(width)
@@ -263,7 +263,7 @@ class VisibleInkComposition(unittest.TestCase):
         top=second['y']+b['y']
         # The last column is incomplete, so the natural preceding-row
         # column-derived gap remains and only the terminal whitespace disappears.
-        self.assertAlmostEqual(top-bottom,C*.10,places=4)
+        self.assertAlmostEqual(top-bottom,result['column_width_mm']*.10,places=4)
         self.assertAlmostEqual(placements[-1]['quadrat']['flexible_gaps'][-1],0)
 
     def test_asymmetric_neighbors_have_one_preceding_column_gap(self):
@@ -743,9 +743,10 @@ class ArtworkWordFlow(unittest.TestCase):
         clear=object_clearance_mm(width)
         self.assertEqual(clear,width/10)
         # The former column-sized exclusion rejects the entire lower lane.
-        self.assertEqual(free_sectors(None,mask=mask,image_width=width,image_height=80,
+        sectors=free_sectors(None,mask=mask,image_width=width,image_height=80,
             x_offset=0,slot_left=0,slot_right=width,top=18,bottom=100,
-            clearance=clear,image_top=20),[])
+            clearance=clear,image_top=20)
+        self.assertTrue(any(a<=18.0 and b>=18.4 for a,b in sectors))
         starts=free_word_starts(q,column_left=0,top=18,bottom=100,
                                clearance=clear,obstacles=[obstacle])
         self.assertTrue(any(a<=40<=b for a,b in starts))
