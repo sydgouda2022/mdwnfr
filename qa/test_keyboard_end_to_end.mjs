@@ -79,9 +79,6 @@ for(const [name,engine] of Object.entries({chromium,webkit})){
       [...document.querySelectorAll('#suggestions button')].some(button=>
         button.getAttribute('aria-label')===label),
       expectedLabel,{timeout:90000});
-    const matchingButtons=page.locator('#suggestions button').filter({
-      has:page.locator('svg')
-    });
     const targetIndex=await page.locator('#suggestions button').evaluateAll((buttons,label)=>
       buttons.findIndex(button=>button.getAttribute('aria-label')===label),expectedLabel);
     assert.ok(targetIndex>=0,'The UI must expose the chosen API suggestion with its provenance');
