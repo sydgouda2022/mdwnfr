@@ -15,6 +15,7 @@ from .silhouette import free_sectors, free_word_starts, solid_object_mask, carto
 from .tables import typeset_table, paginate_table, TableError
 from .cartouches import typeset_cartouche, CartoucheError
 from .typography import divider_stroke_mm
+from .spacing import gap_for_column
 
 MARGIN_MM = 18.0
 PT_TO_MM = 25.4 / 72.0
@@ -22,13 +23,13 @@ LAYOUT_PARAMETERS = ('id', 'direction', 'surface', 'font_size_pt', 'papyrus_heig
 
 
 def object_clearance_mm(column_width: float) -> float:
-    """One quarter of the current column width between objects and visible ink.
+    """The shared 10%-of-column gap between objects and visible ink.
 
     The same physical distance applies to normal text, floated text, tables,
-    cartouches, raster images, and decorative dividers. It is not a percent of
-    object width or a static screen-pixel padding.
+    cartouches, raster images, and decorative dividers. It is derived from the
+    active writing-column width, never from object bounds or screen pixels.
     """
-    return column_width / 4.0
+    return gap_for_column(column_width)
 
 
 def divider_ink_runs(runs, bridge_mm: float) -> list[tuple[float, float]]:
@@ -167,10 +168,12 @@ def _overlay_pairs_for_word(item: dict) -> tuple[tuple[int,int,int], ...]:
 @lru_cache(maxsize=32768)
 def _cached_quadrat(spelling: tuple[str, ...], width: float,
                     ratios: tuple[float, ...],
-                    overlay_pairs: tuple[tuple[int,int,int], ...] = ()):
-    # Using normalized outline ratios in the key means a font metric change
-    # cannot reuse stale sign geometry. Quadrat is an immutable dataclass.
-    return compose(list(spelling), width, dict(zip(spelling, ratios)),overlay_pairs)
+                    overlay_pairs: tuple[tuple[int,int,int], ...] = (),
+                    gap: float | None = None):
+    # Using normalized outline ratios and the shared gap in the key prevents
+    # stale geometry after either font metrics or column spacing changes.
+    return compose(list(spelling), width, dict(zip(spelling, ratios)),
+                   overlay_pairs, gap=gap)
 
 
 def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
@@ -260,7 +263,7 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
             slot += span
         # Lines are derived decoration, never inputs to text geometry.
         # They stop near actual silhouette ink (not its rectangular frame)
-        # and resume in unobstructed sectors after quarter-column clearance.
+        # and resume in unobstructed sectors after the shared column gap.
         artworks=[]
         for col in positioned:
             if col['kind']=='clipart' and col['placements']:
@@ -309,7 +312,7 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
             for art in artworks:
                 # The obstacle's actual 2D painted contour, not its square
                 # image frame, interrupts the decorative line. Apply the same
-                # quarter-column clearance as the text collision engine.
+                # same 10%-of-column gap as the text collision engine.
                 # Transparent areas may contain a divider if both word
                 # columns carry ink there; no page-layout decisions change.
                 remaining = []
@@ -414,7 +417,8 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         overlays=_overlay_pairs_for_word(item)
         ratios = tuple(_shape_ratio(sign, metrics) for sign in signs)
         before = _cached_quadrat.cache_info().misses
-        shape = _cached_quadrat(signs, width, ratios,overlays)
+        gap=object_clearance_mm(width)
+        shape = _cached_quadrat(signs, width, ratios,overlays,gap)
         stats['composed_quadrats'] += _cached_quadrat.cache_info().misses - before
         return shape
 
