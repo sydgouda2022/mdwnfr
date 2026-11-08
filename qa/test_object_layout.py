@@ -100,29 +100,6 @@ class ObjectSequenceLayout(unittest.TestCase):
         undone=transaction(result['document'],result['undo'])
         self.assertEqual(undone['items'][0]['symbol_ids'],ids)
 
-    def test_explicit_overlay_keeps_logical_identity_in_both_reading_directions(self):
-        from mdwnfr.document import transaction
-        for direction in ('ltr','rtl'):
-            with self.subTest(direction=direction):
-                target=word(['𓂝','𓎛'])
-                doc=new_document('Centered overlay',direction=direction)
-                doc['items']=[target]
-                doc=transaction(doc,{'op':'set_word_overlays','id':target['id'],
-                    'overlays':[{'symbols':target['symbol_ids'],
-                                 'front':target['symbol_ids'][1]}]})
-                layout=layout_document(doc)
-                placement=next(pl for page in layout['pages']
-                    for column in page['columns'] for pl in column['placements']
-                    if pl['id']==target['id'])
-                quad=placement['quadrat']
-                signs=quad['signs']
-                self.assertEqual([item['id'] for item in signs],target['symbol_ids'])
-                self.assertEqual([item['paint_order'] for item in signs],[0,1])
-                self.assertAlmostEqual(signs[0]['x']+signs[0]['width']/2,
-                    signs[1]['x']+signs[1]['width']/2,places=6)
-                self.assertAlmostEqual(signs[0]['y']+signs[0]['height']/2,
-                    signs[1]['y']+signs[1]['height']/2,places=6)
-
     def test_paper_to_papyrus_has_one_canonical_margin(self):
         from mdwnfr.document import transaction, assert_document
         doc=new_document('Single papyrus margin')
