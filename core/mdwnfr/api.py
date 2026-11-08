@@ -12,6 +12,17 @@ _layout_session = LayoutSession()
 _document_session = DocumentSession()
 _layout_document_session = LayoutDocumentSession()
 
+def _discard_legacy_overlays(document: dict) -> None:
+    """Drop obsolete overlap metadata when importing older saved documents."""
+    def clean(items):
+        for item in items:
+            if item.get("type")=="word":
+                item.pop("overlays",None)
+            elif item.get("type")=="cartouche":
+                clean(item.get("items",[]))
+    clean(document.get("items",[]))
+
+
 def handle(request: dict) -> dict:
     name=request.get("method")
     if name=="session_open":
@@ -27,6 +38,7 @@ def handle(request: dict) -> dict:
         incoming=request["document"]
         assert_document(incoming)
         restored=deepcopy(incoming)
+        _discard_legacy_overlays(restored)
         restored["id"]=fresh_id()
         restored["revision"]=0
         restored["name"]=(incoming["name"][:109]+" (imported)")[:120]
