@@ -40,7 +40,7 @@ The current core/mdwnfr/quadrat.py compositor supports:
 
 - standalone signs;
 - eligible two-sign horizontal rows;
-- vertical tabulation of two low/compact signs;
+- vertical tabulation of two signs whose classes are each wide/low or small/compact (including mixed pairs);
 - 2×2 tabulation of three or four compact signs;
 - a tall host with two small or wide companions;
 - explicit centered superimposition of an adjacent tall-narrow + low-broad pair, with persistent logical order and independently controlled front/back paint order.
