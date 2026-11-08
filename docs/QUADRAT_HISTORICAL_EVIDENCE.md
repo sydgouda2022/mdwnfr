@@ -43,15 +43,15 @@ The current core/mdwnfr/quadrat.py compositor supports:
 - vertical tabulation of two signs whose classes are each wide/low or small/compact (including mixed pairs);
 - 2×2 tabulation of three or four compact signs;
 - a tall host with two small or wide companions;
-- explicit centered superimposition of an adjacent tall-narrow + low-broad pair, with persistent logical order and independently controlled front/back paint order.
+- no glyph superimposition: every neighboring silhouette retains the shared 10%-of-column gap.
 
-The explicit superimposition feature is not inferred automatically from shape classes. The ordinary automatic patterns remain candidates selected by the deterministic compositor, not mandatory assignments based solely on a sign's class.
+Historical superimposition examples remain part of the evidence corpus, but the editor does not generate overlapping glyphs. The ordinary tabulation patterns remain candidates selected by the deterministic compositor, not mandatory assignments based solely on a sign's class.
 
 ## Gaps and evidence required before adding a pattern
 
 - A wide/low host with one or two compact companions is not currently represented by a dedicated automatic template. The source establishes varied tabulation, but the textual description alone does not establish the exact geometry, reading order, and placement for every proposed host/companion combination. Add a specific template only after inspecting and recording the relevant figure or a primary inscription.
 - “Tall or wide sign forced to remain alone” is not a general class rule. Every sign already has a standalone candidate. A persistent per-sign or per-word restriction would be a separate authoring feature and needs an explicit product decision plus evidence for each restriction.
-- Do not use zero pixel intersection as a universal stacking criterion: stacking is superimposition. For explicit stacking, evaluate the visual relationship and non-interference of meaningful iconic details instead.
+- Historical superimposition must remain distinguishable from tabulation in the research corpus. It is outside the editor's generated-output model because generated glyphs must retain a nonzero silhouette gap.
 
 ## Acceptance rule
 
