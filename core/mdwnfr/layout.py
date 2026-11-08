@@ -10,12 +10,11 @@ from copy import deepcopy
 from functools import lru_cache
 from math import ceil
 from .document import SURFACES, assert_document, DocumentError, artwork_catalog, validated_margins, symbol_ids_for_word
-from .quadrat import compose, expand_internal, expand_to_ink_bottom, _shape_ratio
+from .quadrat import compose, expand_internal, expand_to_ink_bottom, _shape_ratio, gap_for_column
 from .silhouette import free_sectors, free_word_starts, solid_object_mask, cartouche_object_mask, silhouettes_collide
 from .tables import typeset_table, paginate_table, TableError
 from .cartouches import typeset_cartouche, CartoucheError
 from .typography import divider_stroke_mm
-from .spacing import gap_for_column
 
 MARGIN_MM = 18.0
 PT_TO_MM = 25.4 / 72.0
