@@ -30,3 +30,9 @@ class ImportDocumentTests(unittest.TestCase):
         restored=handle({"method":"import_document","document":doc})["document"]
         self.assertEqual(restored["items"][0]["signs"],item["signs"])
         self.assertNotIn("overlays",restored["items"][0])
+        opened=handle({"method":"session_open","document":doc})
+        self.assertEqual(opened["revision"],0)
+        edited=handle({"method":"session_edit","action":{
+            "op":"set_word_style","id":item["id"],"bold":True,"base_revision":0}})
+        self.assertNotIn("overlays",edited["change"]["updates"][0]["object"])
+
