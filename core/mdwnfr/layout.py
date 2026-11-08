@@ -179,6 +179,7 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
                 page_height: float, page_capacity: int | None,
                 compact: bool = False, nested_masks: dict | None = None) -> list[dict]:
     margins = validated_margins(doc)
+    gap = gap_for_column(width)
     # Text columns alone consume writing slots. Floating objects are
     # zero-span overlays with independent silhouettes and clearance. Their
     # anchors may extend across several slots without reserving any of them.
@@ -300,7 +301,7 @@ def _pack_pages(doc: dict, columns: list[dict], width: float, page_width: float,
             index = round((col['x']-margins['left'])/width)
             word_slots.setdefault(index, []).extend(col.get('text_runs', ()))
         divider_thickness = divider_stroke_mm(doc['font_size_pt'])
-        clearance = object_clearance_mm(width)
+        clearance = gap
         for index in sorted(word_slots):
             if index+1 not in word_slots:
                 continue
@@ -370,6 +371,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         page_width, page_height = SURFACES[surface]
         usable_width = page_width - margins['left'] - margins['right']
         capacity, width = fixed_page_column_grid(usable_width, width)
+    gap = gap_for_column(width)
     top = margins['top']
     bottom = page_height - margins['bottom']
     usable_height = bottom - top
@@ -416,7 +418,6 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         overlays=_overlay_pairs_for_word(item)
         ratios = tuple(_shape_ratio(sign, metrics) for sign in signs)
         before = _cached_quadrat.cache_info().misses
-        gap=object_clearance_mm(width)
         shape = _cached_quadrat(signs, width, ratios,overlays,gap)
         stats['composed_quadrats'] += _cached_quadrat.cache_info().misses - before
         return shape
@@ -441,7 +442,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         if not pending:
             return
         left = slot * width
-        clearance = object_clearance_mm(width)
+        clearance = gap
         nearby = [ob for ob in obstacles
                   if ob[4] - clearance < left + width
                   and ob[4] + ob[2] + clearance > left]
@@ -582,7 +583,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
         if cached is not None:
             return cached
         lane_x=slot*width
-        clearance=object_clearance_mm(width)
+        clearance=gap
         nearby=[ob for ob in obstacles
                 if ob[4]-clearance<lane_x+width and ob[4]+ob[2]+clearance>lane_x]
         allowed=free_word_starts(shape,column_left=lane_x,
@@ -706,7 +707,7 @@ def _layout(doc: dict, glyph_metrics: dict | None,
                 # Moving an object in x does not force word flow to skip x.
                 scan=range(slot,(capacity-span+1) if capacity is not None
                            else slot+max(span,32)+ceil(abs(requested)/width)+2)
-                clearance=object_clearance_mm(width)
+                clearance=gap
                 pending_ink=[(slot*width+glyph.x, _y+glyph.y,
                               glyph.width,glyph.height)
                              for _,quadr,_y in pending for glyph in quadr.signs]
