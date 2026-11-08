@@ -65,6 +65,20 @@ class QuadratWorkflowTests(unittest.TestCase):
                 self.assertEqual([g['paint_order'] for g in boxes],
                                  [0,1] if front==1 else [1,0])
 
+    def test_two_disjoint_centered_overlays_share_one_word(self):
+        spelling=['𓂝','𓎛','𓂝','𓎛']
+        shape=compose(spelling,20,overlay_pairs=((0,1,1),(2,3,2))).payload()
+        self.assertEqual(shape['rows'],[[0,1],[2,3]])
+        self.assertEqual([item['sign'] for item in shape['signs']],spelling)
+        boxes=shape['signs']
+        for first in (0,2):
+            with self.subTest(pair=first):
+                self.assertAlmostEqual(boxes[first]['x']+boxes[first]['width']/2,
+                    boxes[first+1]['x']+boxes[first+1]['width']/2,places=6)
+                self.assertAlmostEqual(boxes[first]['y']+boxes[first]['height']/2,
+                    boxes[first+1]['y']+boxes[first+1]['height']/2,places=6)
+        self.assertEqual([box['paint_order'] for box in boxes],[0,1,1,0])
+
     def test_overlay_edit_round_trips_through_session_delta_and_history(self):
         d36='𓂝'
         v28='𓎛'
