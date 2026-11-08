@@ -77,6 +77,7 @@ jobs:
           node qa/test_table_touch_writing.mjs
           node qa/test_word_quick_actions.mjs
           node qa/test_browser_keyboard.mjs
+          node qa/test_keyboard_end_to_end.mjs
           node qa/test_font_bounds_browser.mjs
           node qa/test_touch_editing.mjs
           node qa/test_release_update.mjs
