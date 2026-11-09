@@ -15,10 +15,27 @@ async function activate(worker) {
 }
 
 async function boot() {
+  const swDiagnostics={supported:'serviceWorker' in navigator,secureContext:isSecureContext,
+    origin:location.origin,registrationScope:null,registrationError:null,updateError:null,
+    activeScriptURL:null,installingScriptURL:null,waitingScriptURL:null};
+  window.__mdwnfrServiceWorkerDiagnostics=swDiagnostics;
   if('serviceWorker' in navigator){
     let updateError=null;
     try{
       const registration=await navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'});
+      swDiagnostics.registrationScope=registration.scope;
+      swDiagnostics.activeScriptURL=registration.active?.scriptURL||null;
+      swDiagnostics.installingScriptURL=registration.installing?.scriptURL||null;
+      swDiagnostics.waitingScriptURL=registration.waiting?.scriptURL||null;
+      registration.addEventListener('updatefound',()=>{
+        const worker=registration.installing;
+        if(worker)worker.addEventListener('statechange',()=>{
+          swDiagnostics.activeScriptURL=registration.active?.scriptURL||null;
+          swDiagnostics.installingScriptURL=registration.installing?.scriptURL||null;
+          swDiagnostics.waitingScriptURL=registration.waiting?.scriptURL||null;
+          swDiagnostics.workerState=worker.state;
+        });
+      });
       // An already-coherent offline release must not wait for a network update.
       // New releases still use the existing atomic activation path.
       let coherent=false;
@@ -32,12 +49,19 @@ async function boot() {
           }
         }catch(_){}
       }
-      if(coherent)void registration.update().catch(()=>{});
-      else{
-       await registration.update().catch(error=>{updateError=error;});
+      if(coherent){
+        // Updating an already active registration is safe in WebKit. On the
+        // first install, however, update() may reject while the registration
+        // has no active worker yet; register() has already started installation.
+        void registration.update().catch(error=>{swDiagnostics.updateError=String(error?.stack||error);});
+      }else{
+       if(registration.active){
+        await registration.update().catch(error=>{updateError=error;});
+       }
        await activate(registration.installing||registration.waiting||registration.active);
       }
-    }catch(error){updateError=error;}
+    }catch(error){updateError=error;swDiagnostics.registrationError=String(error?.stack||error);}
+    swDiagnostics.updateError=updateError?String(updateError?.stack||updateError):null;
     // A freshly installed worker can activate before clients.claim() has
     // assigned a controller to this tab. Never import new JS into HTML from
     // the previous release during that window.
