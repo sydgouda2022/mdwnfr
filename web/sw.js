@@ -86,6 +86,21 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
         }
       }
     }
+    // Some WebKit Cache Storage builds can resolve concurrent put() promises
+    // without making every entry immediately visible to match(). Verify the
+    // committed batch and repair only missing entries with serialized writes.
+    // The final full-cache verification below remains the acceptance gate.
+    const invisible=[];
+    for(const record of publication.assets){
+      if(!await cache.match(record.path).catch(()=>null))invisible.push(record);
+    }
+    for(const record of invisible){
+      putStats.retried++;
+      putStats.attempted++;
+      await cache.put(record.path,await verifiedResponse(record));
+      putStats.fulfilled++;
+    }
+
     await cache.put(MANIFEST,new Response(JSON.stringify(publication),{
       headers:{'Content-Type':'application/json'}}));
 
