@@ -95,8 +95,10 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
       Boolean(await cache.match(record.path).catch(()=>null))));
     const absoluteMatches=await Promise.all(publication.assets.map(async record=>
       Boolean(await cache.match(new URL(record.path,self.location.origin).href).catch(()=>null))));
-    const requestMatches=await Promise.all(publication.assets.map(async record=>
-      Boolean(await cache.match(new Request(new URL(record.path,self.location.origin).href)).catch(()=>null))));
+    const requestMatches=typeof Request==='function'
+      ?await Promise.all(publication.assets.map(async record=>
+        Boolean(await cache.match(new Request(new URL(record.path,self.location.origin).href)).catch(()=>null))))
+      :publication.assets.map(()=>null);
     const missing=publication.assets.filter((record,index)=>!relativeMatches[index]);
     if(missing.length){
       const keys=await cache.keys();
