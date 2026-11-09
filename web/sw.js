@@ -22,7 +22,7 @@ async function verifiedResponse(record) {
 }
 
 async function reportInstallFailure(error) {
-  const detail=String(error?.stack||error?.message||error);
+  const detail=String(error?.message||error)+'\n'+String(error?.stack||'');
   console.error('MdwNfr offline installation failed:',detail);
   // Diagnostics must never mask the original install failure. Some test
   // harnesses and older WebKit contexts expose only a partial Clients API.
@@ -52,8 +52,9 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
       const verified=await prior.json().catch(()=>null);
       if(verified?.complete===true &&
          JSON.stringify(verified.assets)===JSON.stringify(publication.assets)){
-        const keys=new Set((await cache.keys()).map(key=>new URL(key.url).pathname));
-        if(publication.assets.every(record=>keys.has(record.path))){
+        const present=await Promise.all(publication.assets.map(async record=>
+          Boolean(await cache.match(record.path).catch(()=>null))));
+        if(present.every(Boolean)){
           await self.skipWaiting();return;
         }
       }
@@ -82,9 +83,11 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
     await cache.put(MANIFEST,new Response(JSON.stringify(publication),{
       headers:{'Content-Type':'application/json'}}));
     // Verify the committed inventory before allowing this release to activate.
-    const committed=new Set((await cache.keys()).map(key=>new URL(key.url).pathname));
-    const missing=publication.assets.find(record=>!committed.has(record.path));
-    if(missing)throw Error('Offline cache commit is missing '+missing.path);
+    const missing=[];
+    for(const record of publication.assets){
+      if(!await cache.match(record.path))missing.push(record.path);
+    }
+    if(missing.length)throw Error('Offline cache commit is missing '+missing.join(', '));
     await self.skipWaiting();
   }catch(error){
     await caches.delete(CACHE);
