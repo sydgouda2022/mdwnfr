@@ -22,7 +22,7 @@ async function verifiedResponse(record) {
 }
 
 async function reportInstallFailure(error) {
-  const detail=String(error?.message||error)+'\n'+String(error?.stack||'');
+  const detail=String(error?.message||error)+'\\n'+String(error?.stack||'');
   console.error('MdwNfr offline installation failed:',detail);
   // Diagnostics must never mask the original install failure. Some test
   // harnesses and older WebKit contexts expose only a partial Clients API.
@@ -46,6 +46,7 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
   if(publication.format!=='mdwnfr-offline-publication-v1'||publication.complete!==true||!Array.isArray(publication.assets))
     throw Error('Unsupported offline publication');
   const cache=await caches.open(CACHE);
+  const putStats={attempted:0,fulfilled:0,retried:0};
   try {
     const prior=await cache.match(MANIFEST);
     if(prior){
@@ -64,14 +65,19 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
     // This is safe because all batch promises have settled before retry begins.
     for(let i=0;i<publication.assets.length;i+=3){
       const batch=publication.assets.slice(i,i+3);
+      putStats.attempted+=batch.length;
       const results=await Promise.allSettled(batch.map(async record=>
         cache.put(record.path,await verifiedResponse(record))));
+      putStats.fulfilled+=results.filter(item=>item.status==='fulfilled').length;
       const failures=results.map((item,index)=>item.status==='rejected'
         ?{record:batch[index],error:item.reason}:null).filter(Boolean);
       if(failures.length){
         for(const record of batch){
+          putStats.retried++;
+          putStats.attempted++;
           try{
             await cache.put(record.path,await verifiedResponse(record));
+            putStats.fulfilled++;
           }catch(error){
             throw Error('Offline asset install failed for '+record.path+': '+
               String(error?.message||error)+' (parallel batch also failed: '+
@@ -82,12 +88,43 @@ self.addEventListener('install',event=>event.waitUntil((async()=>{
     }
     await cache.put(MANIFEST,new Response(JSON.stringify(publication),{
       headers:{'Content-Type':'application/json'}}));
-    // Verify the committed inventory before allowing this release to activate.
-    const missing=[];
-    for(const record of publication.assets){
-      if(!await cache.match(record.path))missing.push(record.path);
+
+    // Verify both Cache API query forms and inspect the actual stored keys.
+    // This is diagnostic-only: it does not alter the cache or retry writes.
+    const relativeMatches=await Promise.all(publication.assets.map(async record=>
+      Boolean(await cache.match(record.path).catch(()=>null))));
+    const absoluteMatches=await Promise.all(publication.assets.map(async record=>
+      Boolean(await cache.match(new URL(record.path,self.location.origin).href).catch(()=>null))));
+    const requestMatches=await Promise.all(publication.assets.map(async record=>
+      Boolean(await cache.match(new Request(new URL(record.path,self.location.origin).href)).catch(()=>null))));
+    const missing=publication.assets.filter((record,index)=>!relativeMatches[index]);
+    if(missing.length){
+      const keys=await cache.keys();
+      const cacheNames=await caches.keys();
+      const sample=publication.assets.slice(0,3).map((record,index)=>({
+        path:record.path,
+        relativeMatch:relativeMatches[index],
+        absoluteMatch:absoluteMatches[index],
+        requestMatch:requestMatches[index]
+      }));
+      const diagnostic={
+        cacheName:CACHE,
+        cacheNames,
+        origin:self.location.origin,
+        workerURL:self.location.href,
+        assetCount:publication.assets.length,
+        putStats,
+        keyCount:keys.length,
+        keySamples:keys.slice(0,8).map(request=>request.url),
+        relativeMatchCount:relativeMatches.filter(Boolean).length,
+        absoluteMatchCount:absoluteMatches.filter(Boolean).length,
+        requestMatchCount:requestMatches.filter(Boolean).length,
+        sample
+      };
+      throw Error('Offline cache commit is missing '+missing.length+' of '+
+        publication.assets.length+' assets. Cache diagnostics: '+JSON.stringify(diagnostic)+
+        '. Missing paths: '+missing.map(record=>record.path).join(', '));
     }
-    if(missing.length)throw Error('Offline cache commit is missing '+missing.join(', '));
     await self.skipWaiting();
   }catch(error){
     await caches.delete(CACHE);
